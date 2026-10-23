@@ -778,7 +778,7 @@ const ITEMS = {
   plume:   { kind:"free", name:"Bird feather", refill:1440, blurb:"Rare · back every 24 hours",
              use: () => ({ h:2, fx:{love:14, energy:-8}, g:"pounce", prop:"bob", line: pick(["A real bird was here. I would have won.", "Evidence of prey. I'm keeping this forever."]) }) }
 };
-const ITEM_ADVICE = { kind:"favor", name:"Advice pass", price:200, blurb:"One extra question, on top of the free one every 2½ days" };
+const ITEM_ADVICE = { kind:"favor", name:"Advice pass", price:200, blurb:"One extra question, on top of the free one every 9–12 hours" };
 ITEMS.advice = ITEM_ADVICE;
 const ORDER = { treat:["salmon","mousse","shrimp","catnip"], toy:["crinkle","ribbon","mouse","feather","box"], free:["rock","twig","grass","flower","plume"] };
 
@@ -876,7 +876,10 @@ function fresh() {
 }
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch { S = fresh(); }
-const FILL_CAP = 3, GRACE_MS = 3*3600e3, DROP_MS = 2*3600e3, ADVICE_MS = 60*3600e3;
+const FILL_CAP = 3, GRACE_MS = 3*3600e3, DROP_MS = 2*3600e3, ADVICE_MIN_MS = 9*3600e3, ADVICE_MAX_MS = 12*3600e3;
+const adviceCooldown = () => ADVICE_MIN_MS + Math.random() * (ADVICE_MAX_MS - ADVICE_MIN_MS);
+// players still waiting on the old 2½-day timer get the new, shorter one
+if (S.freeAdviceAt > Date.now() + ADVICE_MAX_MS) S.freeAdviceAt = Date.now() + ADVICE_MAX_MS;
 for (const [k,v] of Object.entries({ lastTouch: Date.now(), drops: 0, dayFills: 0, dayKey: new Date().toDateString(), freeAdviceAt: Date.now(), passes: 0 })) if (S[k] === undefined) S[k] = v;
 delete S.halfDone;
 if (!Array.isArray(S.advice)) S.advice = [];
@@ -1230,7 +1233,7 @@ $("askBtn").onclick = async () => {
   if (!q) { say("You have to actually ask something. I'm a cat, not a psychic."); $("question").focus(); return; }
   const usedWelcome = !!S.welcomeQ, usedFree = !usedWelcome && Date.now() >= S.freeAdviceAt, prevFreeAt = S.freeAdviceAt, prevHearts = S.hearts;
   const refund = () => { if (usedWelcome) S.welcomeQ = true; else { S.hearts = prevHearts; if (usedFree) S.freeAdviceAt = prevFreeAt; else S.passes++; } save(); render(); };
-  if (usedWelcome) S.welcomeQ = false; else { if (usedFree) S.freeAdviceAt = Date.now() + ADVICE_MS; else S.passes--; S.hearts = 0; }
+  if (usedWelcome) S.welcomeQ = false; else { if (usedFree) S.freeAdviceAt = Date.now() + adviceCooldown(); else S.passes--; S.hearts = 0; }
   touch(); save(); render();
   $("askBtn").disabled = true; $("askForm").hidden = true;
   answerCard(q, "He stares at you for an uncomfortably long time.");
@@ -1470,7 +1473,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") { $("crisis"
 const TOUR = [
   ["Meet Watabish", "He's a lynx point with six toes on each paw and no interest in you. Feed him, pet him, brush him and let him nap with these buttons. His needs drain in real time, even when the game is closed.", ".care"],
   ["His tolerance", "These hearts show how much he can stand you. Treats and toys fill them fastest. Max it out and he'll grant you a cat wisdom and 15 tokens. He only tolerates so much: 3 times a day. Ignore him for 3 hours and it starts slipping.", ".meters"],
-  ["Asking for advice", "This is the Ask button. Finish this walkthrough and your first question is on him. After that, he only answers with his tolerance maxed, and free advice comes back every 2½ days.", ".tab[data-sheet=askSheet]"],
+  ["Asking for advice", "This is the Ask button. Finish this walkthrough and your first question is on him. After that, he only answers with his tolerance maxed, and free advice comes back every 9 to 12 hours (he decides).", ".tab[data-sheet=askSheet]"],
   ["The store", "Earn tokens by caring for him, then spend them here on treats and toys. Rocks are free every 10 minutes. Twigs, grass, wilted flowers and feathers turn up every few hours.", ".tab[data-act=store]"],
   ["One more thing", "Don't over-pet him. He swats. Tap this ? to see the walkthrough again. Adopting, the app and your collected wisdom live in the Journal.", "#helpBtn"]
 ];
