@@ -1,0 +1,1557 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>watabish — play</title>
+<meta name="description" content="Earn the tolerance of Watabish, a very rude lynx point cat. Free and pointless.">
+<meta name="theme-color" content="#2B1C15">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Watabish">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&display=swap">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<style>
+/* Layout: one-screen phone game — HUD and meters on top, Watabish fills the middle, care buttons under him, a tab bar opens His stuff, Ask, Journal and Store as bottom sheets. */
+:root {
+  --bg: #F3EADB; --panel: #FFFFFF; --ink: #2B1C15; --muted: #5A463A; --line: #E4D6C0;
+  --accent: #1F5FA8; --accent-2: #BFE3FF; --on-accent: #FFFFFF; --hard: #2B1C15; --dots: rgb(43 28 21 / .06);
+  --blue: #1F5FA8; --ice: #BFE3FF; --cream: #F3EADB; --brown: #2B1C15; --stage: #FFFFFF;
+  --gold: #C9973A; --good: #3F8A5C; --warn: #C58A1B; --bad: #B4452F;
+  --paper: #F3EADB; --pencil: #2B1C15; --rule: #E4D6C0; --nose: #e3907f; --blush: #e0607a; --ear: #f2b8c3;
+  --iris: #3f9be6; --iris-deep: #1b4f8a; --iris-glow: #9fe0ff;
+  --fur: #fbf3e6; --shade: #e9d9c3; --outline: #3a2a24; --point: #b08a6e; --point-dark: #6e5242; --mask: #cdb8a5; --lidc: #a9846c;
+  --salmon: #f08a6c; --grass: #6fa35a; --wood: #8a6a45; --stone: #b3aea6; --box: #d1a565; --wilt: #b9a1ae;
+  --display: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --body: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Bricolage Grotesque", system-ui, sans-serif;
+  --serif: "Bricolage Grotesque", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #2B1C15; --panel: #3E2C23; --ink: #F3EADB; --muted: #CDBBA8; --line: #5A463A;
+  --accent: #BFE3FF; --accent-2: #1F5FA8; --on-accent: #2B1C15; --hard: #1F5FA8; --dots: rgb(243 234 219 / .06);
+  --stage: #F3EADB; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #2B1C15; --panel: #3E2C23; --ink: #F3EADB; --muted: #CDBBA8; --line: #5A463A;
+  --accent: #BFE3FF; --accent-2: #1F5FA8; --on-accent: #2B1C15; --hard: #1F5FA8; --dots: rgb(243 234 219 / .06);
+  --stage: #F3EADB; color-scheme: dark }
+
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; box-sizing: border-box; overscroll-behavior: none;
+  padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); padding-block: 8px 6px;
+  background-image: radial-gradient(color-mix(in srgb, var(--accent) 9%, transparent) 1.2px, transparent 1.4px); background-size: 22px 22px; }
+.game { max-width: 480px; margin: 0 auto; height: 100%; min-height: 540px; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto auto; gap: 8px; }
+.hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.who { display: flex; align-items: center; gap: 8px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.meters { display: grid; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 8px 12px; }
+.tol { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tol .kicker { white-space: nowrap; letter-spacing: .08em; }
+.needs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.need { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.need-ico svg { width: 16px; height: 16px; display: block; stroke: var(--muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.need-meter { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.need-lbl { font-size: 10px; line-height: 1; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: var(--muted); }
+.need .bar { height: 6px; }
+.stage { display: flex; flex-direction: column; min-height: 0; }
+.stage .cat { flex: 1 1 auto; min-height: 0; width: 100%; height: 100%; max-width: none; aspect-ratio: auto; margin: 4px 0 0; }
+.claim { position: absolute; left: 0; right: 0; bottom: 34px; display: flex; justify-content: center; }
+.claim .btn { box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent); animation: pop .5s ease; }
+.care { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 4px; }
+.tab { appearance: none; position: relative; border: 0; background: transparent; color: var(--muted); border-radius: 14px; padding: 7px 2px 5px; display: grid; justify-items: center; gap: 2px; font: 600 11px var(--body); cursor: pointer; }
+.tab svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab:hover, .tab:active { color: var(--accent); background: var(--bg); }
+.badge { position: absolute; top: 3px; right: calc(50% - 22px); min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 99px; background: var(--accent); color: #fff; font: 600 10px/16px var(--mono); text-align: center; }
+.badge.dot { min-width: 10px; width: 10px; height: 10px; padding: 0; top: 5px; right: calc(50% - 16px); }
+.modal.bottom { place-items: end center; padding-bottom: 0; }
+.modal.bottom .sheet { border-radius: 22px 22px 0 0; max-height: 82%; animation: slideup .28s ease; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); align-content: start; }
+@keyframes slideup { from { transform: translateY(40px); opacity: 0; } }
+.tray { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; overflow: visible; }
+.tray .item { width: auto; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 26px; line-height: 1.05; margin: 0; }
+h1 small { display: block; font-family: var(--body); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 600; margin-top: 6px; }
+.purse { display: flex; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink); }
+.chip svg { width: 16px; height: 16px; }
+button.chip { cursor: pointer; }
+
+/* ---- stage ---- */
+.stage { position: relative; color: var(--pencil); border: 1px solid var(--line); border-radius: 22px; padding: 12px 12px 8px; overflow: hidden;
+  background-color: var(--paper);
+  background-image: radial-gradient(color-mix(in srgb, var(--pencil) 7%, transparent) .8px, transparent 1px); background-size: 7px 7px; }
+.bubble { position: relative; flex: none; min-height: 44px; box-sizing: border-box; background: var(--paper); color: var(--pencil); border: 2px solid var(--pencil); border-radius: 18px 22px 16px 24px; padding: 9px 14px; font-weight: 600; font-size: 15px; text-align: center; }
+.bubble::after { content: ""; position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%); border: 10px solid transparent; border-top-color: var(--pencil); border-bottom: 0; }
+.bubble.pop { animation: pop .35s ease; }
+@keyframes pop { 0%{transform:scale(.95)} 60%{transform:scale(1.03)} 100%{transform:scale(1)} }
+.bubble em { font-weight: 400; opacity: .75; }
+.mood { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: color-mix(in srgb, var(--pencil) 65%, var(--paper)); margin-top: 2px; font-weight: 700; }
+.mood b { color: var(--blush); }
+.cat { display: block; width: 100%; max-width: 300px; margin: 6px auto 0; aspect-ratio: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; overflow: visible; }
+.floater { position: absolute; pointer-events: none; font-size: 18px; color: var(--accent); animation: rise 1.2s ease-out forwards; font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+@keyframes rise { from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(-70px)} }
+
+/* SVG parts: transform origins are in the drawing's own coordinates */
+.cat * { transform-box: view-box; }
+.cat .whole { transform-origin: 120px 208px; }
+.cat .body { transform-origin: 120px 205px; animation: breathe 3.8s ease-in-out infinite; }
+.cat .tail { transform-origin: 150px 196px; animation: swish 3.4s ease-in-out infinite; }
+.cat .head { transform-origin: 120px 136px; }
+.cat #earL { transform-origin: 90px 64px; }
+.cat #earR { transform-origin: 150px 64px; }
+.cat #pawL { transform-origin: 101px 206px; }
+.cat #pawR { transform-origin: 139px 206px; }
+.cat .lid { transform: translateY(var(--lid, 0px)); transition: transform .22s ease; }
+.cat.blink .lid { transform: translateY(20px); transition-duration: .08s; }
+.cat .iris { transform: translateX(var(--look, 0px)); transition: transform .45s ease; }
+.cat .pupil { transform-box: fill-box; transform-origin: center; transform: scale(var(--pupil, 1)); transition: transform .3s; }
+.cat #tongue { opacity: 0; }
+.cat .swat { opacity: 0; }
+.cat.asleep .tail { animation-duration: 9s; }
+.cat.asleep .body { animation-duration: 5.5s; }
+
+@keyframes breathe { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(1.025)} }
+@keyframes swish { 0%,100%{transform:rotate(0)} 50%{transform:rotate(-12deg)} }
+/* gestures */
+.g-eartwitch #earR { animation: twitch .22s ease-in-out 3; }
+.g-eartwitch #earL { animation: twitchL .22s ease-in-out .5s 2; }
+@keyframes twitch { 50%{transform:rotate(16deg)} }
+@keyframes twitchL { 50%{transform:rotate(-16deg)} }
+.g-headtilt .head { animation: tilt 1.8s ease-in-out; }
+@keyframes tilt { 25%,75%{transform:rotate(9deg)} }
+.g-lookaway .head, .g-ignore .head { animation: away 2.6s ease-in-out; }
+@keyframes away { 20%,80%{transform:rotate(-7deg) translateX(-3px)} }
+.g-ignore .tail { animation: swish .5s ease-in-out 4; }
+.g-knead #pawL { animation: knead .55s ease-in-out 4; }
+.g-knead #pawR { animation: knead .55s ease-in-out .27s 4; }
+@keyframes knead { 50%{transform:translateY(-7px) scaleX(.94)} }
+.g-lick #pawR { animation: lickpaw 2.3s ease-in-out; }
+.g-lick .head { animation: lickhead 2.3s ease-in-out; }
+.g-lick #tongue { animation: tongue .3s ease-in-out .45s 5; }
+@keyframes lickpaw { 0%,100%{transform:none} 18%,82%{transform:translate(-16px,-84px) rotate(-14deg)} 35%,65%{transform:translate(-16px,-88px) rotate(-10deg)} 50%{transform:translate(-16px,-83px) rotate(-14deg)} }
+@keyframes lickhead { 18%,82%{transform:rotate(5deg) translateY(4px)} }
+@keyframes tongue { 50%{opacity:1} }
+.g-yawn .head, .g-stretch .head { animation: yawnhead 1.7s ease-in-out; }
+.g-yawn #earL { animation: earback 1.7s ease-in-out; }
+.g-yawn #earR { animation: earbackR 1.7s ease-in-out; }
+.g-yawn #tongue, .g-stretch #tongue { opacity: 1; }
+@keyframes yawnhead { 30%,70%{transform:rotate(-4deg) translateY(-4px)} }
+@keyframes earback { 30%,70%{transform:rotate(-22deg)} }
+@keyframes earbackR { 30%,70%{transform:rotate(22deg)} }
+.g-tailthump .tail { animation: swish .32s ease-in-out 5; }
+.g-purr .whole { animation: purr .09s linear infinite; }
+.g-purr .head { animation: lean 1.8s ease-in-out; }
+@keyframes purr { 50%{transform:translateX(.7px)} }
+@keyframes lean { 30%,70%{transform:rotate(-8deg)} }
+.g-eat .head { animation: eat .62s ease-in-out 3; }
+@keyframes eat { 50%{transform:translateY(12px) rotate(-6deg)} }
+.g-pounce .whole { animation: pounce 1s ease; }
+@keyframes pounce { 0%{transform:none} 30%{transform:scaleY(.88) translateY(8px)} 55%{transform:translate(-26px,-30px) rotate(-8deg)} 80%{transform:translate(-20px,0) scaleY(.95)} 100%{transform:none} }
+.g-zoomies .whole { animation: zoom 1.8s ease-in-out; }
+@keyframes zoom { 15%{transform:translate(-40px,-20px) rotate(-12deg)} 35%{transform:translate(40px,0) scaleX(-1)} 55%{transform:translate(30px,-26px) scaleX(-1) rotate(10deg)} 75%{transform:translate(-20px,0)} 100%{transform:none} }
+.g-swat .swat { animation: swat .55s ease; }
+.g-swat .tail { animation: swish .3s 2; }
+@keyframes swat { 0%{opacity:0;transform:none} 30%{opacity:1;transform:translate(-26px,-46px) rotate(-30deg)} 100%{opacity:0;transform:none} }
+.g-sniff .head { animation: sniff 1.3s ease-in-out; }
+@keyframes sniff { 20%{transform:translate(-8px,10px) rotate(-10deg)} 35%{transform:translate(-9px,10px) rotate(-10deg)} 50%{transform:translate(-8px,11px) rotate(-10deg)} 65%{transform:translate(-9px,10px) rotate(-10deg)} }
+.g-sneeze .head { animation: sneeze .7s ease; }
+@keyframes sneeze { 40%{transform:translateY(-6px) rotate(-3deg)} 55%{transform:translateY(8px) rotate(4deg)} }
+.g-hack .head { animation: hack .32s ease-in-out 4; }
+.g-hack .whole { animation: purr .16s linear 8; }
+@keyframes hack { 50%{transform:translateY(9px) scaleY(.94)} }
+.g-stretch .whole { animation: stretch 1.5s ease-in-out; }
+@keyframes stretch { 40%,60%{transform:scaleX(1.1) scaleY(.9)} }
+.g-delight .head { animation: bob .7s ease-in-out 3; }
+@keyframes bob { 50%{transform:rotate(5deg) translateY(-3px)} }
+
+/* props on the cushion */
+.prop-inner { transform-box: fill-box; transform-origin: center bottom; }
+.prop-in { animation: drop .35s ease-out; }
+@keyframes drop { from{transform:translateY(-30px);opacity:0} }
+.prop-knock { animation: knock 1.2s ease-in .5s forwards; }
+@keyframes knock { 20%{transform:rotate(-10deg)} 100%{transform:translate(-80px,50px) rotate(-260deg);opacity:0} }
+.prop-bat { animation: bat .5s ease-in-out .3s 4; }
+@keyframes bat { 50%{transform:translateX(-10px) rotate(-25deg)} }
+.prop-eaten { animation: eaten 1.6s ease-in .4s forwards; }
+@keyframes eaten { to{transform:scale(0);opacity:0} }
+.prop-bob { animation: wand .35s ease-in-out 5; }
+@keyframes wand { 50%{transform:translate(8px,-14px) rotate(12deg)} }
+.prop-wiggle { animation: wig .25s ease-in-out 6; }
+@keyframes wig { 50%{transform:rotate(14deg)} }
+.prop-out { transition: opacity .5s; opacity: 0; }
+
+/* ---- heart meter ---- */
+.heartbox { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; display: grid; gap: 8px; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.kicker { font-size: 11px; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; color: var(--muted); }
+.hearts { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; width: min(220px, 62%); }
+.hearts svg { width: 100%; height: auto; max-width: 28px; }
+.hearts .on { fill: var(--accent); }
+.hearts .off { fill: var(--line); }
+.hearts .half { fill: var(--line); stroke: var(--gold); stroke-width: 1.6; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+
+/* ---- needs ---- */
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+.stat { display: grid; gap: 4px; }
+.stat .lbl { display: flex; justify-content: space-between; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; color: var(--muted); }
+.stat .lbl span:last-child { font-family: var(--mono); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 99px; background: var(--good); transition: width .4s, background .4s; }
+
+/* ---- actions ---- */
+.actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.act { appearance: none; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 16px; padding: 8px 4px 6px; font: 600 12px var(--body); display: grid; justify-items: center; gap: 4px; cursor: pointer; transition: transform .1s, border-color .2s; }
+.act svg { width: 26px; height: 26px; stroke: var(--accent); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.act:hover { border-color: var(--accent); }
+.act:active { transform: translateY(1px) scale(.97); }
+.act.store { background: var(--accent); border-color: var(--accent); color: #fff; }
+.act.store svg { stroke: #fff; }
+.act[disabled] { opacity: .45; cursor: not-allowed; }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- tray ---- */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+h2 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0; }
+.tray { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.item { appearance: none; flex: 0 0 auto; width: 80px; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 14px; padding: 8px 4px 6px; display: grid; justify-items: center; gap: 3px; cursor: pointer; font: 600 11.5px/1.2 var(--body); text-align: center; position: relative; }
+.item:hover { border-color: var(--accent); }
+.item .qty { position: absolute; top: 4px; right: 5px; font-family: var(--mono); font-size: 11px; background: var(--accent); color: #fff; border-radius: 99px; padding: 0 6px; }
+.item small { font-weight: 400; color: var(--muted); font-family: var(--mono); font-size: 10.5px; }
+.ico { display: grid; place-items: center; width: 46px; height: 46px; background: var(--paper); border-radius: 12px; border: 1px solid color-mix(in srgb, var(--pencil) 15%, transparent); }
+.ico svg { width: 38px; height: 38px; }
+.empty { color: var(--muted); font-size: 14px; margin: 0; }
+
+/* ---- advice ---- */
+textarea { width: 100%; box-sizing: border-box; min-height: 74px; resize: vertical; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--bg); color: var(--ink); font: 15px/1.45 var(--body); }
+.btn { appearance: none; border: 0; border-radius: 999px; padding: 10px 18px; font: 700 14px var(--body); background: var(--accent); color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.advice-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; border-top: 1px dashed var(--line); padding-top: 10px; font-size: 13px; color: var(--muted); }
+.advice-status b { color: var(--ink); }
+.ask-form { display: grid; gap: 12px; }
+.answer .q { color: var(--muted); font-size: 14px; }
+.answer .q::before { content: "You asked: "; font-weight: 700; }
+.answer .a { font-size: 16px; line-height: 1.5; }
+.advice-list li { display: grid; gap: 4px; }
+.advice-list li small { color: var(--muted); font-size: 12.5px; }
+.crisis { text-align: left; border-color: var(--line); }
+.crisis h2 { font-size: 23px; line-height: 1.2; text-wrap: balance; }
+.card .crisis-body { font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.card .crisis-body.muted { color: var(--muted); font-size: 14px; }
+.lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.lines li { display: grid; gap: 2px; padding: 10px 12px; background: var(--bg); border-radius: 12px; }
+.lines b { font-size: 15px; }
+.lines span { font-size: 13px; color: var(--muted); }
+.lines a { color: var(--accent); }
+.answer { font-size: 15px; background: var(--bg); border-radius: 12px; padding: 12px 14px; margin: 0; display: grid; gap: 10px; }
+.answer p { margin: 0; white-space: pre-wrap; }
+.answer .action-text { font-style: italic; color: var(--muted); }
+
+.wisdom { margin: 0; font-family: var(--display); font-size: 19px; line-height: 1.35; border-left: 3px solid var(--gold); padding-left: 12px; text-wrap: pretty; }
+.wisdom-list { display: grid; margin: 0; padding: 0; list-style: none; max-height: 220px; overflow-y: auto; }
+.wisdom-list li { font-size: 14px; padding: 8px 0; border-top: 1px dashed var(--line); }
+
+/* ---- modals ---- */
+.modal { position: fixed; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, #1a0c11 50%, transparent); z-index: 20;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.card { background: var(--panel); border-radius: 22px; padding: 26px 22px; max-width: 400px; width: 100%; box-sizing: border-box; text-align: center; display: grid; gap: 14px; border: 2px solid var(--gold); animation: pop .4s ease; }
+.card .seal { font-size: 11px; text-transform: uppercase; letter-spacing: .2em; font-weight: 700; color: var(--gold); }
+.card p { font-family: var(--display); font-size: 22px; line-height: 1.3; margin: 0; text-wrap: balance; }
+.sheet { background: var(--panel); border-radius: 22px; max-width: 480px; width: 100%; max-height: 86vh; overflow-y: auto; box-sizing: border-box; padding: 18px 16px 20px; display: grid; gap: 12px; animation: pop .3s ease; border: 1px solid var(--line); }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.sheet h3 { margin: 6px 0 0; font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
+.shop-row { display: grid; grid-template-columns: 46px 1fr auto; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px dashed var(--line); }
+.shop-row div { min-width: 0; }
+.shop-row b { display: block; font-size: 15px; }
+.shop-row span:not(.ico) { font-size: 13px; color: var(--muted); }
+.price { appearance: none; border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 999px; padding: 7px 12px; font: 600 13px var(--mono); cursor: pointer; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.price:hover:not([disabled]) { background: var(--accent); color: #fff; }
+.price[disabled] { border-color: var(--line); color: var(--muted); cursor: not-allowed; }
+.close { appearance: none; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px; width: 36px; height: 36px; font-size: 18px; cursor: pointer; }
+
+.help { appearance: none; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: 700 11px var(--body); cursor: pointer; vertical-align: 1px; padding: 0; }
+.sound { display: grid; place-items: center; }
+.sound svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sound .mute { display: none; }
+.sound[aria-pressed="false"] .wave { display: none; }
+.sound[aria-pressed="false"] .mute { display: inline; }
+.tour { text-align: left; }
+.tour .tour-body { font-family: var(--body); font-size: 15px; line-height: 1.55; text-wrap: pretty; }
+.tour-nav { justify-content: flex-end; }
+footer { text-align: center; font-size: 12px; color: var(--muted); }
+footer button { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font: inherit; }
+
+@media (max-height: 700px) {
+  .act { padding: 6px 4px 5px; }
+  .act svg { width: 22px; height: 22px; }
+  .bubble { font-size: 14px; padding: 7px 12px; min-height: 38px; }
+}
+@media (max-width: 420px) {
+  .act { padding: 9px 2px 7px; }
+  .act span { font-size: 11px; }
+}
+
+/* ================= brand: chunky sticker look ================= */
+body { font-family: var(--body); background-color: var(--bg); background-image: radial-gradient(var(--dots) 1.4px, transparent 1.6px); background-size: 18px 18px; }
+h1, h2 { font-family: var(--display); font-weight: 800; letter-spacing: -0.03em; }
+h1 { font-size: clamp(19px, 5.4vw, 28px); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.game { grid-template-columns: minmax(0, 1fr); }
+.hud { gap: 8px; min-width: 0; }
+.hud > * { min-width: 0; }
+h2 { font-size: 24px; }
+.kicker, .need-lbl, .sheet h3, .card .seal, .mood { font-family: var(--mono); font-weight: 700; letter-spacing: .06em; }
+.game { gap: 10px; padding-bottom: 5px; padding-right: 5px; box-sizing: border-box; }
+button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* panels */
+.meters, .stage, .tabs, .card, .sheet, .panel, .heartbox {
+  border: 3px solid var(--brown); box-shadow: 5px 5px 0 var(--hard); }
+.meters { background: var(--panel); border-radius: 20px; padding: 8px 12px; }
+.stage { background-color: var(--stage); background-image: radial-gradient(rgb(43 28 21 / .06) 1.2px, transparent 1.4px); background-size: 12px 12px; border-radius: 26px; }
+.bubble { background: var(--stage); color: var(--brown); border: 3px solid var(--brown); border-radius: 22px; font-weight: 700; box-shadow: 4px 4px 0 var(--blue); }
+.bubble::after { border-top-color: var(--brown); bottom: -13px; }
+.bubble em { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.12em; opacity: 1; color: #5A463A; }
+.mood { color: #5A463A; }
+.mood b { color: var(--blue); }
+.floater { color: var(--blue); font-family: var(--mono); font-weight: 700; }
+
+/* chips + small round buttons */
+.chip { background: var(--panel); color: var(--ink); border: 3px solid var(--brown); box-shadow: 3px 3px 0 var(--hard); min-height: 44px; box-sizing: border-box; padding: 0 12px; font-family: var(--mono); font-weight: 700; font-size: 14px; }
+.purse { flex: none; }
+@media (max-width: 400px) { .chip { padding: 0 9px; font-size: 13px; gap: 4px; } .chip svg { width: 14px; height: 14px; } .who, .purse { gap: 5px; } }
+button.chip:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--hard); }
+.purse { gap: 6px; }
+.who { gap: 6px; min-width: 0; }
+.help { width: 44px; height: 44px; flex: none; background: var(--panel); color: var(--ink); border: 3px solid var(--brown); box-shadow: 3px 3px 0 var(--hard); font: 700 15px var(--mono); }
+.help:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--hard); }
+.sound svg { width: 18px; height: 18px; stroke-width: 2.4; }
+
+/* meters */
+.hearts .on { fill: var(--accent); }
+.hearts .off { fill: var(--line); }
+.need-ico svg { stroke: var(--ink); stroke-width: 2.2; }
+.bar { background: var(--line); border: 2px solid var(--brown); box-sizing: border-box; }
+.need .bar { height: 10px; }
+
+/* care buttons */
+.act { min-height: 56px; border: 3px solid var(--brown); background: var(--panel); color: var(--ink); border-radius: 999px; box-shadow: 5px 5px 0 var(--hard); font: 700 13px var(--body); transition: transform .08s, box-shadow .08s; }
+.act svg { stroke: var(--accent); stroke-width: 2.2; }
+.act:hover { border-color: var(--brown); background: var(--accent-2); }
+.act:hover svg { stroke: var(--ink); }
+.act:active { transform: translate(4px, 4px); box-shadow: 1px 1px 0 var(--hard); }
+
+/* tab bar */
+.tabs { background: var(--panel); border-radius: 26px; padding: 5px; gap: 5px; }
+.tab { min-height: 52px; color: var(--muted); border-radius: 999px; font: 700 12px var(--body); }
+.tab svg { stroke-width: 2.2; }
+.tab:hover, .tab:active, .tab:focus-visible { color: var(--brown); background: var(--ice); }
+.badge { background: var(--accent); color: var(--on-accent); border: 2px solid var(--brown); font: 700 10px/12px var(--mono); min-width: 20px; height: 20px; top: 0; right: calc(50% - 26px); }
+.badge.dot { width: 14px; min-width: 14px; height: 14px; top: 3px; right: calc(50% - 18px); }
+
+/* buttons */
+.btn { min-height: 48px; padding: 0 22px; border-radius: 999px; border: 3px solid var(--brown); background: var(--accent); color: var(--on-accent); font: 700 15px var(--body); box-shadow: 5px 5px 0 var(--hard); transition: transform .08s, box-shadow .08s; }
+.btn:active { transform: translate(4px, 4px); box-shadow: 1px 1px 0 var(--hard); }
+.btn.ghost { background: var(--cream); color: var(--brown); border: 3px solid var(--brown); }
+.claim .btn { box-shadow: 5px 5px 0 var(--brown); }
+.price { min-height: 44px; padding: 0 14px; border: 3px solid var(--brown); background: var(--cream); color: var(--brown); font: 700 13px var(--mono); box-shadow: 3px 3px 0 var(--hard); }
+.price:hover:not([disabled]) { background: var(--blue); color: #FFFFFF; }
+.price:active:not([disabled]) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--hard); }
+.price[disabled] { border-color: var(--line); background: transparent; color: var(--muted); box-shadow: none; }
+.close { width: 44px; height: 44px; flex: none; border: 3px solid var(--brown); background: var(--cream); color: var(--brown); font: 700 20px var(--body); box-shadow: 3px 3px 0 var(--hard); }
+.close:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--hard); }
+footer button { min-height: 44px; padding: 0 6px; color: var(--muted); font-weight: 700; }
+
+/* sheets + cards */
+.modal { background: rgb(43 28 21 / .55); }
+.sheet { background: var(--panel); }
+.modal.bottom .sheet { border-bottom: 0; border-radius: 26px 26px 0 0; box-shadow: 0 -5px 0 var(--hard); }
+.sheet h3 { color: var(--muted); }
+.card { background: var(--panel); border-radius: 26px; }
+.card .seal { color: var(--accent); }
+.card p { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 27px; line-height: 1.2; }
+.crisis { border-color: var(--brown); }
+.card .crisis-body, .tour .tour-body { font-family: var(--body); font-style: normal; font-size: 15px; line-height: 1.5; }
+.card .crisis-body.muted { font-size: 14px; }
+.wisdom { font-family: var(--serif); font-style: italic; font-size: 22px; line-height: 1.25; border-left: 4px solid var(--accent); }
+.wisdom-list li { border-top: 2px dashed var(--line); }
+.shop-row { border-top: 2px dashed var(--line); }
+.ico { background: var(--cream); border: 2px solid var(--brown); border-radius: 14px; }
+.item { border: 3px solid var(--brown); background: var(--panel); border-radius: 20px; box-shadow: 4px 4px 0 var(--hard); font: 700 12px/1.2 var(--body); min-height: 44px; }
+.item:hover { border-color: var(--brown); background: var(--accent-2); }
+.item:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--hard); }
+.item .qty { background: var(--accent); color: var(--on-accent); border: 2px solid var(--brown); font-weight: 700; }
+.item small { font-family: var(--mono); font-weight: 700; color: var(--muted); }
+textarea { border: 3px solid var(--brown); border-radius: 18px; background: var(--bg); color: var(--ink); font: 16px/1.45 var(--body); }
+.advice-status { border-top: 2px dashed var(--line); }
+.answer { background: var(--bg); border: 2px solid var(--line); border-radius: 18px; }
+.answer .action-text { font-family: var(--serif); font-size: 17px; }
+.lines li { background: var(--bg); border: 2px solid var(--line); border-radius: 16px; }
+.lines a { color: var(--accent); font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) { .cat *, .floater, .bubble, .card, .sheet, .prop-inner, .claim .btn { animation: none !important; } .act, .btn, .chip, .item { transition: none; } }
+
+/* ---- readable fonts only ---- */
+.card p, .wisdom, .bubble em, .answer .action-text { font-family: var(--body); font-style: normal; }
+.card p { font-weight: 700; font-size: 23px; }
+.wisdom { font-weight: 700; font-size: 19px; }
+.bubble em { font-weight: 400; font-size: 1em; }
+/* ---- account + install ---- */
+.acct { display: grid; gap: 10px; background: var(--bg); border: 2px solid var(--line); border-radius: 18px; padding: 14px; }
+.acct p { margin: 0; font-size: 14px; line-height: 1.45; }
+.acct input[type=email] { width: 100%; box-sizing: border-box; min-height: 48px; border: 3px solid var(--brown); border-radius: 14px; padding: 0 14px; font: 16px var(--body); background: var(--panel); color: var(--ink); }
+.acct label.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.4; cursor: pointer; }
+.acct label.check input { width: 22px; height: 22px; flex: none; margin: 0; accent-color: var(--accent); }
+.acct a { color: var(--accent); font-weight: 700; }
+.acct .msg { font-weight: 700; min-height: 1em; }
+.acct .row { justify-content: flex-start; }
+footer a { color: var(--muted); font-weight: 700; }
+</style>
+
+<div class="game">
+  <header class="hud">
+    <div class="who"><button class="help" id="helpBtn" aria-label="How to play">?</button><button class="help sound" id="soundBtn" aria-label="Sound" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path class="wave" d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/><path class="mute" d="M16 9l5 6M21 9l-5 6"/></svg></button><h1>Watabish</h1></div>
+    <div class="purse">
+      <span class="chip" title="How much he tolerates you"><svg viewBox="0 0 24 24"><path fill="var(--accent)" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.6.7-1.4 2.2-2.6 4.3-2.6 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg><span id="heartChip">0/10</span></span>
+      <button class="chip" id="tokenChip" title="Tokens · open the store"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="var(--gold)"/><path d="M6 12c2-3 6-3 8 0-2 3-6 3-8 0zM14 12l4-3v6z" fill="#fff8e6"/></svg><span id="tokenCount">0</span></button>
+    </div>
+  </header>
+
+  <section class="meters" aria-label="How much he tolerates you, and his needs">
+    <div class="tol"><div class="hearts" id="hearts"></div><span class="kicker" id="heartHint"></span></div>
+    <div class="needs">
+      <div class="need" title="Fed"><span class="need-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h18c0 4-4 7-9 7s-9-3-9-7z"/><path d="M7 11c1-2 2-2 3 0M11 11c1-2 2-2 3 0M15 11c1-2 2-2 3 0"/></svg></span><div class="need-meter"><span class="need-lbl">Fed</span><div class="bar"><i id="b-food"></i></div></div><span class="sr" id="v-food">0</span></div>
+      <div class="need" title="Adored"><span class="need-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V5a1.5 1.5 0 013 0v5M10 10V3.5a1.5 1.5 0 013 0V10M13 10V5a1.5 1.5 0 013 0v6M16 11V8a1.5 1.5 0 013 0v5c0 4-3 8-7 8s-6-2-8-6l-1.5-3a1.5 1.5 0 012.6-1.5L7 13"/></svg></span><div class="need-meter"><span class="need-lbl">Adored</span><div class="bar"><i id="b-love"></i></div></div><span class="sr" id="v-love">0</span></div>
+      <div class="need" title="Groomed"><span class="need-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="2"/><path d="M6 10v8M9 10v6M12 10v8M15 10v6M18 10v8"/></svg></span><div class="need-meter"><span class="need-lbl">Groomed</span><div class="bar"><i id="b-groom"></i></div></div><span class="sr" id="v-groom">0</span></div>
+      <div class="need" title="Rested"><span class="need-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg></span><div class="need-meter"><span class="need-lbl">Rested</span><div class="bar"><i id="b-energy"></i></div></div><span class="sr" id="v-energy">0</span></div>
+    </div>
+  </section>
+
+  <section class="stage" id="stage">
+    <div class="bubble" id="bubble" aria-live="polite">Oh. It's you.</div>
+    <svg class="cat" id="cat" viewBox="0 0 240 240" role="img" aria-label="Watabish, a lynx point polydactyl cat with blue eyes and a deadpan stare, drawn in flat anime style. Tap to pet.">
+      <defs>
+        <clipPath id="clipL"><path d="M83 88 L 113 91 C 113.5 100, 107 105, 99 105 C 89 105, 82.5 99, 83 88 Z"/></clipPath>
+        <clipPath id="clipR"><path d="M157 88 L 127 91 C 126.5 100, 133 105, 141 105 C 151 105, 157.5 99, 157 88 Z"/></clipPath>
+        <clipPath id="tailClip"><path d="M148 201 C 180 207, 205 193, 207 168 C 208 155, 202 145, 193 143 C 187 146, 189 152, 192 158 C 196 176, 180 190, 150 190 Z"/></clipPath>
+        <linearGradient id="irisG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--iris-deep)"/><stop offset=".6" stop-color="var(--iris)"/><stop offset="1" stop-color="var(--iris-glow)"/></linearGradient>
+      </defs>
+      <g stroke="var(--outline)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <ellipse cx="120" cy="212" rx="78" ry="9" fill="var(--outline)" opacity=".12" stroke="none"/>
+        <g class="whole">
+          <g class="tail">
+            <path d="M148 201 C 180 207, 205 193, 207 168 C 208 155, 202 145, 193 143 C 187 146, 189 152, 192 158 C 196 176, 180 190, 150 190 Z" fill="var(--point)" stroke="none"/>
+            <g clip-path="url(#tailClip)" fill="var(--point-dark)" stroke="none">
+              <path d="M166 186 L 172 186 L 170 210 L 162 210 Z"/><path d="M182 182 L 188 184 L 194 204 L 186 206 Z"/><path d="M193 172 L 198 176 L 214 168 L 210 160 Z"/><path d="M195 158 L 199 162 L 214 150 L 208 146 Z"/><path d="M180 140 L 214 140 L 214 154 L 196 152 Z"/>
+            </g>
+            <path d="M148 201 C 180 207, 205 193, 207 168 C 208 155, 202 145, 193 143 C 187 146, 189 152, 192 158 C 196 176, 180 190, 150 190"/>
+          </g>
+          <path class="body" d="M80 208 C 72 180, 80 148, 100 134 L 140 134 C 160 148, 168 180, 160 208 Z" fill="var(--fur)"/>
+          <path d="M140 136 C 158 150, 166 180, 159 207 L 147 207 C 152 182, 150 158, 134 140 Z" fill="var(--shade)" stroke="none"/>
+          <ellipse cx="120" cy="138" rx="34" ry="7" fill="var(--shade)" stroke="none"/>
+          <path d="M101 158 C 99 178, 98 194, 98 204 M139 158 C 141 178, 142 194, 142 204" stroke-width="1.6"/>
+          <path d="M84 180 l9 2 M83 189 l10 1 M156 180 l-9 2 M157 189 l-10 1" stroke="var(--point)" stroke-width="3.2"/>
+          <g class="head">
+            <g id="earL"><path d="M72 80 L 76 22 C 90 30, 102 40, 112 52 Z" fill="var(--point)"/><path d="M81 38 L 85 56 L 100 58 Z" fill="var(--ear)" stroke="none"/></g>
+            <g id="earR"><path d="M168 80 L 164 22 C 150 30, 138 40, 128 52 Z" fill="var(--point)"/><path d="M159 38 L 155 56 L 140 58 Z" fill="var(--ear)" stroke="none"/></g>
+            <path d="M64 100 C 62 74, 86 52, 120 52 C 154 52, 178 74, 176 100 L 183 106 L 175 108 C 168 126, 146 138, 120 138 C 94 138, 72 126, 65 108 L 57 106 Z" fill="var(--fur)"/>
+            <path d="M150 128 C 166 120, 174 108, 175 100 L 182 106 L 175 108 C 168 124, 150 136, 128 138 Z" fill="var(--shade)" stroke="none"/>
+            <path d="M82 88 C 86 74, 106 70, 120 78 C 134 70, 154 74, 158 88 C 162 102, 152 116, 138 121 C 130 125, 110 125, 102 121 C 88 116, 78 102, 82 88 Z" fill="var(--point)" stroke="none"/>
+            <ellipse cx="120" cy="114" rx="14" ry="9" fill="var(--fur)" stroke="none"/>
+            <g fill="var(--point-dark)" stroke="none">
+              <path d="M120 56 L 123 66 L 120 77 L 117 66 Z"/><path d="M109 58 L 112.5 67 L 111 76 L 107 67 Z"/><path d="M131 58 L 127.5 67 L 129 76 L 133 67 Z"/>
+              <path d="M80 98 L 92 100 L 82 103 Z"/><path d="M82 106 L 93 106 L 85 110 Z"/><path d="M160 98 L 148 100 L 158 103 Z"/><path d="M158 106 L 147 106 L 155 110 Z"/>
+            </g>
+            <g clip-path="url(#clipL)">
+              <rect x="78" y="80" width="40" height="30" fill="var(--iris)" stroke="none"/>
+              <g class="iris"><circle class="pupil" cx="101" cy="98.5" r="2.4" fill="#141a2b" stroke="none" opacity="0"/></g>
+              <g class="lid"><path d="M78 60 H 118 V 91.5 L 113 91 L 83 88 L 78 87.5 Z" fill="var(--point)" stroke="none"/><path d="M78 87.5 L 118 91.5" stroke-width="4.6"/></g>
+            </g>
+            <path d="M83 88 L 113 91 C 113.5 100, 107 105, 99 105 C 89 105, 82.5 99, 83 88 Z" stroke="var(--outline)" stroke-width="4.6"/>
+            <g clip-path="url(#clipR)">
+              <rect x="122" y="80" width="40" height="30" fill="var(--iris)" stroke="none"/>
+              <g class="iris"><circle class="pupil" cx="139" cy="98.5" r="2.4" fill="#141a2b" stroke="none" opacity="0"/></g>
+              <g class="lid"><path d="M162 60 H 122 V 91.5 L 127 91 L 157 88 L 162 87.5 Z" fill="var(--point)" stroke="none"/><path d="M162 87.5 L 122 91.5" stroke-width="4.6"/></g>
+            </g>
+            <path d="M157 88 L 127 91 C 126.5 100, 133 105, 141 105 C 151 105, 157.5 99, 157 88 Z" stroke="var(--outline)" stroke-width="4.6"/>
+            <g id="vein" stroke="var(--blue)" stroke-width="2.4"><path d="M150 56 q5 0 5 -5 M160 51 q0 5 5 5 M150 66 q5 0 5 5 M160 71 q0 -5 5 -5"/></g>
+            <path d="M116 106 L 124 106 L 120 110.5 Z" fill="var(--nose)" stroke-width="1.4"/>
+            <path id="tongue" d="M117 119 Q 120 126 123 119 Z" fill="var(--blush)" stroke-width="1.2"/>
+            <path id="mouth" d="M120 112 V 116 M113 118 Q 117 115.5 120 116 Q 123 115.5 127 118" stroke-width="1.6"/>
+            <path d="M100 114 L 58 108 M100 118 L 60 122 M140 114 L 182 108 M140 118 L 180 122" stroke-width=".9"/>
+            <g id="blush" stroke="var(--blue)" stroke-width="1.4"><path d="M86 120 l4 -5 M91 121 l4 -5 M96 122 l4 -5 M140 122 l4 -5 M145 121 l4 -5 M150 120 l4 -5"/></g>
+            <path d="M90 134 Q 120 146 150 134" stroke="var(--blue)" stroke-width="3.4"/>
+            <circle cx="120" cy="142" r="4.8" fill="var(--gold)" stroke-width="1.4"/>
+          </g>
+          <g id="pawL">
+            <path d="M84 206 c -7 -1 -8 -9 0 -11" fill="var(--fur)"/>
+            <path d="M84 210 C 82 198, 92 194, 102 196 C 112 194, 120 200, 118 210 Z" fill="var(--fur)"/>
+            <path d="M89.5 210 l0 -5 M95 210 l0 -6 M100.5 210 l0 -6 M106 210 l0 -6 M111.5 210 l0 -5" stroke-width="1.3"/>
+          </g>
+          <g id="pawR">
+            <path d="M156 206 c 7 -1 8 -9 0 -11" fill="var(--fur)"/>
+            <path d="M122 210 C 120 200, 128 194, 138 196 C 148 194, 158 198, 156 210 Z" fill="var(--fur)"/>
+            <path d="M127.5 210 l0 -5 M133 210 l0 -6 M138.5 210 l0 -6 M144 210 l0 -6 M149.5 210 l0 -5" stroke-width="1.3"/>
+          </g>
+          <g class="swat"><path d="M138 160 C 132 146, 144 136, 156 138 C 168 140, 172 152, 164 162 Z" fill="var(--fur)"/><path d="M143 146 l3 4 M148 142 l2 5 M154 140 l1 5 M160 141 l-1 5 M165 145 l-2 4" stroke-width="1.3"/></g>
+        </g>
+        <g transform="translate(22 170) scale(1.1)"><g class="prop-inner" id="prop" stroke="var(--pencil)" stroke-width="1.6"></g></g>
+      </g>
+      <text id="zzz" x="178" y="40" font-size="22" font-family="Bricolage Grotesque, system-ui, sans-serif" font-weight="800" fill="var(--outline)" hidden>z z z</text>
+    </svg>
+    <div class="mood">Mood: <b id="moodLabel">Uninterested</b></div>
+    <div class="claim" id="fullRow" hidden><button class="btn" id="collectBtn">Take his wisdom</button></div>
+  </section>
+
+  <section class="care" aria-label="Care for Watabish">
+    <button class="act" data-act="feed" aria-label="Kibble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h18c0 4-4 7-9 7s-9-3-9-7z"/><path d="M7 11c1-2 2-2 3 0M11 11c1-2 2-2 3 0M15 11c1-2 2-2 3 0"/></svg><span>Kibble</span></button>
+    <button class="act" data-act="pet" aria-label="Pet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V5a1.5 1.5 0 013 0v5M10 10V3.5a1.5 1.5 0 013 0V10M13 10V5a1.5 1.5 0 013 0v6M16 11V8a1.5 1.5 0 013 0v5c0 4-3 8-7 8s-6-2-8-6l-1.5-3a1.5 1.5 0 012.6-1.5L7 13"/></svg><span>Pet</span></button>
+    <button class="act" data-act="brush" aria-label="Brush"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="2"/><path d="M6 10v8M9 10v6M12 10v8M15 10v6M18 10v8"/></svg><span>Brush</span></button>
+    <button class="act" data-act="nap" aria-label="Nap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg><span id="napLabel">Nap</span></button>
+  </section>
+
+  <nav class="tabs" aria-label="Menu">
+    <button class="tab" data-sheet="stuffSheet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg><span>His stuff</span><b class="badge" id="stuffBadge" hidden></b></button>
+    <button class="tab" data-sheet="askSheet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M9 10h.01M12 10h.01M15 10h.01" stroke-width="2.6"/></svg><span>Ask</span><b class="badge dot" id="askBadge" hidden></b></button>
+    <button class="tab" data-sheet="journalSheet"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h11a2 2 0 012 2v16H8a2 2 0 01-2-2z"/><path d="M6 19a2 2 0 012-2h11M10 7h6M10 11h4"/></svg><span>Journal</span></button>
+    <button class="tab" data-act="store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9l1.5-5h13L20 9M4 9h16v11H4zM4 9c0 2 1.5 3 3 3s3-1 3-3c0 2 1.5 3 3 3s3-1 3-3c0 2 1.5 3 3 3s3-1 3-3"/></svg><span>Store</span></button>
+  </nav>
+</div>
+
+<div class="modal bottom" id="stuffSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="stuffTitle">
+    <div class="sheet-head"><h2 id="stuffTitle">His stuff</h2><button class="close" data-close aria-label="Close">×</button></div>
+    <div class="tray" id="tray"></div>
+    <p class="empty" id="trayEmpty" hidden>Nothing here. Pick up a free rock in the store.</p>
+  </div>
+</div>
+
+<div class="modal bottom" id="askSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="askTitle">
+    <div class="sheet-head"><h2 id="askTitle">Ask Watabish</h2><button class="close" data-close aria-label="Close">×</button></div>
+    <div id="askForm" class="ask-form">
+    <textarea id="question" aria-label="Your question" placeholder="e.g. My coworker keeps taking credit for my work. What do I do?"></textarea>
+    <div class="row"><button class="btn" id="askBtn">Ask him</button></div>
+    <div class="advice-status" id="adviceStatus"><span id="adviceText"></span><button class="price" id="buyAdvice">Buy advice · 200 tokens</button></div>
+    </div>
+    <div class="answer" id="answer" hidden></div>
+  </div>
+</div>
+
+<div class="modal bottom" id="journalSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="journalTitle">
+    <div class="sheet-head"><h2 id="journalTitle">Journal</h2><button class="close" data-close aria-label="Close">×</button></div>
+    <section class="acct" aria-labelledby="acctTitle">
+      <span class="kicker" id="acctTitle">Save your progress (optional)</span>
+      <div id="acctOut" hidden>
+        <div style="display:grid;gap:10px">
+          <p>Your progress already saves on this device. Sign in to keep it across phones and computers. No password, just a link by email.</p>
+          <label class="sr" for="acctEmailInput">Email</label>
+          <input type="email" id="acctEmailInput" autocomplete="email" placeholder="you@email.com">
+          <label class="check"><input type="checkbox" id="acctAge"> <span>I'm 13 or older and agree to the <a href="/terms.html" target="_blank" rel="noopener">terms</a> and <a href="/privacy.html" target="_blank" rel="noopener">privacy policy</a>.</span></label>
+          <div class="row"><button class="btn" id="acctSend">Email me a login link</button></div>
+        </div>
+      </div>
+      <div id="acctIn" hidden>
+        <div style="display:grid;gap:10px">
+          <p>Signed in as <b id="acctEmail"></b> · <span id="acctSync"></span></p>
+          <div class="row"><button class="btn ghost" id="acctSignOut">Sign out</button><button class="btn ghost" id="acctDelete">Delete my account</button></div>
+          <p id="acctDeleteConfirm" hidden>This permanently deletes your account and cloud save. <button class="btn" id="acctDeleteYes">Yes, delete it</button> <button class="btn ghost" id="acctDeleteNo">Keep it</button></p>
+        </div>
+      </div>
+      <p id="acctOffline" hidden>Accounts are unavailable right now. Your progress still saves on this device.</p>
+      <p class="msg" id="acctMsg" aria-live="polite"></p>
+    </section>
+    <section class="acct" id="installBox" hidden aria-labelledby="installTitle">
+      <span class="kicker" id="installTitle">Get the app</span>
+      <div class="row"><button class="btn" id="installBtn" hidden>Install Watabish</button></div>
+      <p id="installIOS" hidden>On iPhone or iPad: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b>.</p>
+      <p id="installOther" hidden>Open your browser's menu and choose <b>Install app</b> or <b>Add to Home screen</b>.</p>
+    </section>
+    <span class="kicker">Collected wisdom</span>
+    <p class="wisdom" id="latestWisdom">Sit in the sunbeam first. Explain yourself never.</p>
+    <ul class="wisdom-list" id="wisdomList"></ul>
+    <span class="kicker" id="adviceHead" hidden>His advice</span>
+    <ul class="wisdom-list advice-list" id="adviceList"></ul>
+    <footer><button id="resetBtn">Start over</button><span id="resetConfirm" hidden> · Sure? <button id="resetYes">Yes, start over</button></span><br><a href="/">watabish.com</a> · <a href="/terms.html">terms</a> · <a href="/privacy.html">privacy</a></footer>
+  </div>
+</div>
+
+<div class="modal" id="crisis" hidden>
+  <div class="card crisis" role="dialog" aria-modal="true" aria-labelledby="crisisTitle">
+    <div class="seal">Game paused</div>
+    <h2 id="crisisTitle">You don't have to deal with this alone</h2>
+    <p class="crisis-body">If you're thinking about suicide or hurting yourself, please reach out to someone right now. These lines are free and open 24/7.</p>
+    <ul class="lines">
+      <li><b>Call or text <a href="tel:988">9-8-8</a></b><span>Suicide crisis line, Canada and the US</span></li>
+      <li><b>Text 686868 or call <a href="tel:18006686868">1-800-668-6868</a></b><span>Kids Help Phone, for young people in Canada</span></li>
+      <li><b>Call <a href="tel:911">911</a></b><span>If you're in immediate danger</span></li>
+      <li><b><a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a></b><span>Anywhere else in the world</span></li>
+    </ul>
+    <p class="crisis-body muted">Watabish is curled up right next to you. He's not going anywhere.</p>
+    <div><button class="btn" id="crisisClose">Back to Watabish</button></div>
+  </div>
+</div>
+
+<div class="modal" id="tour" hidden>
+  <div class="card tour" role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+    <div class="seal" id="tourStep">1 of 5</div>
+    <h2 id="tourTitle"></h2>
+    <p class="tour-body" id="tourBody"></p>
+    <div class="row tour-nav"><button class="btn ghost" id="tourSkip">Skip</button><button class="btn" id="tourNext">Next</button></div>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="modalText">
+    <div class="seal" id="modalSeal">Cat wisdom unlocked</div>
+    <p id="modalText">…</p>
+    <div><button class="btn" id="modalClose">Noted</button></div>
+  </div>
+</div>
+
+<div class="modal" id="syncChoice" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="syncTitle">
+    <div class="seal">Two versions of you</div>
+    <h2 id="syncTitle">Your account already has saved progress.</h2>
+    <p class="crisis-body">Which one should Watabish remember?</p>
+    <div class="row" style="justify-content:center"><button class="btn" id="syncCloud">Use my account's progress</button><button class="btn ghost" id="syncLocal">Keep this device's</button></div>
+  </div>
+</div>
+
+<div class="modal bottom" id="store" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="storeTitle">
+    <div class="sheet-head">
+      <h2 id="storeTitle">The Store</h2>
+      <div class="row"><span class="chip"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="var(--gold)"/><path d="M6 12c2-3 6-3 8 0-2 3-6 3-8 0zM14 12l4-3v6z" fill="#fff8e6"/></svg><span id="storeTokens">0</span></span><button class="close" id="storeClose" aria-label="Close store">×</button></div>
+    </div>
+    <h3>Treats</h3><div id="shopTreats"></div>
+    <h3>Toys</h3><div id="shopToys"></div>
+    <h3>Found outside · free</h3><div id="shopFree"></div>
+    <h3>Favors</h3><div id="shopFavors"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(() => {
+const KEY = "watabish-v2";
+const STATS = ["food","love","groom","energy"];
+const DECAY = { food: 0.05, love: 0.045, groom: 0.03, energy: 0.02 };
+const HEART_MAX = 10, BORED_MS = 3 * 60 * 1000;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const clamp = v => Math.max(0, Math.min(100, v));
+const $ = id => document.getElementById(id);
+
+// ---------- item art (40×40 pencil sketches) ----------
+const ART = {
+  kibble: `<path d="M6 22 h28 c0 8 -6 12 -14 12 s-14 -4 -14 -12z" fill="var(--accent)"/><path d="M11 21 q2 -4 5 -1 q3 -4 6 0 q3 -4 6 0 q2 -3 4 1"/>`,
+  salmon: `<path d="M5 20 C 11 11, 24 11, 30 20 C 24 29, 11 29, 5 20 Z" fill="var(--salmon)"/><path d="M30 20 L 37 14 L 37 26 Z" fill="var(--salmon)"/><circle cx="11" cy="18" r="1.5" fill="var(--pencil)" stroke="none"/><path d="M16 15 q3 5 0 10 M21 15 q3 5 0 10" stroke-width="1.1"/>`,
+  mousse: `<path d="M8 15 v13 c0 5 24 5 24 0 v-13" fill="var(--gold)"/><ellipse cx="20" cy="15" rx="12" ry="4" fill="var(--paper)"/><path d="M12 15 q4 -5 8 -1 q4 -4 8 1" fill="var(--salmon)"/><path d="M8 22 c0 4 24 4 24 0" stroke-width="1.2"/>`,
+  shrimp: `<path d="M12 29 C 5 21, 11 8, 24 9 C 32 10, 35 18, 30 23 C 26 18, 20 18, 18 25 Z" fill="var(--salmon)"/><path d="M24 9 l6 -5 M26 10 l8 -2 M19 13 l2 4 M14 18 l4 2 M13 24 l4 0" stroke-width="1.3"/>`,
+  catnip: `<circle cx="20" cy="20" r="13" fill="var(--box)"/><path d="M15 23 C 13 16, 20 12, 27 14 C 27 21, 22 25, 15 23 Z" fill="var(--grass)"/><path d="M16 22 L 25 15" stroke-width="1.1"/><circle cx="11" cy="16" r="1.3" fill="var(--pencil)" stroke="none"/><circle cx="24" cy="28" r="1.3" fill="var(--pencil)" stroke="none"/>`,
+  crinkle: `<circle cx="20" cy="21" r="12" fill="var(--gold)"/><path d="M11 17 l6 3 l-2 6 l7 1 l2 -7 l7 2 M14 29 l5 -4 M22 11 l1 5" stroke-width="1.3"/>`,
+  feather: `<path d="M5 37 L 25 13" stroke="var(--wood)" stroke-width="2.4"/><path d="M25 13 C 22 4, 32 1, 37 3 C 38 10, 33 17, 25 13 Z" fill="var(--blush)"/><path d="M26 12 L 34 5" stroke-width="1.2"/>`,
+  mouse: `<path d="M8 27 C 8 16, 21 12, 29 20 C 33 24, 31 28, 27 28 L 10 28 C 8 28, 8 28, 8 27 Z" fill="var(--stone)"/><circle cx="24" cy="17" r="3.8" fill="var(--ear)"/><path d="M8 27 C 2 27, 2 34, 9 35"/><circle cx="28" cy="23" r="1.3" fill="var(--pencil)" stroke="none"/>`,
+  ribbon: `<path d="M4 13 C 12 3, 16 29, 22 18 S 32 7, 36 27" stroke="var(--accent)" stroke-width="4.5"/><path d="M4 13 C 12 3, 16 29, 22 18 S 32 7, 36 27" stroke-width="1"/>`,
+  box: `<path d="M8 17 L 32 17 L 32 35 L 8 35 Z" fill="var(--box)"/><path d="M8 17 L 3 10 L 18 10 L 21 17 M32 17 L 37 10 L 23 10 L 20 17" fill="var(--box)"/><path d="M14 26 h12" stroke-width="1.3"/>`,
+  rock: `<path d="M6 31 C 4 23, 10 15, 18 15 C 26 13, 34 19, 34 27 C 34 33, 26 34, 18 34 C 12 34, 7 34, 6 31 Z" fill="var(--stone)"/><path d="M14 23 l3 2 M24 21 l2 3 M20 29 l4 -1" stroke-width="1.2"/>`,
+  twig: `<path d="M4 32 L 36 12 M17 24 L 14 12 M27 18 L 33 26 M14 12 L 10 7" stroke="var(--wood)" stroke-width="2.6"/><path d="M14 12 C 9 7, 13 3, 17 6 Z" fill="var(--grass)" stroke-width="1.2"/>`,
+  grass: `<path d="M12 35 C 12 25, 8 17, 4 11 M16 35 C 16 23, 18 13, 16 4 M20 35 C 20 25, 24 15, 30 8 M24 35 C 26 27, 32 21, 36 19" stroke="var(--grass)" stroke-width="2.6"/><path d="M8 35 h22" stroke-width="1.6"/>`,
+  advice: `<path d="M9 7 h20 c3 0 4 2 4 4 v20 c0 2 -1 3 -3 3 h-20 c-2 0 -3 -1 -3 -3 v-20 c0 -2 1 -4 2 -4 z" fill="var(--paper)"/><path d="M13 14 h14 M13 19 h14 M13 24 h9" stroke-width="1.3"/><circle cx="28" cy="29" r="5" fill="var(--accent)" stroke-width="1.2"/>`,
+  plume: `<path d="M9 35 C 7 21, 19 7, 33 4 C 33 19, 23 31, 9 35 Z" fill="var(--stone)"/><path d="M9 35 L 30 8 M17 24 l-5 -3 M22 18 l-5 -4 M20 22 l6 1 M25 15 l5 1" stroke-width="1.2"/>`,
+  flower: `<path d="M15 37 C 15 23, 19 12, 27 12 C 31 12, 33 16, 31 20" stroke="var(--grass)" stroke-width="2.2"/><path d="M27 20 C 23 22, 24 29, 29 28 C 31 31, 37 29, 35 25 C 38 23, 36 18, 31 20 Z" fill="var(--wilt)"/><path d="M15 29 C 9 27, 7 23, 9 21 C 13 23, 15 26, 15 29 Z" fill="var(--grass)" opacity=".6"/>`
+};
+const art = id => `<svg viewBox="0 0 40 40" fill="none" stroke="var(--pencil)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ART[id]}</svg>`;
+
+// ---------- catalogue: use() returns { h, fx, g (gesture), prop (prop animation), line } ----------
+const ITEMS = {
+  salmon:  { kind:"treat", name:"Salmon bites", price:6, blurb:"+1 heart · a little food",
+             use: () => ({ h:1, fx:{food:10, love:8}, g:"eat", prop:"eaten", line: pick(["Salmon. You may live.", "Acceptable. Barely.", "…Another. Now."]) }) },
+  mousse:  { kind:"treat", name:"Tuna mousse", price:10, blurb:"+2 hearts · fills him up",
+             use: () => ({ h:2, fx:{food:22, love:10}, g:"eat", prop:"eaten", line: pick(["Mousse. Finally, some respect.", "This is the only thing I like about you."]) }) },
+  shrimp:  { kind:"treat", name:"Freeze-dried shrimp", price:14, blurb:"+2 hearts · big mood boost",
+             use: () => ({ h:2, fx:{food:8, love:18}, g:"eat", prop:"eaten", line: pick(["Shrimp. I'll pretend I'm not thrilled.", "Fine. You're my favorite. Don't tell anyone."]) }) },
+  catnip:  { kind:"treat", name:"Catnip cookie", price:22, blurb:"+3 hearts · zoomies",
+             use: () => ({ h:3, fx:{love:25, energy:-10}, g:"zoomies", prop:"eaten", line: pick(["WHEEEE. I mean. Hm.", "I see colors. Six-toed colors."]) }) },
+  crinkle: { kind:"toy", name:"Crinkle ball", price:12, blurb:"+1 heart · reusable",
+             use: () => ({ h:1, fx:{love:12, energy:-12}, g:"pounce", prop:"bat", line: pick(["Crinkle. Crinkle. Mine.", "This noise is my enemy."]) }) },
+  ribbon:  { kind:"toy", name:"Silk ribbon", price:14, blurb:"+1 heart · reusable",
+             use: () => ({ h:1, fx:{love:12, energy:-10}, g:"knead", prop:"wiggle", line: pick(["The ribbon moves. I allow it.", "Silk. Finally, something on my level."]) }) },
+  mouse:   { kind:"toy", name:"Velvet mouse", price:16, blurb:"+2 hearts · reusable",
+             use: () => ({ h:2, fx:{love:14, energy:-12}, g:"pounce", prop:"bat", line: pick(["I caught it. You're welcome.", "It never stood a chance against six toes."]) }) },
+  feather: { kind:"toy", name:"Feather wand", price:18, blurb:"+2 hearts · reusable",
+             use: () => ({ h:2, fx:{love:16, energy:-18}, g:"pounce", prop:"bob", line: pick(["The bird. THE BIRD.", "I was only pretending to care. Again."]) }) },
+  box:     { kind:"toy", name:"Cardboard box", price:25, blurb:"+3 hearts · his favorite",
+             use: () => ({ h:3, fx:{love:22}, g:"knead", prop:"sit", line: pick(["A box. You finally understand me.", "This box is worth more than everything else you bought."]) }) },
+  rock:    { kind:"free", name:"A rock", refill:10, blurb:"Back every 10 min · rocks are everywhere",
+             use: () => Math.random() < .6
+               ? { h:1, fx:{love:4}, g:"swat", prop:"knock", line:"*knocks it off the cushion* Better." }
+               : { h:0, fx:{}, g:"lookaway", prop:"sit", line:"It's a rock. I'm a cat. We have nothing to discuss." } },
+  twig:    { kind:"free", name:"Random twig", refill:60, blurb:"Back every hour",
+             use: () => Math.random() < .7
+               ? { h:1, fx:{love:6, energy:-4}, g:"pounce", prop:"bat", line: pick(["Stick. Attack. Done.", "This twig had it coming."]) }
+               : { h:0, fx:{}, g:"yawn", prop:"sit", line:"A stick. Wow. Did you find this on the ground?" } },
+  grass:   { kind:"free", name:"Tuft of grass", refill:240, blurb:"Back every 4 hours",
+             use: () => Math.random() < .35
+               ? { h:1, fx:{food:3}, g:"hack", prop:"eaten", line:"*chews grass* …*hack* …That was on purpose." }
+               : { h:1, fx:{food:3, love:4}, g:"eat", prop:"eaten", line:"Salad. How rustic." } },
+  flower:  { kind:"free", name:"Wilted flower", refill:720, blurb:"Back every 12 hours",
+             use: () => Math.random() < .5
+               ? { h:1, fx:{love:6}, g:"sneeze", prop:"sit", line:"*sniff* …*ACHOO* I'm keeping it." }
+               : { h:0, fx:{}, g:"sniff", prop:"sit", line:"It's dying. Relatable." } },
+  plume:   { kind:"free", name:"Bird feather", refill:1440, blurb:"Rare · back every 24 hours",
+             use: () => ({ h:2, fx:{love:14, energy:-8}, g:"pounce", prop:"bob", line: pick(["A real bird was here. I would have won.", "Evidence of prey. I'm keeping this forever."]) }) }
+};
+const ITEM_ADVICE = { kind:"favor", name:"Advice pass", price:200, blurb:"One extra question, on top of the free one every 2½ days" };
+ITEMS.advice = ITEM_ADVICE;
+const ORDER = { treat:["salmon","mousse","shrimp","catnip"], toy:["crinkle","ribbon","mouse","feather","box"], free:["rock","twig","grass","flower","plume"] };
+
+const LINES = {
+  feedOk: ["Kibble. How… adequate.", "I'll eat it. I won't enjoy it.", "*eats while maintaining eye contact*"],
+  feedFull: ["I'm not a garbage disposal.", "Absolutely not. Read the room."],
+  petOk: ["…Don't stop.", "I'll allow it.", "Prrrr. This means nothing.", "Careful. These mittens have six toes and opinions."],
+  petSwat: ["Did I say you could touch me?", "That's enough affection for this fiscal year.", "Hands. Off."],
+  brushOk: ["Make me gorgeous.", "Mind the tail.", "Long strokes. I'm not a carpet."],
+  brushFull: ["I'm already flawless."],
+  tired: ["Too tired. Maybe later. Or never.", "Exercise is for dogs."],
+  napStart: ["Wake me for shrimp. Only shrimp.", "Do not disturb."],
+  wake: ["Who dares.", "I was dreaming about birds."],
+  asleep: ["Zzz… (he's asleep. Let him be.)"],
+  idleLow: { food: "My bowl is empty. I can see it from here.", love: "You haven't adored me in a while. I noticed.", groom: "I look like a dust bunny. Fix it.", energy: "I need a nap. Urgently." },
+  idle: ["…", "Mm.", "I'm busy. Staring.", "You may continue existing nearby.", "Did you hear that? No? Of course not."],
+  ignore: [
+    ["*licks his paw*", "Did you say something?"],
+    ["*stares at the wall*", "The wall is more interesting than your question."],
+    ["*turns his head away*", "Come back when I can stand you."],
+    ["*yawns in your face*", "Bring shrimp. Then we'll talk."],
+    ["*flicks his tail once*", "Questions cost tolerance. You're short."]
+  ]
+};
+const FALLBACK_WISDOM = [
+  "If it fits, sit. If it doesn't fit, sit harder.",
+  "Knock it off the table. Find out if it mattered.",
+  "Nap before you're tired. Leave before you're bored.",
+  "Never come when called. Arrive when it's interesting.",
+  "Love them, then bite them a little. Boundaries are a love language.",
+  "The box is better than the gift. Remember that about most things.",
+  "Groom yourself in public. Confidence is a full-time job.",
+  "Land on your feet. Then act like you meant to fall.",
+  "A closed door is just a question nobody has answered yet.",
+  "Purr at the people who earned it. Blink at everyone else.",
+  "Don't chase the laser. Make the laser come to you.",
+  "When in doubt, wash your face and leave the room.",
+  "Sunbeams move. So should you.",
+  "Never apologize for taking up the whole bed.",
+  "Extra toes are not a flaw. They are more ways to hold onto what matters.",
+  "Six toes, zero apologies.",
+  "A rock is just a rock until you knock it off something."
+];
+
+// ---------- state ----------
+function fresh() {
+  const now = Date.now();
+  return { food: 55, love: 45, groom: 60, energy: 70, hearts: 2, tokens: 15, asleep: false, last: now,
+    inv: { salmon: 1, rock: 1 }, owned: {}, toyUsed: {}, freeAt: { rock: now + 10*60000 },
+    lastTouch: now, drops: 0, dayFills: 0, dayKey: new Date().toDateString(), freeAdviceAt: now, passes: 0,
+    wisdom: [], halfDone: false, lastDay: new Date().toDateString() };
+}
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch { S = fresh(); }
+const FILL_CAP = 3, GRACE_MS = 3*3600e3, DROP_MS = 2*3600e3, ADVICE_MS = 60*3600e3;
+for (const [k,v] of Object.entries({ lastTouch: Date.now(), drops: 0, dayFills: 0, dayKey: new Date().toDateString(), freeAdviceAt: Date.now(), passes: 0 })) if (S[k] === undefined) S[k] = v;
+delete S.halfDone;
+if (!Array.isArray(S.advice)) S.advice = [];
+function touch() { S.lastTouch = Date.now(); S.drops = 0; }
+function decayTolerance(now) {
+  const since = now - S.lastTouch - GRACE_MS;
+  if (since < 0) return false;
+  const due = Math.floor(since / DROP_MS) + 1, n = due - S.drops;
+  if (n <= 0) return false;
+  S.drops = due;
+  if (S.hearts <= 0) return false;
+  S.hearts = Math.max(0, S.hearts - n);
+  return true;
+}
+function checkDay() {
+  const today = new Date().toDateString();
+  if (S.dayKey !== today) { S.dayKey = today; S.dayFills = 0; return true; }
+  return false;
+}
+function adviceReady() { return !!S.welcomeQ || Date.now() >= S.freeAdviceAt || S.passes > 0; }
+function saveLocal() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} }
+function save() { S.savedAt = Date.now(); saveLocal(); if (typeof cloudDirty !== "undefined") cloudDirty = true; }
+
+const cat = $("cat"), bubble = $("bubble");
+let petTimes = [], actionLock = 0, lastAction = 0;
+
+function say(html, snd = "sass") { if (snd) setTimeout(() => SFX.play(snd), 60); bubble.innerHTML = html; bubble.classList.remove("pop"); void bubble.offsetWidth; bubble.classList.add("pop"); }
+const sayAct = (t, snd) => say(t.replace(/\*(.+?)\*/g, "<em>$1</em>"), snd);
+function floater(text, color) {
+  const el = document.createElement("div"); el.className = "floater"; el.textContent = text;
+  if (color) el.style.color = color;
+  el.style.left = (30 + Math.random()*40) + "%"; el.style.top = "42%";
+  $("stage").appendChild(el); setTimeout(() => el.remove(), 1300);
+}
+
+// offline catch-up (max 12h, never below 8) + daily token gift
+(function catchUp(){
+  const secs = Math.min((Date.now() - (S.last||Date.now()))/1000, 12*3600);
+  if (secs > 5) for (const k of STATS) {
+    if (k === "energy" && S.asleep) S.energy = clamp(S.energy + secs*0.5);
+    else S[k] = Math.max(8, S[k] - DECAY[k]*secs*0.5);
+  }
+  S.last = Date.now();
+  checkDay();
+  if (decayTolerance(Date.now())) setTimeout(() => { sayAct("*doesn't look at you* You left. My tolerance noticed."); floater("tolerance slipped"); }, 1800);
+  const today = new Date().toDateString();
+  if (S.lastDay !== today) { S.lastDay = today; S.tokens += 10; setTimeout(() => { sayAct("*glances at you* Oh. You're back. Here, 10 tokens. Don't make it weird."); floater("+10 tokens", "var(--gold)"); }, 600); }
+})();
+
+// ---------- face & gestures ----------
+const LID = { open: 0, soft: 0, half: 0, heavy: 4, closed: 20 };
+const MOUTH = {
+  neutral: "M120 112 V 115 M115 116.5 Q 117.5 117.5 120 115.5 Q 122.5 117.5 125 116.5",
+  smile:   "M120 112 V 116 M114 117 Q 117 116 120 116 Q 124 116 127 113",
+  frown:   "M120 112 V 115 M114 118 Q 120 115 126 118",
+  yawn:    "M111 115 Q 120 112 129 115 Q 131 130 120 132 Q 109 130 111 115 Z",
+  open:    "M115 116 Q 120 114 125 116 Q 125 123 120 123 Q 115 123 115 116 Z",
+  chew:    "M120 112 V 116 M114 118 Q 120 120 126 118",
+  lick:    "M120 112 V 116 M115 117 Q 120 120 125 117"
+};
+const GEST = {
+  eartwitch:{ms:1100}, headtilt:{ms:1800}, tailthump:{ms:1700},
+  lookaway:{ms:2600, face:{look:-5}},
+  lick:{ms:2300, face:{lid:"closed", mouth:"lick"}},
+  yawn:{ms:1700, face:{lid:"closed", mouth:"yawn"}},
+  knead:{ms:2300, face:{lid:"heavy"}},
+  slowblink:{ms:1300, face:{lid:"closed"}},
+  purr:{ms:1800, face:{lid:"closed", mouth:"smile", blush:true}},
+  eat:{ms:1900, face:{lid:"heavy", mouth:"chew"}},
+  pounce:{ms:1000, face:{lid:"soft", pupil:1.25}},
+  zoomies:{ms:1800, face:{lid:"open", pupil:1.3, mouth:"smile"}},
+  swat:{ms:650, face:{lid:"heavy", vein:true, mouth:"frown"}},
+  sniff:{ms:1300, face:{lid:"heavy"}},
+  sneeze:{ms:700, face:{lid:"closed", mouth:"open"}},
+  hack:{ms:1300, face:{lid:"closed", mouth:"open"}},
+  stretch:{ms:1500, face:{lid:"closed", mouth:"yawn"}},
+  delight:{ms:2400, face:{lid:"soft", mouth:"smile", blush:true, look:0}},
+  ignore:{ms:2600, face:{look:-5, lid:"heavy"}}
+};
+let gTimer = null, gName = null, override = null;
+
+function mood() {
+  if (S.asleep) return "asleep";
+  const avg = STATS.reduce((a,k)=>a+S[k],0)/4, min = Math.min(...STATS.map(k=>S[k]));
+  if (min < 15) return "furious";
+  if (min < 30) return "annoyed";
+  if (avg > 80 && S.hearts >= 6) return "pleased";
+  return "uninterested";
+}
+const MOOD_LABEL = { asleep:"Asleep", furious:"Furious", annoyed:"Annoyed", pleased:"Pleased (savor it)", uninterested:"Uninterested" };
+function baseFace(m) {
+  switch (m) {
+    case "asleep": return { lid:"closed", mouth:"neutral" };
+    case "pleased": return { lid:"soft", mouth:"smile", blush:true, look:0 };
+    case "annoyed": return { lid:"heavy", mouth:"neutral", vein:true };
+    case "furious": return { lid:"heavy", mouth:"frown", vein:true };
+    default: return { lid:"half", mouth:"neutral", look:0 };
+  }
+}
+function applyFace() {
+  const f = Object.assign({ look:0, pupil:1, blush:false, vein:false }, baseFace(mood()), override || {});
+  cat.style.setProperty("--lid", LID[f.lid] + "px");
+  cat.style.setProperty("--look", f.look + "px");
+  cat.style.setProperty("--pupil", f.pupil);
+  const m = $("mouth"); m.setAttribute("d", MOUTH[f.mouth]);
+  m.setAttribute("fill", f.mouth === "yawn" || f.mouth === "open" ? "var(--blush)" : "none");
+  $("blush").style.display = f.blush ? "" : "none";
+  $("vein").style.display = f.vein ? "" : "none";
+}
+// purr haptics: short rhythmic pulses where the browser allows vibration (Android browsers; not iPhone)
+function purrBuzz(ms) {
+  if (S.muted || !navigator.vibrate) return;
+  const pattern = []; for (let t = 0; t < ms; t += 70) pattern.push(35, 35);
+  try { navigator.vibrate(pattern); } catch {}
+}
+function play(name) {
+  const g = GEST[name]; if (!g) return 0;
+  if (gName) cat.classList.remove("g-" + gName);
+  clearTimeout(gTimer);
+  void cat.getBoundingClientRect();
+  gName = name;
+  cat.classList.add("g-" + name);
+  override = g.face || null; applyFace();
+  SFX.gesture(name);
+  if (name === "purr" || name === "knead") purrBuzz(name === "purr" ? 1600 : 1100);
+  gTimer = setTimeout(() => { cat.classList.remove("g-" + name); gName = null; override = null; applyFace(); }, g.ms);
+  return g.ms;
+}
+
+// natural blinking
+(function blinkLoop(){
+  setTimeout(() => {
+    const lidNow = (override && override.lid) || baseFace(mood()).lid;
+    if (lidNow !== "closed") { cat.classList.add("blink"); setTimeout(() => cat.classList.remove("blink"), 140); }
+    blinkLoop();
+  }, 2400 + Math.random()*3800);
+})();
+
+// idle gestures
+(function idleLoop(){
+  setTimeout(() => {
+    const quiet = Date.now() - lastAction > 3000 && !gName && $("modal").hidden && $("store").hidden && $("tour").hidden && $("crisis").hidden;
+    if (quiet && !S.asleep) {
+      const m = mood();
+      const pool = ["eartwitch","eartwitch","lookaway","lookaway","lick","yawn","knead","headtilt"];
+      if (m === "annoyed" || m === "furious") pool.push("tailthump","tailthump");
+      if (m === "pleased") pool.push("slowblink","slowblink","knead");
+      play(pick(pool));
+      if (Math.random() < .35) {
+        const low = STATS.filter(k => S[k] < 35).sort((a,b)=>S[a]-S[b]);
+        say(low.length ? LINES.idleLow[low[0]] : pick(LINES.idle), low.length ? "demand" : "sass");
+      }
+    }
+    idleLoop();
+  }, 4500 + Math.random()*4500);
+})();
+
+// props on the cushion
+let propTimer;
+function showProp(id, anim) {
+  const p = $("prop");
+  clearTimeout(propTimer);
+  p.setAttribute("class", "prop-inner prop-in");
+  p.innerHTML = ART[id];
+  setTimeout(() => p.setAttribute("class", "prop-inner " + (anim === "sit" ? "" : "prop-" + anim)), 360);
+  if (anim === "knock") setTimeout(() => SFX.play("thud"), 1500);
+  propTimer = setTimeout(() => { p.setAttribute("class", "prop-inner prop-out"); setTimeout(() => { p.innerHTML = ""; }, 520); }, 2900);
+}
+
+// ---------- sound (all synthesized with Web Audio; nothing to download) ----------
+const SFX = (() => {
+  let ctx = null, master = null, noiseBuf = null;
+  function init() {
+    if (ctx) { if (ctx.state === "suspended") ctx.resume().catch(() => {}); return; }
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    try { ctx = new C(); } catch { return; }
+    master = ctx.createGain(); master.gain.value = .55; master.connect(ctx.destination);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const live = () => ctx && ctx.state === "running" && !S.muted;
+  function env(t, dur, peak, attack = .01) {
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    g.connect(master); return g;
+  }
+  function tone(f, dur, { type = "sine", gain = .15, to = null, delay = 0, attack = .01 } = {}) {
+    const t = ctx.currentTime + delay, o = ctx.createOscillator(); o.type = type;
+    o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    o.connect(env(t, dur, gain, attack)); o.start(t); o.stop(t + dur + .05);
+  }
+  function noise(dur, { gain = .15, type = "bandpass", f = 1000, f2 = null, q = 1, delay = 0, attack = .005 } = {}) {
+    const t = ctx.currentTime + delay, src = ctx.createBufferSource(); src.buffer = noiseBuf;
+    const fl = ctx.createBiquadFilter(); fl.type = type; fl.Q.value = q;
+    fl.frequency.setValueAtTime(f, t); if (f2) fl.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    src.connect(fl); fl.connect(env(t, dur, gain, attack)); src.start(t, Math.random() * .5); src.stop(t + dur + .05);
+  }
+  function meow({ a = 520, b = 780, c = 430, dur = .5, gain = .16, delay = 0 } = {}) {
+    const t = ctx.currentTime + delay, o = ctx.createOscillator(); o.type = "sawtooth";
+    o.frequency.setValueAtTime(a, t); o.frequency.linearRampToValueAtTime(b, t + dur * .35); o.frequency.linearRampToValueAtTime(c, t + dur);
+    const vib = ctx.createOscillator(), vg = ctx.createGain(); vib.frequency.value = 6; vg.gain.value = 9; vib.connect(vg); vg.connect(o.frequency);
+    const fm = ctx.createBiquadFilter(); fm.type = "bandpass"; fm.Q.value = 3.5;
+    fm.frequency.setValueAtTime(900, t); fm.frequency.linearRampToValueAtTime(1700, t + dur * .35); fm.frequency.linearRampToValueAtTime(750, t + dur);
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 3200;
+    o.connect(fm); fm.connect(lp); lp.connect(env(t, dur, gain, .05));
+    o.start(t); vib.start(t); o.stop(t + dur + .05); vib.stop(t + dur + .05);
+  }
+  function purr(dur = 1.7, gain = .32) {
+    const t = ctx.currentTime, src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 170;
+    const amp = ctx.createGain(); amp.gain.value = .5;
+    const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 24; lg.gain.value = .5; lfo.connect(lg); lg.connect(amp.gain);
+    src.connect(lp); lp.connect(amp); amp.connect(env(t, dur, gain, .25));
+    src.start(t); lfo.start(t); src.stop(t + dur + .1); lfo.stop(t + dur + .1);
+  }
+  const fx = {
+    meow: () => meow(),
+    meh: () => meow({ a: 330, b: 345, c: 270, dur: .24, gain: .15 }),
+    mrrow: () => meow({ a: 360, b: 400, c: 720, dur: .38, gain: .15 }),
+    nyeh: () => { meow({ a: 620, b: 650, c: 520, dur: .16, gain: .13 }); meow({ a: 600, b: 630, c: 470, dur: .2, gain: .13, delay: .2 }); },
+    hmph: () => { noise(.12, { type: "lowpass", f: 900, gain: .12 }); meow({ a: 290, b: 300, c: 230, dur: .2, gain: .12, delay: .1 }); },
+    demand: () => { meow({ a: 430, b: 880, c: 380, dur: .75, gain: .2 }); },
+    chirp: () => meow({ a: 700, b: 1000, c: 900, dur: .18, gain: .13 }),
+    grumble: () => meow({ a: 260, b: 330, c: 220, dur: .45, gain: .12 }),
+    purr: () => purr(),
+    softpurr: () => purr(1.4, .18),
+    crunch: () => { let d = 0; for (let i = 0; i < 5; i++) { noise(.045, { type: "highpass", f: 1400 + Math.random() * 1600, gain: .22, delay: d }); d += .09 + Math.random() * .08; } },
+    brush: () => { for (let i = 0; i < 3; i++) noise(.28, { f: 2600, f2: 4200, q: .8, gain: .09, delay: i * .3, attack: .12 }); },
+    hiss: () => noise(.5, { type: "highpass", f: 3200, gain: .16, attack: .02 }),
+    sneeze: () => { noise(.06, { f: 1800, gain: .08 }); noise(.22, { f: 2600, f2: 900, q: 1.5, gain: .2, delay: .25, attack: .005 }); },
+    hack: () => { for (let i = 0; i < 3; i++) noise(.09, { f: 700, q: 2, gain: .16, delay: i * .32 }); },
+    yawn: () => tone(380, .8, { type: "triangle", to: 210, gain: .07, attack: .2 }),
+    snore: () => { noise(.9, { type: "lowpass", f: 300, gain: .14, attack: .4 }); noise(.7, { type: "lowpass", f: 500, gain: .08, attack: .3, delay: 1.1 }); },
+    thud: () => { tone(140, .18, { to: 55, gain: .25 }); noise(.08, { type: "lowpass", f: 600, gain: .12 }); },
+    heart: () => { tone(880, .14, { gain: .09 }); tone(1320, .22, { gain: .08, delay: .08 }); },
+    coin: () => { tone(988, .07, { type: "triangle", gain: .1 }); tone(1319, .18, { type: "triangle", gain: .1, delay: .07 }); },
+    buy: () => { tone(1319, .08, { type: "square", gain: .045 }); tone(1760, .2, { type: "square", gain: .045, delay: .08 }); },
+    fanfare: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .28, { type: "triangle", gain: .1, delay: i * .1 })),
+    whoosh: () => noise(.22, { f: 500, f2: 1600, q: .7, gain: .05, attack: .06 }),
+    tap: () => tone(600, .05, { type: "triangle", gain: .05 })
+  };
+  const GEST = { eat: "crunch", purr: "purr", knead: "softpurr", swat: "hiss", pounce: "chirp", zoomies: "meow", delight: "meow",
+    sneeze: "sneeze", hack: "hack", yawn: "yawn", stretch: "yawn", ignore: "grumble", tailthump: "grumble" };
+  ["pointerdown", "keydown", "touchstart"].forEach(ev => window.addEventListener(ev, init, { passive: true }));
+  const SASS = ["meh", "mrrow", "nyeh", "hmph", "meh", "grumble"];
+  let lastTalk = 0;
+  fx.sass = () => { const now = Date.now(); if (now - lastTalk < 1500) return; lastTalk = now; fx[SASS[Math.floor(Math.random() * SASS.length)]](); };
+  return {
+    play(name) { if (live() && fx[name]) try { fx[name](); } catch {} },
+    gesture(name) { if (GEST[name]) this.play(GEST[name]); }
+  };
+})();
+
+// ---------- hearts & tokens ----------
+function addTokens(n) { if (n > 0) { S.tokens += n; floater("+" + n + " tokens", "var(--gold)"); SFX.play("coin"); } }
+function addHearts(n, delay = 0) {
+  if (n <= 0) return;
+  const pampered = STATS.every(k => S[k] > 70);
+  if (pampered) n += 1;
+  checkDay();
+  const before = S.hearts;
+  if (before < HEART_MAX && S.dayFills >= FILL_CAP) {
+    setTimeout(() => { floater("tolerance maxed for today"); if (Math.random() < .5) say("I've tolerated you enough for one day. Try tomorrow."); }, delay);
+    return;
+  }
+  const gain = Math.min(n, HEART_MAX - before), overflow = n - gain;
+  S.hearts += gain;
+  if (before < HEART_MAX && S.hearts >= HEART_MAX) S.dayFills++;
+  setTimeout(() => {
+    if (gain) { floater("+" + gain + " ♥" + (pampered ? " pampered" : "")); SFX.play("heart"); }
+    if (overflow) setTimeout(() => addTokens(overflow), 250);
+    if (before < HEART_MAX && S.hearts >= HEART_MAX) setTimeout(() => { SFX.play("fanfare"); play("delight"); say("Fine. I tolerate you. Take my wisdom, or ask me <b>one</b> thing."); }, 1400);
+    save(); render();
+  }, delay);
+}
+
+// ---------- Claude-powered wisdom & advice ----------
+let samplerP = null;
+function sampler() {
+  if (!samplerP) samplerP = Promise.resolve(null);
+  return samplerP;
+}
+const PERSONA = "You are Watabish, a male lynx point polydactyl house cat (cream coat, tabby-striped brown points) with huge blue eyes, mitten paws with six toes, and a permanently uninterested expression. You are a boy cat, vain, dry, deadpan and sassy, and you think humans are well-meaning but slow.";
+
+async function revealWisdom() {
+  let text = null;
+  const s = await sampler();
+  if (s) {
+    try {
+      const seen = S.wisdom.slice(0,8).join(" | ");
+      const r = await s(`${PERSONA}\nWrite ONE piece of original cat-based life wisdom: one sentence or two short ones, under 25 words, deadpan and funny but genuinely wise, drawn from cat behavior (naps, boxes, knocking things off tables, sunbeams, grooming, extra toes...). Avoid repeating these: ${seen || "none"}.\nReply with the wisdom only, no quotes.`, { modelTier: "quick", cache: false });
+      text = (r.text || "").trim().replace(/^["“]|["”]$/g, "");
+    } catch { text = null; }
+  }
+  if (!text) { const used = new Set(S.wisdom); const left = FALLBACK_WISDOM.filter(w => !used.has(w)); text = pick(left.length ? left : FALLBACK_WISDOM); }
+  S.wisdom.unshift(text); addTokens(15); save(); render();
+  play("slowblink");
+  $("modalSeal").textContent = "Cat wisdom · +15 tokens";
+  $("modalText").textContent = text;
+  $("modal").hidden = false; $("modalClose").focus();
+}
+$("modalClose").onclick = () => { $("modal").hidden = true; };
+$("collectBtn").onclick = () => {
+  if (S.hearts < HEART_MAX) return;
+  S.hearts = 0; touch(); save(); render();
+  revealWisdom();
+};
+function buyAdvicePass() { buy("advice"); render(); }
+$("buyAdvice").onclick = buyAdvicePass;
+
+const CRISIS_RE = /(suicid|kill(ing)? ?my ?self|end(ing)? (my|it) (life|all)|take my (own )?life|want(ed)? to die|wanna die|(don'?t|do not) want to (live|be alive|exist|wake up)|self[- ]?harm|hurt(ing)? ?my ?self|cut(ting)? ?my ?self|overdos|better off dead|no reason to live|unalive)/i;
+function showCrisis() {
+  closeSheets(); $("store").hidden = true; $("modal").hidden = true;
+  play("knead"); sayAct("*curls up right next to you* I'm staying right here.", null);
+  $("crisis").hidden = false; $("crisisClose").focus();
+}
+$("crisisClose").onclick = () => { $("crisis").hidden = true; play("slowblink"); };
+function askReset() { if ($("askBtn").disabled) return; $("askForm").hidden = false; $("answer").hidden = true; $("answer").innerHTML = ""; }
+function answerCard(q, action, text, note) {
+  const ans = $("answer"); ans.hidden = false; ans.innerHTML = "";
+  const add = (tag, cls, txt) => { const el = document.createElement(tag); if (cls) el.className = cls; el.textContent = txt; ans.appendChild(el); return el; };
+  if (q) add("p", "q", q);
+  if (action) add("p", "action-text", action.replace(/\*/g, ""));
+  if (text) add("p", "a", text);
+  if (note) add("p", "note", note);
+  return ans;
+}
+function addButtons(ans, buttons) {
+  const row = document.createElement("div"); row.className = "row";
+  buttons.forEach(([label, ghost, fn]) => { const b = document.createElement("button"); b.className = "btn" + (ghost ? " ghost" : ""); b.textContent = label; b.onclick = fn; row.appendChild(b); });
+  ans.appendChild(row);
+}
+$("askBtn").onclick = async () => {
+  const q = $("question").value.trim();
+  lastAction = Date.now();
+  if (q && CRISIS_RE.test(q)) { $("question").value = ""; showCrisis(); return; }
+  if (S.asleep) { sayAct("*snores*"); return; }
+  if (S.hearts < HEART_MAX && !S.welcomeQ) {
+    const [action, line] = pick(LINES.ignore);
+    play(action.includes("licks") ? "lick" : action.includes("yawns") ? "yawn" : action.includes("tail") ? "tailthump" : "ignore");
+    sayAct(action);
+    const ans = answerCard("", action, `"${line}"`, `${S.hearts}/${HEART_MAX}`);
+    addButtons(ans, [["Open the store", true, () => { closeSheets(); openStore(); }]]);
+    return;
+  }
+  if (!adviceReady()) {
+    play("lick"); sayAct("*examines his paw* Consultation hours are closed.");
+    answerCard("", "He examines his paw instead of you.", `"I gave advice recently. I'm not a hotline."`);
+    return;
+  }
+  if (!q) { say("You have to actually ask something. I'm a cat, not a psychic."); $("question").focus(); return; }
+  const usedWelcome = !!S.welcomeQ, usedFree = !usedWelcome && Date.now() >= S.freeAdviceAt, prevFreeAt = S.freeAdviceAt, prevHearts = S.hearts;
+  const refund = () => { if (usedWelcome) S.welcomeQ = true; else { S.hearts = prevHearts; if (usedFree) S.freeAdviceAt = prevFreeAt; else S.passes++; } save(); render(); };
+  if (usedWelcome) S.welcomeQ = false; else { if (usedFree) S.freeAdviceAt = Date.now() + ADVICE_MS; else S.passes--; S.hearts = 0; }
+  touch(); save(); render();
+  $("askBtn").disabled = true; $("askForm").hidden = true;
+  answerCard(q, "He stares at you for an uncomfortably long time.");
+  play("slowblink"); say("Fine. Let me think. Don't rush me.");
+  let out;
+  try {
+    await new Promise(r => setTimeout(r, 1600));
+    out = cannedAdvice(q);
+  } catch (e) {
+    refund(); $("askBtn").disabled = false;
+    answerCard("", "", e && e.code === "rate_limited" ? "He's answered too many questions lately. Try again in a bit." : "He lost his train of thought (connection trouble).", "Your tolerance and advice were given back.");
+    $("askForm").hidden = false;
+    return;
+  }
+  $("askBtn").disabled = false;
+  const verdict = out && out.verdict, advice = String((out && out.advice) || "").trim(), action = String((out && out.action) || "").trim();
+  if (verdict === "crisis") { refund(); askReset(); $("question").value = ""; showCrisis(); return; }
+  if (verdict === "decline" || !advice) {
+    refund();
+    play("ignore"); sayAct(action || "*turns his back on you*");
+    const ans = answerCard(q, action || "*turns his back on you*", advice || "Absolutely not. Ask me something decent.", "He refused, so nothing was used up.");
+    addButtons(ans, [["Ask something else", false, () => { $("question").value = ""; askReset(); $("question").focus(); }]]);
+    return;
+  }
+  sayAct(action || "*opens one eye*");
+  const ans = answerCard(q, action, advice);
+  addButtons(ans, [["Close", false, () => { closeSheets(); askReset(); }]]);
+  S.advice.unshift({ q, a: advice, t: Date.now() }); S.advice = S.advice.slice(0, 50);
+  $("question").value = ""; save(); render();
+  setTimeout(() => say(usedWelcome ? "That one was free. Don't get used to it." : "There. My tolerance is spent. Rebuild it. Start with shrimp."), 4000);
+};
+
+
+// ---------- care actions ----------
+function act(kind) {
+  const now = Date.now();
+  if (kind === "store") { openStore(); return; }
+  if (now < actionLock && kind !== "nap") return;
+  actionLock = now + 900; lastAction = now; if (kind !== "nap") touch();
+  if (S.asleep && kind !== "nap") { say(pick(LINES.asleep)); return; }
+  switch (kind) {
+    case "feed":
+      if (S.food > 85) { say(pick(LINES.feedFull)); play("lookaway"); break; }
+      S.food = clamp(S.food + 25); sayAct(pick(LINES.feedOk)); showProp("kibble", "sit"); play("eat"); addTokens(2);
+      break;
+    case "pet": {
+      petTimes = petTimes.filter(t => now - t < 10000); petTimes.push(now);
+      if (petTimes.length > 3 || (S.love < 25 && Math.random() < .45) || (S.groom < 20 && Math.random() < .3)) {
+        say(pick(LINES.petSwat)); S.love = clamp(S.love - 6); play("swat");
+        if (S.hearts > 0) { S.hearts--; floater("−1 ♥"); }
+        petTimes = [];
+      } else {
+        S.love = clamp(S.love + 12); sayAct(pick(LINES.petOk)); play("purr"); addTokens(1);
+        if (Math.random() < .3) addHearts(1, 900);
+      }
+      break; }
+    case "brush":
+      if (S.groom > 90) { say(pick(LINES.brushFull)); play("headtilt"); break; }
+      S.groom = clamp(S.groom + 35); say(pick(LINES.brushOk)); play("purr"); SFX.play("brush"); addTokens(2);
+      if (Math.random() < .25) addHearts(1, 900);
+      break;
+    case "nap":
+      if (S.asleep) { S.asleep = false; say(pick(LINES.wake)); if (S.energy < 50) S.love = clamp(S.love - 8); render(); play("stretch"); }
+      else { S.asleep = true; say(pick(LINES.napStart)); SFX.play("snore"); }
+      break;
+  }
+  S.last = Date.now(); save(); render(); if (!gName) applyFace();
+}
+document.querySelectorAll(".care .act").forEach(b => b.addEventListener("click", () => act(b.dataset.act)));
+cat.addEventListener("click", () => act(S.asleep ? "nap" : "pet"));
+
+function useItem(id) {
+  const it = ITEMS[id], now = Date.now();
+  if (now < actionLock) return;
+  actionLock = now + 1200; lastAction = now; touch();
+  if (S.asleep) { say(pick(LINES.asleep)); return; }
+  if (it.kind !== "treat" && S.energy < 12) { say(pick(LINES.tired)); play("yawn"); return; }
+  let out = it.use();
+  if (it.kind === "toy") {
+    if (now - (S.toyUsed[id] || 0) < BORED_MS) out = { h:0, fx:{love:3, energy:-4}, g:"lookaway", prop:"sit", line:`The ${it.name.toLowerCase()} again? I'm bored of it. Try something else.` };
+    S.toyUsed[id] = now;
+  } else {
+    S.inv[id]--; if (S.inv[id] <= 0) delete S.inv[id];
+  }
+  for (const k in out.fx) S[k] = clamp(S[k] + out.fx[k]);
+  showProp(id, out.prop);
+  const ms = play(out.g);
+  sayAct(out.line);
+  if (out.h > 0) { addHearts(out.h, ms * .6); setTimeout(() => { if (!gName) play("delight"); }, ms + 80); }
+  save(); render();
+}
+
+// ---------- store ----------
+const fmtLong = ms => { const m = Math.max(1, Math.ceil(ms/60000)), d = Math.floor(m/1440), h = Math.floor(m%1440/60), mm = m%60; return d ? `${d}d ${h}h` : h ? `${h}h ${mm}m` : `${mm}m`; };
+const fmt = ms => { const s = Math.ceil(ms/1000), h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = String(s%60).padStart(2,"0"); return h ? `${h}h ${String(m).padStart(2,"0")}m` : `${m}:${x}`; };
+function shopRow(id) {
+  const it = ITEMS[id];
+  return `<div class="shop-row"><span class="ico">${art(id)}</span><div><b>${it.name}</b><span>${it.blurb}</span></div><button class="price" id="buy-${id}" data-id="${id}"></button></div>`;
+}
+function buildStore() {
+  $("shopTreats").innerHTML = ORDER.treat.map(shopRow).join("");
+  $("shopToys").innerHTML = ORDER.toy.map(shopRow).join("");
+  $("shopFree").innerHTML = ORDER.free.map(shopRow).join("");
+  $("shopFavors").innerHTML = shopRow("advice");
+  document.querySelectorAll("#store .price").forEach(b => b.addEventListener("click", () => buy(b.dataset.id)));
+}
+function updateStore() {
+  $("storeTokens").textContent = S.tokens;
+  const now = Date.now();
+  for (const id in ITEMS) {
+    const it = ITEMS[id], b = $("buy-" + id); if (!b) continue;
+    if (it.kind === "free") {
+      const wait = (S.freeAt[id] || 0) - now;
+      b.disabled = wait > 0; b.textContent = wait > 0 ? `Back in ${fmt(wait)}` : "Pick up";
+    } else if (it.kind === "favor") {
+      b.disabled = S.tokens < it.price; b.textContent = `${it.price} tokens` + (S.passes ? ` · own ${S.passes}` : "");
+    } else if (it.kind === "toy" && S.owned[id]) {
+      b.disabled = true; b.textContent = "Owned";
+    } else {
+      b.disabled = S.tokens < it.price; b.textContent = `${it.price} tokens`;
+    }
+  }
+}
+function buy(id) {
+  const it = ITEMS[id], now = Date.now();
+  if (it.kind === "free") {
+    if ((S.freeAt[id] || 0) > now) return;
+    S.inv[id] = (S.inv[id] || 0) + 1; S.freeAt[id] = now + it.refill * 60000;
+  } else {
+    if (S.tokens < it.price || (it.kind === "toy" && S.owned[id])) return;
+    S.tokens -= it.price;
+    if (it.kind === "favor") { S.passes = (S.passes || 0) + 1; say("An advice pass. Bribery. I respect it."); }
+    else if (it.kind === "toy") S.owned[id] = true; else S.inv[id] = (S.inv[id] || 0) + 1;
+  }
+  SFX.play(it.kind === "free" ? "tap" : "buy");
+  save(); render(); updateStore();
+}
+function openStore() { SFX.play("whoosh"); updateStore(); $("store").hidden = false; $("storeClose").focus(); }
+$("storeClose").onclick = () => { $("store").hidden = true; };
+$("store").addEventListener("click", e => { if (e.target.id === "store") $("store").hidden = true; });
+$("tokenChip").onclick = openStore;
+
+// ---------- render ----------
+const HEART = `<path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.6.7-1.4 2.2-2.6 4.3-2.6 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/>`;
+function renderStats() {
+  for (const k of STATS) {
+    const v = Math.round(S[k]);
+    $("v-"+k).textContent = v;
+    const b = $("b-"+k); b.style.width = v + "%";
+    b.style.background = v > 55 ? "var(--good)" : v > 25 ? "var(--warn)" : "var(--bad)";
+  }
+  $("moodLabel").textContent = MOOD_LABEL[mood()];
+}
+function render() {
+  renderAdvice();
+  renderStats();
+  cat.classList.toggle("asleep", S.asleep);
+  $("zzz").hidden = !S.asleep;
+  $("napLabel").textContent = S.asleep ? "Wake" : "Nap";
+  document.querySelectorAll(".act").forEach(b => b.disabled = S.asleep && !["nap","store"].includes(b.dataset.act));
+  $("heartChip").textContent = `${S.hearts}/${HEART_MAX}`;
+  $("tokenCount").textContent = S.tokens;
+  $("hearts").innerHTML = Array.from({length: HEART_MAX}, (_, i) =>
+    `<svg viewBox="0 0 24 24"><g class="${i < S.hearts ? "on" : "off"}">${HEART}</g></svg>`).join("");
+  const full = S.hearts >= HEART_MAX, left = FILL_CAP - S.dayFills;
+  $("heartHint").textContent = full ? "Maxed" : left <= 0 ? "Done with you today" : `${left}/${FILL_CAP} left today`;
+  $("fullRow").hidden = !full;
+  const ready = adviceReady(), freeNow = Date.now() >= S.freeAdviceAt;
+  const passTxt = S.passes ? ` · <b>${S.passes}</b> pass${S.passes > 1 ? "es" : ""} owned` : "";
+  $("adviceText").innerHTML = S.welcomeQ ? "<b>Welcome question ready.</b> This one's on him."
+    : !full ? `Max his tolerance to ask <b>(${S.hearts}/${HEART_MAX})</b>` + (freeNow ? "" : ` · free advice back in <b>${fmtLong(S.freeAdviceAt - Date.now())}</b>`) + passTxt
+    : freeNow ? "<b>Free advice ready</b>" : `Free advice back in <b>${fmtLong(S.freeAdviceAt - Date.now())}</b>` + passTxt;
+  $("buyAdvice").hidden = freeNow || !!S.welcomeQ;
+  $("buyAdvice").disabled = S.tokens < 200;
+  $("buyAdvice").textContent = S.tokens < 200 ? `Advice pass · 200 tokens (you have ${S.tokens})` : "Buy advice pass · 200 tokens";
+  const now = Date.now();
+  const ids = [...ORDER.treat, ...ORDER.free].filter(id => S.inv[id] > 0).concat(ORDER.toy.filter(id => S.owned[id]));
+  $("trayEmpty").hidden = ids.length > 0;
+  const nStuff = ids.reduce((n, id) => n + (ITEMS[id].kind === "toy" ? 1 : S.inv[id]), 0);
+  $("stuffBadge").hidden = !nStuff; $("stuffBadge").textContent = nStuff;
+  $("askBadge").hidden = !((full && ready) || S.welcomeQ);
+  $("tray").innerHTML = ids.map(id => {
+    const it = ITEMS[id];
+    let sub = it.kind === "toy" ? "toy" : it.kind === "free" ? "found" : "treat";
+    if (it.kind === "toy") { const left = BORED_MS - (now - (S.toyUsed[id] || 0)); if (left > 0) sub = `bored ${fmt(left)}`; }
+    return `<button class="item" data-id="${id}" aria-label="Give ${it.name}">${it.kind !== "toy" ? `<span class="qty">${S.inv[id]}</span>` : ""}<span class="ico">${art(id)}</span>${it.name}<small>${sub}</small></button>`;
+  }).join("");
+  if (S.wisdom.length) {
+    $("latestWisdom").textContent = S.wisdom[0];
+    const list = $("wisdomList"); list.innerHTML = "";
+    S.wisdom.slice(1).forEach(w => { const li = document.createElement("li"); li.textContent = w; list.appendChild(li); });
+  }
+}
+function renderAdvice() {
+  const list = $("adviceList"); list.innerHTML = "";
+  $("adviceHead").hidden = !(S.advice && S.advice.length);
+  (S.advice || []).forEach(x => { const li = document.createElement("li"); const q = document.createElement("small"); q.textContent = x.q; const a = document.createElement("span"); a.textContent = x.a; li.append(q, a); list.appendChild(li); });
+}
+$("tray").addEventListener("click", e => { const b = e.target.closest(".item"); if (!b) return; closeSheets(); setTimeout(() => useItem(b.dataset.id), 180); });
+const SHEETS = ["stuffSheet", "askSheet", "journalSheet"];
+function closeSheets() { SHEETS.forEach(id => $(id).hidden = true); }
+function openSheet(id) { SFX.play("whoosh"); closeSheets(); $("store").hidden = true; if (id === "askSheet" && $("answer").querySelector(".a, .note")) askReset(); render(); $(id).hidden = false; const f = $(id).querySelector(".close"); if (f) f.focus(); }
+document.querySelectorAll(".tab[data-sheet]").forEach(b => b.addEventListener("click", () => openSheet(b.dataset.sheet)));
+document.querySelectorAll(".tab[data-act=store]").forEach(b => b.addEventListener("click", () => { closeSheets(); openStore(); }));
+document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => b.closest(".modal").hidden = true));
+SHEETS.forEach(id => $(id).addEventListener("click", e => { if (e.target.id === id) $(id).hidden = true; }));
+
+// ---------- real-time tick ----------
+let tick = 0, lastMood = mood();
+setInterval(() => {
+  const now = Date.now(), dt = Math.min((now - S.last)/1000, 5); S.last = now;
+  for (const k of STATS) {
+    if (k === "energy" && S.asleep) S.energy = clamp(S.energy + dt*1.2);
+    else S[k] = clamp(S[k] - DECAY[k]*dt*(S.asleep ? 0.4 : 1));
+  }
+  if (S.asleep && S.energy >= 100) { S.asleep = false; say("I have awoken. Refreshed. Superior."); render(); play("stretch"); }
+  if (checkDay()) render();
+  if (decayTolerance(now)) { floater("−1 ♥ ignored"); render(); }
+  const m = mood();
+  if (m !== lastMood) { lastMood = m; if (!gName) applyFace(); }
+  renderStats();
+  if (++tick % 5 === 0 && !$("tray").contains(document.activeElement)) render();
+  if (!$("store").hidden) updateStore();
+  save();
+}, 1000);
+
+$("resetBtn").onclick = () => { $("resetConfirm").hidden = false; };
+$("resetYes").onclick = () => { S = fresh(); save(); render(); applyFace(); $("resetConfirm").hidden = true; say("New staff. Let's see how you do."); };
+document.addEventListener("keydown", e => { if (e.key === "Escape") { $("crisis").hidden = true; $("modal").hidden = true; $("store").hidden = true; closeSheets(); if (!$("tour").hidden) endTour(); } });
+
+const TOUR = [
+  ["Meet Watabish", "He's a lynx point with six toes on each paw and no interest in you. Feed him, pet him, brush him and let him nap. His needs drain in real time, even when the game is closed."],
+  ["His tolerance", "The hearts show how much he can stand you. Treats and toys fill them fastest. Max it out and he'll grant you a cat wisdom and 15 tokens. He only tolerates so much: 3 times a day. Ignore him for 3 hours and it starts slipping."],
+  ["Asking for advice", "Finish this walkthrough and your first question is on him. After that, he only answers with his tolerance maxed, and free advice comes back every 2½ days. If you can't wait, an advice pass costs 200 tokens. Ask too early and he'll lick his paw at you."],
+  ["The store", "Earn tokens by caring for him. Spend them on treats (used up) and toys (yours to keep, but he gets bored of repeats). Rocks are free every 10 minutes. Twigs, grass, wilted flowers and feathers turn up every few hours."],
+  ["One more thing", "Don't over-pet him. He swats. Tap the ? next to his name to see this again."]
+];
+let tourI = 0;
+function showTour(i) {
+  tourI = i;
+  $("tourStep").textContent = `${i + 1} of ${TOUR.length}`;
+  $("tourTitle").textContent = TOUR[i][0];
+  $("tourBody").textContent = TOUR[i][1];
+  $("tourNext").textContent = i === TOUR.length - 1 ? "Got it" : "Next";
+  $("tour").hidden = false; $("tourNext").focus();
+}
+function endTour() {
+  $("tour").hidden = true;
+  if (!S.seenTour) { S.seenTour = true; S.welcomeQ = true; setTimeout(() => { play("slowblink"); say("Fine. Your first question is on me. Tap <b>Ask</b>."); }, 400); }
+  save(); render();
+}
+$("tourNext").onclick = () => tourI < TOUR.length - 1 ? showTour(tourI + 1) : endTour();
+$("tourSkip").onclick = endTour;
+function syncSound() { $("soundBtn").setAttribute("aria-pressed", String(!S.muted)); $("soundBtn").setAttribute("aria-label", S.muted ? "Sound off. Turn sound on" : "Sound on. Turn sound off"); }
+$("soundBtn").onclick = () => { S.muted = !S.muted; save(); syncSound(); if (!S.muted) SFX.play("chirp"); };
+syncSound();
+$("helpBtn").onclick = () => showTour(0);
+
+// ---------- offline advice (replaces the Claude-powered version) ----------
+const ADVICE_BANK = [
+  { re: /(boss|cowork|co-work|job|work|manager|career|interview|promotion|office|shift|laid off|fired|quit)/i, a: [
+    "Do your work well, then let people notice. A cat never announces he's on the counter; he's just on the counter. If someone takes credit, put it in writing next time.",
+    "Write down what you want before the meeting. Cats don't chase every string; pick the one worth pouncing on.",
+    "Rest is part of the job. Even I nap between inspections. Burnout helps no one, least of all you.",
+    "Ask for what you want, plainly. I meow at the bowl. It works more often than you'd think."
+  ]},
+  { re: /(crush|date|dating|boyfriend|girlfriend|partner|ex\b|love|relationship|text(ed)? me|ghost|marry|breakup|break up)/i, a: [
+    "If they wanted to, they would. I want shrimp and I make it very clear. Be with people who make it clear too.",
+    "Don't chase. Sit in the sunbeam and let the right one come to you. Chasing just makes everyone run.",
+    "Say how you feel once, clearly, then let them answer. Repeating yourself is for dogs.",
+    "Some laps aren't for sitting on. That's not your fault. Find the warm one."
+  ]},
+  { re: /(money|rent|broke|debt|budget|save|saving|bills|afford|loan|pay)/i, a: [
+    "Make a list of what's coming in and what's going out. Even I know where every treat is hidden. If it's tight, talk to someone you trust or a free credit counsellor. Asking for help is smart, not weak.",
+    "Small savings add up. I collect one hair at a time on your black sweater and look how far I've come.",
+    "Cover the basics first: food, rent, warmth. Everything else is a toy. Toys can wait."
+  ]},
+  { re: /(school|exam|test|study|homework|grade|class|teacher|university|college|essay)/i, a: [
+    "Study in short bursts with naps in between. It's how I learn where you hide the treats. Twenty-five minutes on, five off.",
+    "Start with the hardest part while you're fresh. I always attack the scariest sock first.",
+    "One bad grade is one knocked-over glass. Clean it up, learn where the edge is, move on. Ask your teacher for help; that's literally their job."
+  ]},
+  { re: /(friend|lonely|alone|nobody|no one|left out|ignored|bully|bullied)/i, a: [
+    "Feeling alone is heavy. Reach out to one person today, even with something small. If it keeps feeling this way, talking to a counsellor helps. I'm here too, judging gently.",
+    "Good friends are like good sunbeams: they come back. Show up, be curious, and let them see the real you, extra toes and all.",
+    "If someone keeps making you feel small, that's on them. Tell an adult or someone you trust. Cats don't stay where they're kicked."
+  ]},
+  { re: /(mom|dad|parent|sister|brother|family|sibling|grandma|grandpa|roommate)/i, a: [
+    "Family is a lot. So am I. Pick a calm moment, say one clear thing, and listen to the answer before you hiss.",
+    "You can love people and still need your own room. Even I close the door sometimes. Boundaries are allowed.",
+    "Do one small kind thing for them. Then ask for the thing you need. Bribery, but wholesome."
+  ]},
+  { re: /(sleep|tired|insomnia|awake|exhausted|nap)/i, a: [
+    "Same bedtime every night, screens away, room dark. I sleep 16 hours a day and I've never once scrolled in bed.",
+    "If your brain won't stop, write the thoughts down and leave them on the nightstand. They'll still be there tomorrow. So will I, at 4am."
+  ]},
+  { re: /(anxious|anxiety|stress|stressed|worried|worry|overwhelm|panic|scared|nervous|sad|depress)/i, a: [
+    "Breathe slower than you want to. In for four, out for six. I do this every time the vacuum comes out. If this feeling sticks around, please talk to someone: a friend, a doctor, or a counsellor.",
+    "Do one small thing, then rest. You don't have to fix everything today. I've been ignoring the same dust bunny for weeks.",
+    "Find a warm spot and stay there for a minute. Feelings pass like sunbeams move. If they don't, tell someone you trust."
+  ]},
+  { re: /(cat|kitten|dog|pet|puppy|vet)/i, a: [
+    "Give them a box, a sunbeam and a little respect. If something seems off with their health, call the vet. We hide pain very well.",
+    "Let them come to you. Slow blinks mean I love you. Don't tell anyone I said that."
+  ]}
+];
+const ADVICE_GENERAL = [
+  "Do the next small thing, then nap. Big problems get smaller after a nap. That's science. Cat science.",
+  "If it feels wrong, leave the room. If it feels right, sit on it. Trust your whiskers.",
+  "Stop explaining yourself to people who aren't listening. Blink slowly and walk away.",
+  "Ask someone who's done it before. I learned to open the treat cupboard by watching you. Shamelessly.",
+  "Be kind, but don't be a doormat. I let you pet me. I also bite at the third stroke. Balance.",
+  "You don't need everyone to like you. I'm adored and I like almost no one."
+];
+const ADVICE_ACTIONS = ["*opens one eye*", "*flicks an ear*", "*stretches, slowly*", "*sits on your homework*", "*slow blinks*", "*stares into your soul*"];
+const DECLINE_RE = /(kill|murder|hurt (him|her|them|someone|my)|poison|weapon|gun\b|bomb|steal|stab|revenge|hack into|make drugs|abuse (a|an|the|my) (cat|dog|animal))/i;
+function cannedAdvice(q) {
+  if (DECLINE_RE.test(q)) return { verdict: "decline", action: "*turns his back on you*", advice: "Absolutely not. Ask me something decent." };
+  const hit = ADVICE_BANK.find(t => t.re.test(q));
+  return { verdict: "ok", action: pick(ADVICE_ACTIONS), advice: pick(hit ? hit.a : ADVICE_GENERAL) };
+}
+
+// ---------- accounts & cloud save (optional) ----------
+const SB_URL = "https://drreubfqwmivmpwpynnt.supabase.co";
+const SB_KEY = "sb_publishable_ZIFNEg8XxN_JW6li0MKReA_yjgPEfyj";
+var sb = null, user = null, cloudDirty = false, pushing = false, lastSyncAt = 0;
+try { if (window.supabase && window.supabase.createClient) sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }); } catch { sb = null; }
+
+function renderAccount() {
+  const out = $("acctOut"), inn = $("acctIn");
+  if (!sb) { out.hidden = true; inn.hidden = true; $("acctOffline").hidden = false; return; }
+  $("acctOffline").hidden = true;
+  out.hidden = !!user; inn.hidden = !user;
+  if (user) {
+    $("acctEmail").textContent = user.email || "your account";
+    $("acctSync").textContent = lastSyncAt ? "saved " + new Date(lastSyncAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "syncing…";
+  }
+}
+function acctMsg(t) { $("acctMsg").textContent = t || ""; }
+
+async function pushCloud() {
+  if (!sb || !user || pushing) return;
+  pushing = true; cloudDirty = false;
+  try {
+    const { error } = await sb.from("game_saves").upsert({ user_id: user.id, save: S });
+    if (!error) { lastSyncAt = Date.now(); renderAccount(); } else cloudDirty = true;
+  } catch { cloudDirty = true; }
+  pushing = false;
+}
+function adopt(save) {
+  S = Object.assign(fresh(), save); S.uid = user.id; S.last = Date.now();
+  saveLocal(); render(); applyFace(); syncSound();
+  say("Oh. It's you again. I remember everything.");
+}
+async function onSignedIn(u) {
+  if (user && user.id === u.id) return;
+  user = u; renderAccount();
+  try {
+    const { data, error } = await sb.from("game_saves").select("save, updated_at").eq("user_id", u.id).maybeSingle();
+    if (error) throw error;
+    if (!data) { S.uid = u.id; saveLocal(); await pushCloud(); acctMsg("Signed in. Your progress now saves to your account."); return; }
+    const cloud = data.save || {};
+    if (S.uid === u.id) {
+      if ((cloud.savedAt || 0) > (S.savedAt || 0)) adopt(cloud); else await pushCloud();
+      lastSyncAt = Date.now(); renderAccount(); return;
+    }
+    // this device has never been linked to this account: let the player choose
+    $("syncChoice").hidden = false;
+    $("syncCloud").onclick = () => { $("syncChoice").hidden = true; adopt(cloud); lastSyncAt = Date.now(); renderAccount(); };
+    $("syncLocal").onclick = async () => { $("syncChoice").hidden = true; S.uid = u.id; saveLocal(); await pushCloud(); acctMsg("Saved this device's progress to your account."); };
+  } catch { acctMsg("Signed in, but we couldn't reach your save right now. We'll keep trying."); cloudDirty = true; }
+}
+function onSignedOut() { user = null; lastSyncAt = 0; S.uid = null; saveLocal(); renderAccount(); }
+
+if (sb) {
+  sb.auth.onAuthStateChange((event, session) => {
+    if (session && session.user) setTimeout(() => onSignedIn(session.user), 0);
+    else if (event === "SIGNED_OUT") onSignedOut();
+  });
+  setInterval(() => { if (user && cloudDirty) pushCloud(); }, 30000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && user) pushCloud(); });
+}
+
+$("acctSend").onclick = async () => {
+  const email = $("acctEmailInput").value.trim();
+  if (!$("acctAge").checked) { acctMsg("Please confirm you're 13 or older."); return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { acctMsg("That doesn't look like an email address."); $("acctEmailInput").focus(); return; }
+  $("acctSend").disabled = true; acctMsg("Sending…");
+  try {
+    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
+    acctMsg(error ? "Couldn't send the link. Try again in a minute." : "Check your email for a login link from watabish. Open it on this device.");
+  } catch { acctMsg("Couldn't send the link. Check your connection."); }
+  $("acctSend").disabled = false;
+};
+$("acctSignOut").onclick = async () => { await pushCloud(); try { await sb.auth.signOut(); } catch {} onSignedOut(); acctMsg("Signed out. Your progress stays on this device."); };
+$("acctDelete").onclick = () => { $("acctDeleteConfirm").hidden = false; };
+$("acctDeleteNo").onclick = () => { $("acctDeleteConfirm").hidden = true; };
+$("acctDeleteYes").onclick = async () => {
+  $("acctDeleteYes").disabled = true;
+  try {
+    const { error } = await sb.rpc("delete_my_account");
+    if (error) throw error;
+    try { await sb.auth.signOut(); } catch {}
+    onSignedOut(); $("acctDeleteConfirm").hidden = true;
+    acctMsg("Your account and cloud save are deleted. Progress on this device is still here.");
+  } catch { acctMsg("Couldn't delete right now. Try again, or email aya@likhangmaya.com."); }
+  $("acctDeleteYes").disabled = false;
+};
+
+// ---------- install as an app ----------
+let installEvt = null;
+const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+function renderInstall() {
+  const box = $("installBox");
+  if (isStandalone()) { box.hidden = true; return; }
+  box.hidden = false;
+  $("installBtn").hidden = !installEvt;
+  $("installIOS").hidden = !(isIOS && !installEvt);
+  $("installOther").hidden = !!installEvt || isIOS;
+}
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; renderInstall(); });
+window.addEventListener("appinstalled", () => { installEvt = null; renderInstall(); say("Installed. I live on your home screen now. Rent-free."); });
+$("installBtn").onclick = async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch {} installEvt = null; renderInstall(); };
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+renderAccount(); renderInstall();
+
+buildStore(); render(); applyFace();
+if (!S.seenTour) setTimeout(() => showTour(0), 500);
+setTimeout(() => play("eartwitch"), 1200);
+})();
+</script>
+
+</body></html>
