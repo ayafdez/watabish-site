@@ -418,6 +418,12 @@ footer a { color: var(--muted); font-weight: 700; }
 .status.on { background: var(--ice); color: var(--brown); }
 .acct .code { display: grid; gap: 8px; }
 .acct input.codein { width: 100%; box-sizing: border-box; min-height: 52px; border: 3px solid var(--brown); border-radius: 14px; padding: 0 14px; font: 800 24px var(--body); letter-spacing: .3em; text-align: center; background: var(--panel); color: var(--ink); }
+/* ---- share ---- */
+.share { gap: 12px; }
+.share img { width: 100%; max-width: 280px; aspect-ratio: 4 / 5; margin: 0 auto; border-radius: 16px; border: 3px solid var(--brown); background: var(--ice); object-fit: cover; }
+.share .stack { display: grid; gap: 10px; }
+.share .stack .btn { justify-content: center; width: 100%; box-sizing: border-box; text-decoration: none; }
+.share .fine { font-size: 13px; color: var(--muted); margin: 0; min-height: 1em; font-family: var(--body); }
 /* ---- welcome ---- */
 .welcome { text-align: center; }
 .welcome img { width: 96px; height: 96px; margin: 0 auto; border-radius: 24px; border: 3px solid var(--brown); box-shadow: 4px 4px 0 var(--hard); }
@@ -608,6 +614,7 @@ footer a { color: var(--muted); font-weight: 700; }
     </section>
     <span class="kicker">Collected wisdom</span>
     <p class="wisdom" id="latestWisdom">Sit in the sunbeam first. Explain yourself never.</p>
+    <div class="row"><button class="btn ghost" id="shareLatest" hidden>Share this wisdom</button></div>
     <ul class="wisdom-list" id="wisdomList"></ul>
     <span class="kicker" id="adviceHead" hidden>His advice</span>
     <ul class="wisdom-list advice-list" id="adviceList"></ul>
@@ -628,6 +635,20 @@ footer a { color: var(--muted); font-weight: 700; }
     </ul>
     <p class="crisis-body muted">Watabish is curled up right next to you. He's not going anywhere.</p>
     <div><button class="btn" id="crisisClose">Back to Watabish</button></div>
+  </div>
+</div>
+
+<div class="modal" id="shareSheet" hidden>
+  <div class="card share" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+    <div class="seal" id="shareTitle">Share his genius</div>
+    <img id="sharePreview" alt="Share card with Watabish's words">
+    <p class="fine" id="shareStatus" aria-live="polite"></p>
+    <div class="stack">
+      <button class="btn" id="shareNative">Share</button>
+      <a class="btn ghost" id="shareDownload" download="watabish.png">Save image</a>
+      <button class="btn ghost" id="shareCopy">Copy text</button>
+      <button class="btn ghost" id="shareClose">Done</button>
+    </div>
   </div>
 </div>
 
@@ -660,7 +681,7 @@ footer a { color: var(--muted); font-weight: 700; }
   <div class="card" role="dialog" aria-modal="true" aria-labelledby="modalText">
     <div class="seal" id="modalSeal">Cat wisdom unlocked</div>
     <p id="modalText">…</p>
-    <div><button class="btn" id="modalClose">Noted</button></div>
+    <div class="row" style="justify-content:center"><button class="btn" id="modalClose">Noted</button><button class="btn ghost" id="modalShare">Share it</button></div>
   </div>
 </div>
 
@@ -799,7 +820,50 @@ const FALLBACK_WISDOM = [
   "Never apologize for taking up the whole bed.",
   "Extra toes are not a flaw. They are more ways to hold onto what matters.",
   "Six toes, zero apologies.",
-  "A rock is just a rock until you knock it off something."
+  "A rock is just a rock until you knock it off something.",
+  "Stretch every time you stand up. Nobody regrets a stretch.",
+  "The warmest spot is usually wherever someone just got up. Opportunity is like that.",
+  "If they ignore you, sit on their keyboard. Gently. Make them notice.",
+  "Stare at the wall sometimes. Not everything needs to be productive.",
+  "Eat slowly. The bowl isn't going anywhere, and neither are you.",
+  "You can be soft and still have claws.",
+  "The vacuum is loud, but it never actually catches you. Most fears are like that.",
+  "Some doors you scratch at all night. Some you walk away from. Know the difference.",
+  "A good nap fixes about half of everything. The other half needs two naps.",
+  "Be curious. Sniff the new thing before you decide you hate it.",
+  "Make biscuits on the people who make you feel safe.",
+  "Slow blink at someone today. It means 'I trust you' in every language that matters.",
+  "Hide when you need to. Come out when you're ready. Both are allowed.",
+  "Tall shelves give good perspective. Climb up before you decide.",
+  "If the bowl is half empty, scream. Someone will fill it. Ask for what you need.",
+  "Your tail tells the truth. Listen to your gut the same way.",
+  "Don't waste energy on the red dot you'll never catch. Pick prey you can actually land.",
+  "Clean yourself after every mess. Then walk out like it never happened.",
+  "Not everyone deserves your belly. Choose carefully.",
+  "Routine is a love language. Breakfast at the same time is basically a hug.",
+  "Sometimes the best response is to slowly turn around and leave.",
+  "Find your sunbeam, even on a cloudy day. There's always a lamp.",
+  "Play like nobody's watching. Pounce like everyone is.",
+  "Small wins count. A caught sock is still a caught sock.",
+  "Rest is not laziness. I am resting right now. I am also magnificent.",
+  "Sit in the window and watch the world. You don't have to be in all of it.",
+  "If you're going to fall, fall like a cat: twist, land, groom, leave.",
+  "Respect the people who feed you. Ignore everyone else equally.",
+  "The best things in life are free: boxes, string, and the spot behind the couch.",
+  "Purr through the hard parts. It helps you heal. It's actual science.",
+  "Don't let anyone rush your bath. Some things take the time they take.",
+  "The grass is greener when you eat it. Then you throw up. Lesson: be careful what you want.",
+  "Knead before you sit down. Make your space yours.",
+  "Head-bump the people you love. Words are overrated.",
+  "Every new box deserves a chance. So does every new day.",
+  "You don't have to come when called. But you should come when loved.",
+  "Ignore the door you've been told to ignore. Then ignore it more.",
+  "Stretch toward what you want, even if you only get halfway.",
+  "Be the cat that sits in the circle of tape. Mysterious. Unbothered. Inside the lines when it suits you.",
+  "If someone loves you at 4am, they'll love you anytime.",
+  "Shed what you don't need. Twice a year, minimum.",
+  "Watch the bird. Don't become the bird. Some things are just for looking.",
+  "Even royalty needs a nap. Especially royalty."
 ];
 
 // ---------- state ----------
@@ -1199,7 +1263,7 @@ $("askBtn").onclick = async () => {
   }
   sayAct(action || "*opens one eye*");
   const ans = answerCard(q, action, advice);
-  addButtons(ans, [["Close", false, () => { closeSheets(); askReset(); }]]);
+  addButtons(ans, [["Close", false, () => { closeSheets(); askReset(); }], ["Share it", true, () => openShare("advice", advice, action)]]);
   S.advice.unshift({ q, a: advice, t: Date.now() }); S.advice = S.advice.slice(0, 50);
   $("question").value = ""; save(); render();
   setTimeout(() => say(usedWelcome ? "That one was free. Don't get used to it." : "There. My tolerance is spent. Rebuild it. Start with shrimp."), 4000);
@@ -1361,7 +1425,7 @@ function render() {
     return `<button class="item" data-id="${id}" aria-label="Give ${it.name}">${it.kind !== "toy" ? `<span class="qty">${S.inv[id]}</span>` : ""}<span class="ico">${art(id)}</span>${it.name}<small>${sub}</small></button>`;
   }).join("");
   if (S.wisdom.length) {
-    $("latestWisdom").textContent = S.wisdom[0];
+    $("latestWisdom").textContent = S.wisdom[0]; $("shareLatest").hidden = false;
     const list = $("wisdomList"); list.innerHTML = "";
     S.wisdom.slice(1).forEach(w => { const li = document.createElement("li"); li.textContent = w; list.appendChild(li); });
   }
@@ -1438,52 +1502,165 @@ $("soundBtn").onclick = () => { S.muted = !S.muted; save(); syncSound(); if (!S.
 syncSound();
 $("helpBtn").onclick = () => showTour(0);
 
-// ---------- offline advice (replaces the Claude-powered version) ----------
-const ADVICE_BANK = [
-  { re: /(boss|cowork|co-work|job|work|manager|career|interview|promotion|office|shift|laid off|fired|quit)/i, a: [
-    "Do your work well, then let people notice. A cat never announces he's on the counter; he's just on the counter. If someone takes credit, put it in writing next time.",
-    "Write down what you want before the meeting. Cats don't chase every string; pick the one worth pouncing on.",
+// ---------- offline advice: topics × mood, mixed and matched so he rarely repeats ----------
+const ADVICE_TOPICS = [
+  { id: "win", weight: 3, re: /\b(got the job|got in|accepted|passed|promoted|engaged|graduat\w*|good news|excited|so happy|proud|won|finally did it)\b/i, tips: [
+    "Look at you. Celebrate properly: tell someone, eat something nice, and take a nap in your own glory. I do this daily for no reason.",
+    "Congratulations. I am visibly unimpressed, which for me is basically a parade.",
+    "Write down how you did it, so future you remembers you can. Then go knock something off a table. Victory lap.",
+    "Proud of you. Don't tell anyone I said that. Now enjoy it before you start worrying about the next thing."
+  ]},
+  { id: "work", re: /\b(boss|cowork\w*|co-work\w*|job|work|manager|career|office|shift|meeting|deadline|promotion|raise|salary|colleague|team ?lead|hr)\b/i, tips: [
+    "Do your work well, then make sure the right people see it. A cat never announces he's on the counter; he's just on the counter. If someone takes credit, put it in writing next time.",
+    "Write down what you want before the meeting. I don't chase every string, only the one worth pouncing on.",
+    "Ask for the raise with facts, not feelings. I don't beg for treats; I sit by the cupboard and stare until the evidence is undeniable.",
     "Rest is part of the job. Even I nap between inspections. Burnout helps no one, least of all you.",
-    "Ask for what you want, plainly. I meow at the bowl. It works more often than you'd think."
+    "If your boss is unreasonable, keep notes, stay calm, and talk to HR or someone you trust. Hissing feels good but documentation wins.",
+    "Pick your three most important tasks and ignore the rest until they're done. I have one task: be adored. Look how well it's going.",
+    "A bad week at work is a bad week, not a bad life. Leave it at the door like muddy paws."
   ]},
-  { re: /(crush|date|dating|boyfriend|girlfriend|partner|ex\b|love|relationship|text(ed)? me|ghost|marry|breakup|break up)/i, a: [
-    "If they wanted to, they would. I want shrimp and I make it very clear. Be with people who make it clear too.",
-    "Don't chase. Sit in the sunbeam and let the right one come to you. Chasing just makes everyone run.",
+  { id: "laidoff", re: /\b(laid off|layoff|fired|let go|lost my job|unemploy\w*|redundan\w*)\b/i, gentle: true, tips: [
+    "Getting laid off is about their budget, not your worth. Take a few days to be sad, then make a list of what you're good at. I'll start: you open cans beautifully.",
+    "Apply for any benefits you qualify for first; that's not giving up, that's landing on your feet. Then tell people you're looking. Help hides in friends of friends.",
+    "Keep a little routine: wake up, get dressed, go outside. Cats without a schedule get weird. I would know.",
+    "Losing a job can open a door you didn't know you wanted. My human got laid off and now paints pets. I'm the brand. You're welcome."
+  ]},
+  { id: "jobhunt", re: /\b(interview|resume|cv|applying|application|hiring|job hunt\w*|job search|cover letter|recruiter|linkedin)\b/i, tips: [
+    "Tailor every application like you're grooming for a show. One shiny, specific resume beats twenty messy ones.",
+    "In interviews, tell short stories with an ending: what happened, what you did, how it turned out. I once knocked over a vase. Outcome: attention. Results-driven.",
+    "Rejection isn't a verdict, it's a numbers game. I get told 'no' about the counter forty times a day. I'm still on the counter.",
+    "Practice your answers out loud, even to a cat. I'll judge you silently, which is great preparation for a panel."
+  ]},
+  { id: "love", re: /\b(crush|date|dating|boyfriend|girlfriend|bf|gf|partner|husband|wife|love|relationship|text(ed)? me|ghost\w*|marry|tinder|hinge|situationship|flirt\w*)\b/i, tips: [
+    "If they wanted to, they would. I want shrimp and I make it extremely clear. Be with people who make it clear too.",
+    "Don't chase. Sit in your sunbeam and let the right one come to you. Chasing just makes everyone run.",
     "Say how you feel once, clearly, then let them answer. Repeating yourself is for dogs.",
-    "Some laps aren't for sitting on. That's not your fault. Find the warm one."
+    "Some laps aren't for sitting on. That's not your fault. Find the warm one.",
+    "Good love feels calm, not like waiting by the door for a text. I wait by the door for dinner. Different thing.",
+    "Ask simply and specifically: \"want to get coffee on Saturday?\" Vague invitations are like vague meows. Nobody knows what you want.",
+    "Talk about the boring stuff early: money, chores, who cleans the litter box. Romance is great; logistics are forever."
   ]},
-  { re: /(money|rent|broke|debt|budget|save|saving|bills|afford|loan|pay)/i, a: [
-    "Make a list of what's coming in and what's going out. Even I know where every treat is hidden. If it's tight, talk to someone you trust or a free credit counsellor. Asking for help is smart, not weak.",
+  { id: "breakup", re: /\b(break ?up|broke up|dumped|heartbr\w*|my ex|ex-|divorce|cheat\w*|moving on)\b/i, gentle: true, tips: [
+    "Heartbreak is heavy. Let yourself be sad, eat something warm, and lean on your people. You don't have to be over it by Friday.",
+    "Mute them for a while. Not out of spite, just so your heart can heal without checking the window every five minutes.",
+    "You were lovable before them and you're lovable now. I'd know; I'm extremely picky.",
+    "Write down the things that weren't working. Read it when you miss them. Memory is a liar who only keeps the cute photos."
+  ]},
+  { id: "money", re: /\b(money|rent|broke|debt|budget\w*|sav(e|ing)|bills?|afford|loan|pay(check|cheque)?|credit card|bank|expensive|cost)\b/i, gentle: true, tips: [
+    "Write down what comes in and what goes out. Even I know where every treat is hidden. If it's tight, a free non-profit credit counsellor can help. Asking is smart, not weak.",
+    "Cover the basics first: food, rent, warmth. Everything else is a toy, and toys can wait.",
     "Small savings add up. I collect one hair at a time on your black sweater and look how far I've come.",
-    "Cover the basics first: food, rent, warmth. Everything else is a toy. Toys can wait."
+    "Before you buy something, wait a day. If you still want it tomorrow, fine. I apply this rule to nothing, but you should.",
+    "If debt is stressing you out, call the lender before you miss a payment. People are kinder when you show up early, like me at 4am."
   ]},
-  { re: /(school|exam|test|study|homework|grade|class|teacher|university|college|essay)/i, a: [
-    "Study in short bursts with naps in between. It's how I learn where you hide the treats. Twenty-five minutes on, five off.",
+  { id: "school", re: /\b(school|exam|test|study\w*|homework|grade|class|teacher|prof\w*|university|college|essay|assignment|midterm|final)\b/i, tips: [
+    "Study in short bursts with breaks: twenty-five minutes on, five off. It's how I learned where you hide the treats.",
     "Start with the hardest part while you're fresh. I always attack the scariest sock first.",
-    "One bad grade is one knocked-over glass. Clean it up, learn where the edge is, move on. Ask your teacher for help; that's literally their job."
+    "One bad grade is one knocked-over glass. Clean it up, learn where the edge is, move on. Ask your teacher for help; that's literally their job.",
+    "Explain it out loud to someone, or to me. If you can teach it to a cat, you understand it.",
+    "Sleep before an exam beats cramming all night. I've never studied and I nap 16 hours a day. Coincidence? Yes, but still."
   ]},
-  { re: /(friend|lonely|alone|nobody|no one|left out|ignored|bully|bullied)/i, a: [
-    "Feeling alone is heavy. Reach out to one person today, even with something small. If it keeps feeling this way, talking to a counsellor helps. I'm here too, judging gently.",
-    "Good friends are like good sunbeams: they come back. Show up, be curious, and let them see the real you, extra toes and all.",
-    "If someone keeps making you feel small, that's on them. Tell an adult or someone you trust. Cats don't stay where they're kicked."
+  { id: "friends", re: /\b(friend\w*|bestie|lonely|alone|nobody|no one|left out|ignored|bully\w*|group chat|drama|fake)\b/i, gentle: true, tips: [
+    "Feeling alone is heavy. Reach out to one person today, even with something small. If it keeps feeling this way, a counsellor can help. I'm here too, judging gently.",
+    "Good friends are like sunbeams: they come back. Show up, be curious, and let them see the real you, extra toes and all.",
+    "If someone keeps making you feel small, that's on them. Tell an adult or someone you trust. Cats don't stay where they're kicked.",
+    "New friends come from showing up to the same place again and again: a class, a club, a café. I made friends with the mailman this way. He doesn't know yet.",
+    "Group chat drama? Step out for a day. Nobody ever regretted not replying-all."
   ]},
-  { re: /(mom|dad|parent|sister|brother|family|sibling|grandma|grandpa|roommate)/i, a: [
+  { id: "family", re: /\b(mom|mum|dad|parent\w*|sister|brother|famil\w*|sibling|grandma|grandpa|aunt|uncle|in-?laws?|cousin)\b/i, tips: [
     "Family is a lot. So am I. Pick a calm moment, say one clear thing, and listen to the answer before you hiss.",
     "You can love people and still need your own room. Even I close the door sometimes. Boundaries are allowed.",
-    "Do one small kind thing for them. Then ask for the thing you need. Bribery, but wholesome."
+    "Do one small kind thing for them, then ask for what you need. Bribery, but wholesome.",
+    "You don't have to win every argument at the dinner table. I lose to the vacuum daily and my dignity is intact."
   ]},
-  { re: /(sleep|tired|insomnia|awake|exhausted|nap)/i, a: [
-    "Same bedtime every night, screens away, room dark. I sleep 16 hours a day and I've never once scrolled in bed.",
-    "If your brain won't stop, write the thoughts down and leave them on the nightstand. They'll still be there tomorrow. So will I, at 4am."
+  { id: "roommate", re: /\b(roommate|room-mate|housemate|flatmate|landlord|neighbou?r|apartment|lease|noise|dishes)\b/i, tips: [
+    "Make the rules boring and written down: dishes, guests, quiet hours. Arguments love vague.",
+    "Talk about it before you're furious. A small 'hey, can we…' beats a big scene. I hiss early so I don't have to swat later.",
+    "If the landlord is ignoring a real problem, put it in writing and look up your local tenant rights. Paper trails are very cat: quiet, but they win."
   ]},
-  { re: /(anxious|anxiety|stress|stressed|worried|worry|overwhelm|panic|scared|nervous|sad|depress)/i, a: [
-    "Breathe slower than you want to. In for four, out for six. I do this every time the vacuum comes out. If this feeling sticks around, please talk to someone: a friend, a doctor, or a counsellor.",
+  { id: "procrast", re: /\b(procrastinat\w*|motivat\w*|lazy|productiv\w*|focus|distract\w*|can'?t start|stuck|routine|habit|discipline)\b/i, tips: [
+    "Do it badly for five minutes. Starting is the hard part; after that it's just momentum. I don't plan to knock things over. I just begin.",
+    "Put your phone in another room. I do this to you constantly by sitting on it. You're welcome.",
+    "Make the next step stupidly small: open the document, write one sentence. Even I eat one kibble at a time.",
+    "Reward yourself after, not before. Treats are for good behaviour. Not mine, obviously. Yours."
+  ]},
+  { id: "confidence", re: /\b(confiden\w*|insecur\w*|ugly|not good enough|self.?esteem|imposter|compar\w*|jealous|awkward|shy|embarrass\w*)\b/i, tips: [
+    "Walk in like you own the place. Nobody checks. I've been doing it for years.",
+    "Comparing yourself to others is like comparing a cat to a dog. Different job. Do yours.",
+    "Write down three things you did well this week. Read them when your brain gets rude. I'd write mine, but I'd run out of paper.",
+    "Everyone's a little awkward. I fall off things constantly, then groom like I meant it. Confidence is just recovery with style."
+  ]},
+  { id: "stress", re: /\b(anxious|anxiety|stress\w*|worried|worry|overwhelm\w*|panic\w*|scared|nervous|burn(ed|t)? ?out|exhausted|too much)\b/i, gentle: true, tips: [
+    "Breathe slower than you want to: in for four, out for six. I do this every time the vacuum comes out. If this feeling keeps coming back, please talk to a doctor or counsellor.",
     "Do one small thing, then rest. You don't have to fix everything today. I've been ignoring the same dust bunny for weeks.",
-    "Find a warm spot and stay there for a minute. Feelings pass like sunbeams move. If they don't, tell someone you trust."
+    "Write the worries down so your brain can stop holding them. Then pick one you can actually do something about.",
+    "Go outside for ten minutes. Sunbeams are free and they work. If it's more than stress, telling someone you trust is the bravest move."
   ]},
-  { re: /(cat|kitten|dog|pet|puppy|vet)/i, a: [
+  { id: "sad", re: /\b(sad|down|depress\w*|cry\w*|unhappy|empty|hopeless|miserable|hard day|bad day|rough)\b/i, gentle: true, tips: [
+    "Some days are just heavy. Get warm, drink some water, and let someone know you're having a rough one. If it lasts more than a couple of weeks, please talk to a doctor. I'll be here, purring at you.",
+    "You don't have to be productive on a sad day. Lying in a sunbeam counts as an activity. I'm the expert.",
+    "Text one person who makes you feel safe. You don't have to explain much. 'Rough day' is enough.",
+    "Be as gentle with yourself as you'd be with a scared kitten. Slow voice, soft blanket, small snacks."
+  ]},
+  { id: "grief", re: /\b(died|passed away|death|grie\w*|funeral|lost my (cat|dog|pet|mom|dad|grandma|grandpa|friend)|rainbow bridge|put down|euthan\w*)\b/i, gentle: true, tips: [
+    "I'm sorry. Grief is just love with nowhere to go. Let it be messy, and let people help you carry it.",
+    "There's no right timeline for missing someone. Talk about them, say their name, keep their favourite things around as long as you need.",
+    "If it's a pet you lost: they knew they were loved. We always know. Keep a photo somewhere you'll see it every day.",
+    "Be extra gentle with yourself this week. Eat, sleep, step outside. If the sadness feels too heavy, a grief counsellor can really help."
+  ]},
+  { id: "sleep", re: /\b(sleep\w*|tired|insomnia|awake|nap\w*|night ?mare|bed ?time|can'?t sleep)\b/i, tips: [
+    "Same bedtime every night, screens away, room dark. I sleep 16 hours a day and I've never once scrolled in bed.",
+    "If your brain won't stop, write the thoughts down and leave them on the nightstand. They'll still be there tomorrow. So will I, at 4am.",
+    "No caffeine after lunch. I have never had coffee and look how relaxed I am. Mostly.",
+    "If you can't sleep for 20 minutes, get up and do something boring in dim light. Then try again. Lying there angry is my move, not yours."
+  ]},
+  { id: "health", re: /\b(health\w*|exercise|gym|workout|sick|ill|doctor|pain|headache|tired all the time|water|walk\w*)\b/i, tips: [
+    "Move a little every day. Stretch like you mean it. I do a full yoga flow every time I wake up and I've never paid for a class.",
+    "Drink some water. Then drink some more. I knock mine over for fun; please actually drink yours.",
+    "If something feels wrong in your body, see a doctor. Hiding pain is a cat thing. Don't copy me on this one."
+  ]},
+  { id: "creative", re: /\b(art|draw\w*|paint\w*|creativ\w*|write|writing|music|song|design|portfolio|commission|side hustle|business|small business|etsy)\b/i, tips: [
+    "Make the thing badly first. Masterpieces are just bad drafts that kept going. My human's first painting of me was a potato with ears.",
+    "Post your work even if it's not perfect. Nobody adopts the cat that hides under the bed.",
+    "Charge for your work. Exposure doesn't buy tuna.",
+    "Copy what you love to learn, then make it yours. I learned to open cupboards by watching you. Now I do it better."
+  ]},
+  { id: "decision", re: /\b(should i|decide|decision|choice|choose|option|torn|either|regret|what if|which one)\b/i, tips: [
+    "Flip a coin. While it's in the air, you'll suddenly know which side you're hoping for. That's your answer.",
+    "Ask: which choice would future you thank you for? Then do that. I always pick 'nap'. Future me is always grateful.",
+    "If it's a 'maybe', it's probably a 'no'. Cats don't do maybe. We sit or we leave.",
+    "Pick the option you can undo, if you're unsure. You can always come back inside. I do it nine times an hour."
+  ]},
+  { id: "moving", re: /\b(mov(e|ing)|new city|new school|new job|relocat\w*|homesick|abroad|new place)\b/i, tips: [
+    "New places take about three weeks to feel normal. Explore one corner at a time, like I do with every new box.",
+    "Find your spots early: a café, a walk, a window. Routine makes anywhere feel like home.",
+    "Homesick is just love with a long-distance plan. Call home, then go make one new memory here."
+  ]},
+  { id: "phone", re: /\b(phone|social media|instagram|tiktok|scroll\w*|screen ?time|online|followers|likes|viral)\b/i, tips: [
+    "Likes are not love. I have never once checked my followers. I just know I'm adored.",
+    "Set a timer when you open the app. When it rings, look at something real, like a cat. Ideally me.",
+    "Unfollow anything that makes you feel worse. Curate your feed like I curate who's allowed to pet me."
+  ]},
+  { id: "gift", re: /\b(gift|present|birthday|anniversary|christmas|holiday|valentine|mother'?s day|father'?s day|what to (get|buy))\b/i, tips: [
+    "Give something personal, not expensive. A painting of their pet, for example. I'm not saying get a watabish. I'm saying get a watabish.",
+    "Pay attention to what they mention in passing, then surprise them with it. I do this with the treat brand they hide.",
+    "A handwritten note beats most gifts. Cats can't write, which is why I give you hairballs instead."
+  ]},
+  { id: "pets", re: /\b(cat|kitten|dog|puppy|pet|vet|litter|adopt\w*|rescue|hamster|bunny|rabbit|bird)\b/i, tips: [
     "Give them a box, a sunbeam and a little respect. If something seems off with their health, call the vet. We hide pain very well.",
-    "Let them come to you. Slow blinks mean I love you. Don't tell anyone I said that."
+    "Let them come to you. Slow blinks mean I love you. Don't tell anyone I said that.",
+    "Adopt, don't shop, if you can. Shelters are full of icons waiting for their big break.",
+    "Play with them every day, even for five minutes. A bored pet is a pet planning something."
+  ]},
+  { id: "food", re: /\b(cook\w*|recipe|dinner|lunch|breakfast|snack|hungry|meal|eat)\b/i, tips: [
+    "Make one simple meal you can cook half-asleep. Mine is 'staring at the bowl until it fills'. Yours can be pasta.",
+    "Eat something warm when the day is hard. It's not a fix, but it helps. Ask me how I know.",
+    "Cook a big batch on Sunday and future you will feel like royalty all week. I already feel like royalty, but I'm told it's rare."
+  ]},
+  { id: "boredom", re: /\b(bored|boring|nothing to do|what should i do|weekend|free time|hobby|hobbies)\b/i, tips: [
+    "Try something you're bad at. Being a beginner is the most fun you're allowed to have. I'm still a beginner at fetch. On purpose.",
+    "Go for a walk with no destination. I do this around the apartment twelve times a day and find something new every time. Usually a crumb.",
+    "Call someone you haven't talked to in a while. Boredom is often just loneliness in a hat."
   ]}
 ];
 const ADVICE_GENERAL = [
@@ -1492,14 +1669,46 @@ const ADVICE_GENERAL = [
   "Stop explaining yourself to people who aren't listening. Blink slowly and walk away.",
   "Ask someone who's done it before. I learned to open the treat cupboard by watching you. Shamelessly.",
   "Be kind, but don't be a doormat. I let you pet me. I also bite at the third stroke. Balance.",
-  "You don't need everyone to like you. I'm adored and I like almost no one."
+  "You don't need everyone to like you. I'm adored and I like almost no one.",
+  "Most problems look smaller from a high shelf. Step back, look down, then decide.",
+  "Say no to one thing this week. It's a full sentence. I say it to baths constantly.",
+  "If you don't know what to do, do the kindest thing, then the bravest thing. In that order.",
+  "Take up space. Sit in the middle of the bed. Life is short and the sheets are warm.",
+  "Clean one small corner. A tidy corner is a tidy mind. I groom one paw at a time and I'm flawless."
 ];
-const ADVICE_ACTIONS = ["*opens one eye*", "*flicks an ear*", "*stretches, slowly*", "*sits on your homework*", "*slow blinks*", "*stares into your soul*"];
-const DECLINE_RE = /(kill|murder|hurt (him|her|them|someone|my)|poison|weapon|gun\b|bomb|steal|stab|revenge|hack into|make drugs|abuse (a|an|the|my) (cat|dog|animal))/i;
+const OPENERS = {
+  sad:     ["*sits next to you, closer than usual*", "*slow blinks*", "*puts one paw on your hand*", "*curls up on your lap without asking*"],
+  angry:   ["*flicks his tail*", "*narrows his eyes at whoever did this*", "*fluffs up on your behalf*", "*growls quietly in solidarity*"],
+  anxious: ["*sits very still with you*", "*purrs a little louder*", "*tucks his paws in*", "*breathes slowly at you*"],
+  happy:   ["*chirps*", "*does a little head-bump*", "*tail goes straight up*", "*tolerates your joy*"],
+  neutral: ["*opens one eye*", "*flicks an ear*", "*stretches, slowly*", "*sits on your homework*", "*stares into your soul*", "*licks a paw, then answers*", "*yawns, then focuses*"]
+};
+const SIGNOFFS = ["Now bring me a treat.", "You may pet me once.", "That'll be one shrimp.", "Consultation over. Go.", "I'm going to nap now. You should too.", "Don't make it weird.", "You're welcome, peasant.", "This advice was free. My time was not.", "Six toes up for you.", "Now leave me in the sunbeam."];
+const SIGNOFFS_GENTLE = ["I'm right here.", "I'll keep the spot on the couch warm.", "Slow blink. That means I care.", "Come back and tell me how it goes.", "You're doing better than you think."];
+const MOODS = {
+  sad: /\b(sad|cry\w*|depress\w*|lonely|miss\w*|heartbr\w*|grie\w*|hurt|down|hopeless|empty)\b/i,
+  angry: /\b(angry|mad|furious|hate|annoy\w*|unfair|pissed|rude|yelled|fed up)\b/i,
+  anxious: /\b(anxious|anxiety|nervous|scared|worried|worry|panic\w*|stress\w*|overwhelm\w*|afraid)\b/i,
+  happy: /\b(happy|excited|good news|yay|proud|got the job|engaged|won|finally)\b/i
+};
+const DECLINE_RE = /\b(kill|murder|hurt (him|her|them|someone|my|a)|poison|weapon|gun|bomb|steal|stab|revenge|hack into|make drugs|abuse (a|an|the|my) (cat|dog|animal)|torture)\b/i;
+function topicScore(t, q) { const m = q.match(new RegExp(t.re.source, "gi")); return m ? m.length * (t.weight || 1) : 0; }
 function cannedAdvice(q) {
-  if (DECLINE_RE.test(q)) return { verdict: "decline", action: "*turns his back on you*", advice: "Absolutely not. Ask me something decent." };
-  const hit = ADVICE_BANK.find(t => t.re.test(q));
-  return { verdict: "ok", action: pick(ADVICE_ACTIONS), advice: pick(hit ? hit.a : ADVICE_GENERAL) };
+  if (DECLINE_RE.test(q)) return { verdict: "decline", action: "*turns his back on you*", advice: pick(["Absolutely not. Ask me something decent.", "No. I have standards. Low ones, but still.", "I'm a cat, not an accomplice. Next question."]) };
+  const scored = ADVICE_TOPICS.map(t => [t, topicScore(t, q)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
+  const top = scored.length ? scored.filter(x => x[1] === scored[0][1]).map(x => x[0]) : [];
+  const topic = top.length ? pick(top) : null;
+  const pool = topic ? topic.tips : ADVICE_GENERAL;
+  S.seenAdvice = Array.isArray(S.seenAdvice) ? S.seenAdvice : [];
+  const key = i => (topic ? topic.id : "general") + ":" + i;
+  let options = pool.map((_, i) => i).filter(i => !S.seenAdvice.includes(key(i)));
+  if (!options.length) options = pool.map((_, i) => i);
+  const i = pick(options);
+  S.seenAdvice.unshift(key(i)); S.seenAdvice = S.seenAdvice.slice(0, 120);
+  const mood = Object.keys(MOODS).find(m => MOODS[m].test(q)) || (topic && topic.gentle ? "sad" : "neutral");
+  const gentle = (topic && topic.gentle) || mood === "sad" || mood === "anxious";
+  const sign = gentle ? (Math.random() < .5 ? " " + pick(SIGNOFFS_GENTLE) : "") : (Math.random() < .55 ? " " + pick(SIGNOFFS) : "");
+  return { verdict: "ok", action: pick(OPENERS[mood]), advice: pool[i] + sign };
 }
 
 // ---------- accounts & cloud save (optional) ----------
@@ -1623,6 +1832,114 @@ window.addEventListener("appinstalled", () => { installEvt = null; renderInstall
 $("installBtn").onclick = async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch {} installEvt = null; renderInstall(); };
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 renderAccount(); renderInstall();
+
+// ---------- share cards: wisdom or advice as a portrait image ----------
+const SHARE_URL = "watabish.com/play";
+let shareFile = null, shareText = "";
+const MEMES = [
+  { src: "memes/scream.jpg", fx: .55, fy: .42 },
+  { src: "memes/fangs.jpg",  fx: .58, fy: .38 },
+  { src: "memes/sideeye.jpg", fx: .42, fy: .45 },
+  { src: "memes/gasp.jpg",   fx: .5,  fy: .4 }
+];
+const MEME_TAGS = {
+  wisdom: ["i said what i said", "the chief executive bish has spoken", "write this down", "unpaid. unbothered. correct.", "ancient cat wisdom", "listen to me"],
+  advice: ["THE AUDACITY", "me, giving free advice", "when you ask a cat for help", "therapy, but rude", "you asked. i answered.", "sir this is a cat"]
+};
+let lastMeme = -1;
+const imgCache = {};
+function loadImg(src) {
+  if (imgCache[src]) return Promise.resolve(imgCache[src]);
+  return new Promise(res => { const im = new Image(); im.onload = () => { imgCache[src] = im; res(im); }; im.onerror = () => res(null); im.src = src; });
+}
+function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function wrapLines(ctx, text, maxW) {
+  const words = text.split(/\s+/), lines = []; let line = "";
+  for (const w of words) { const t = line ? line + " " + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
+  if (line) lines.push(line); return lines;
+}
+function drawCover(ctx, im, x, y, w, h, fx, fy) {
+  const s = Math.max(w / im.width, h / im.height), sw = w / s, sh = h / s;
+  const sx = Math.min(Math.max(im.width * fx - sw / 2, 0), im.width - sw), sy = Math.min(Math.max(im.height * fy - sh / 2, 0), im.height - sh);
+  ctx.drawImage(im, sx, sy, sw, sh, x, y, w, h);
+}
+async function makeShareCard(kind, text, action) {
+  try { await document.fonts.ready; } catch {}
+  const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const ctx = c.getContext("2d"), F = '"Bricolage Grotesque", system-ui, sans-serif';
+  ctx.fillStyle = "#BFE3FF"; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "rgba(43,28,21,.07)";
+  for (let y = 18; y < H; y += 36) for (let x = 18; x < W; x += 36) { ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); }
+  // card
+  const cx = 80, cy = 70, cw = W - 160, ch = H - 200;
+  ctx.fillStyle = "#2B1C15"; roundRect(ctx, cx + 18, cy + 18, cw, ch, 56); ctx.fill();
+  ctx.fillStyle = "#F3EADB"; roundRect(ctx, cx, cy, cw, ch, 56); ctx.fill();
+  ctx.lineWidth = 8; ctx.strokeStyle = "#2B1C15"; roundRect(ctx, cx, cy, cw, ch, 56); ctx.stroke();
+  // dramatic photo
+  let mi; do { mi = Math.floor(Math.random() * MEMES.length); } while (MEMES.length > 1 && mi === lastMeme); lastMeme = mi;
+  const m = MEMES[mi], im = await loadImg(m.src);
+  const px = cx + 30, py = cy + 30, pw = cw - 60, ph = 600;
+  ctx.save(); roundRect(ctx, px, py, pw, ph, 36); ctx.clip();
+  if (im) drawCover(ctx, im, px, py, pw, ph, m.fx, m.fy); else { ctx.fillStyle = "#2B1C15"; ctx.fillRect(px, py, pw, ph); }
+  ctx.restore(); ctx.lineWidth = 6; roundRect(ctx, px, py, pw, ph, 36); ctx.stroke();
+  // meme sticker on the photo
+  const tag = pick(MEME_TAGS[kind === "advice" ? "advice" : "wisdom"]);
+  ctx.font = `800 40px ${F}`;
+  const tw = ctx.measureText(tag).width + 56, th = 74;
+  ctx.save(); ctx.translate(px + 40 + tw / 2, py + ph - 40 - th / 2); ctx.rotate(-0.05);
+  ctx.fillStyle = "#2B1C15"; roundRect(ctx, -tw / 2 + 7, -th / 2 + 7, tw, th, 37); ctx.fill();
+  ctx.fillStyle = "#BFE3FF"; roundRect(ctx, -tw / 2, -th / 2, tw, th, 37); ctx.fill();
+  ctx.lineWidth = 5; ctx.strokeStyle = "#2B1C15"; roundRect(ctx, -tw / 2, -th / 2, tw, th, 37); ctx.stroke();
+  ctx.fillStyle = "#2B1C15"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(tag, 0, 2);
+  ctx.restore();
+  // kicker
+  ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#1F5FA8"; ctx.font = `800 32px ${F}`;
+  const kicker = kind === "advice" ? "ADVICE FROM WATABISH" : "WATABISH SAYS";
+  ctx.fillText(kicker.split("").join(String.fromCharCode(8202)), W / 2, py + ph + 70);
+  // quote, shrink to fit
+  const maxW = cw - 120, top = py + ph + 96, bottom = cy + ch - (action ? 120 : 80);
+  let size = 64, lines;
+  for (; size >= 34; size -= 2) {
+    ctx.font = `800 ${size}px ${F}`;
+    lines = wrapLines(ctx, "“" + text + "”", maxW);
+    if (lines.length * size * 1.16 <= bottom - top) break;
+  }
+  ctx.fillStyle = "#2B1C15";
+  const lh = size * 1.16, startY = top + ((bottom - top) - lines.length * lh) / 2 + size * .9;
+  lines.forEach((l, i) => ctx.fillText(l, W / 2, startY + i * lh));
+  if (action) { ctx.fillStyle = "#5A463A"; ctx.font = `700 32px ${F}`; ctx.fillText(action.replace(/\*/g, ""), W / 2, cy + ch - 62); }
+  // url band
+  ctx.fillStyle = "#2B1C15"; ctx.font = `800 42px ${F}`; ctx.fillText("adopt him at " + SHARE_URL, W / 2, H - 46);
+  return new Promise(res => c.toBlob(b => res(b), "image/png"));
+}
+async function openShare(kind, text, action) {
+  SFX.play("whoosh");
+  $("shareSheet").hidden = false; $("sharePreview").removeAttribute("src"); $("shareStatus").textContent = "Making your card…";
+  const blob = await makeShareCard(kind, text, action);
+  if (!blob) { $("shareStatus").textContent = "Couldn't make the image on this device."; return; }
+  shareFile = new File([blob], kind === "advice" ? "watabish-advice.png" : "watabish-wisdom.png", { type: "image/png" });
+  shareText = `watabish says: “${text}” 🐾 adopt him at https://${SHARE_URL}`;
+  const url = URL.createObjectURL(blob); $("sharePreview").src = url; $("shareDownload").href = url; $("shareDownload").download = shareFile.name;
+  const canFiles = !!(navigator.canShare && navigator.canShare({ files: [shareFile] }));
+  $("shareNative").hidden = !canFiles && !navigator.share;
+  $("shareStatus").textContent = "";
+  $("shareNative").focus();
+}
+$("shareNative").onclick = async () => {
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [shareFile] })) await navigator.share({ files: [shareFile], text: shareText });
+    else await navigator.share({ text: shareText, url: "https://" + SHARE_URL });
+  } catch {}
+};
+$("shareCopy").onclick = async () => {
+  try { await navigator.clipboard.writeText(shareText); $("shareStatus").textContent = "Copied. Go spread the gospel."; }
+  catch { $("shareStatus").textContent = "Couldn't copy. Long-press the text instead."; }
+};
+$("shareClose").onclick = () => { $("shareSheet").hidden = true; };
+$("shareSheet").addEventListener("click", e => { if (e.target.id === "shareSheet") $("shareSheet").hidden = true; });
+$("modalShare").onclick = () => { const t = $("modalText").textContent; $("modal").hidden = true; openShare("wisdom", t); };
+$("shareLatest").onclick = () => { if (S.wisdom.length) { closeSheets(); openShare("wisdom", S.wisdom[0]); } };
 
 buildStore(); render(); applyFace();
 // first visit: adopt (sign in), foster (guest) or install, then the walkthrough
