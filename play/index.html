@@ -412,6 +412,7 @@ textarea { border: 3px solid var(--brown); border-radius: 18px; background: var(
 .acct .msg { font-weight: 700; min-height: 1em; }
 .acct .row { justify-content: flex-start; }
 footer a { color: var(--muted); font-weight: 700; }
+.linkish { appearance: none; border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .nameblock { display: grid; min-width: 0; line-height: 1; }
 .status { appearance: none; justify-self: start; margin-top: 3px; border: 2px solid var(--brown); border-radius: 999px; background: var(--panel); color: var(--muted); font: 700 11px var(--body); padding: 2px 8px; cursor: pointer; white-space: nowrap; }
 .status.on { background: var(--ice); color: var(--brown); }
@@ -563,6 +564,7 @@ footer a { color: var(--muted); font-weight: 700; }
     <div id="askForm" class="ask-form">
     <textarea id="question" aria-label="Your question" placeholder="e.g. My coworker keeps taking credit for my work. What do I do?"></textarea>
     <div class="row"><button class="btn" id="askBtn">Ask him</button></div>
+    <p class="note" id="askAdoptHint" hidden>Fostering? He's using his classic lines. <button class="linkish" id="askAdoptBtn" type="button">Adopt him</button> for fresh, made-for-you advice.</p>
     <div class="advice-status" id="adviceStatus"><span id="adviceText"></span><button class="price" id="buyAdvice">Buy advice · 200 tokens</button></div>
     </div>
     <div class="answer" id="answer" hidden></div>
@@ -1099,13 +1101,11 @@ const PERSONA = "You are Watabish, a male lynx point polydactyl house cat (cream
 
 async function revealWisdom() {
   let text = null;
-  const s = await sampler();
-  if (s) {
+  if (user && sb) {
     try {
-      const seen = S.wisdom.slice(0,8).join(" | ");
-      const r = await s(`${PERSONA}\nWrite ONE piece of original cat-based life wisdom: one sentence or two short ones, under 25 words, deadpan and funny but genuinely wise, drawn from cat behavior (naps, boxes, knocking things off tables, sunbeams, grooming, extra toes...). Avoid repeating these: ${seen || "none"}.\nReply with the wisdom only, no quotes.`, { modelTier: "quick", cache: false });
-      text = (r.text || "").trim().replace(/^["“]|["”]$/g, "");
-    } catch { text = null; }
+      const { data, error } = await sb.functions.invoke("ask-watabish", { body: { kind: "wisdom", seen: S.wisdom.slice(0, 8) } });
+      if (!error && data && data.wisdom) text = String(data.wisdom).trim();
+    } catch {}
   }
   if (!text) { const used = new Set(S.wisdom); const left = FALLBACK_WISDOM.filter(w => !used.has(w)); text = pick(left.length ? left : FALLBACK_WISDOM); }
   S.wisdom.unshift(text); addTokens(15); save(); render();
@@ -1173,8 +1173,14 @@ $("askBtn").onclick = async () => {
   play("slowblink"); say("Fine. Let me think. Don't rush me.");
   let out;
   try {
-    await new Promise(r => setTimeout(r, 1600));
-    out = cannedAdvice(q);
+    out = null;
+    if (user && sb) {
+      try {
+        const { data, error } = await sb.functions.invoke("ask-watabish", { body: { kind: "advice", question: q } });
+        if (!error && data && data.verdict) out = data;
+      } catch {}
+    }
+    if (!out) { await new Promise(r => setTimeout(r, 1200)); out = cannedAdvice(q); }
   } catch (e) {
     refund(); $("askBtn").disabled = false;
     answerCard("", "", e && e.code === "rate_limited" ? "He's answered too many questions lately. Try again in a bit." : "He lost his train of thought (connection trouble).", "Your tolerance and advice were given back.");
@@ -1504,6 +1510,7 @@ try { if (window.supabase && window.supabase.createClient) sb = window.supabase.
 
 function renderAccount() {
   const out = $("acctOut"), inn = $("acctIn"), st = $("acctStatus");
+  $("askAdoptHint").hidden = !sb || !!user;
   st.textContent = user ? "adopted ✓" : "fostering"; st.classList.toggle("on", !!user);
   st.setAttribute("aria-label", user ? "Adopted, signed in. Open journal" : "Fostering as a guest. Adopt him");
   if (!sb) { out.hidden = true; inn.hidden = true; $("acctOffline").hidden = false; return; }
@@ -1583,6 +1590,7 @@ $("acctVerify").onclick = async () => {
   $("acctVerify").disabled = false;
 };
 $("acctStatus").onclick = () => openSheet("journalSheet");
+$("askAdoptBtn").onclick = () => openSheet("journalSheet");
 $("acctSignOut").onclick = async () => { await pushCloud(); try { await sb.auth.signOut(); } catch {} onSignedOut(); acctMsg("Signed out. He's back to fostering on this device."); };
 $("acctDelete").onclick = () => { $("acctDeleteConfirm").hidden = false; };
 $("acctDeleteNo").onclick = () => { $("acctDeleteConfirm").hidden = true; };
