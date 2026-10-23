@@ -412,6 +412,11 @@ textarea { border: 3px solid var(--brown); border-radius: 18px; background: var(
 .acct .msg { font-weight: 700; min-height: 1em; }
 .acct .row { justify-content: flex-start; }
 footer a { color: var(--muted); font-weight: 700; }
+.nameblock { display: grid; min-width: 0; line-height: 1; }
+.status { appearance: none; justify-self: start; margin-top: 3px; border: 2px solid var(--brown); border-radius: 999px; background: var(--panel); color: var(--muted); font: 700 11px var(--body); padding: 2px 8px; cursor: pointer; white-space: nowrap; }
+.status.on { background: var(--ice); color: var(--brown); }
+.acct .code { display: grid; gap: 8px; }
+.acct input.codein { width: 100%; box-sizing: border-box; min-height: 52px; border: 3px solid var(--brown); border-radius: 14px; padding: 0 14px; font: 800 24px var(--body); letter-spacing: .3em; text-align: center; background: var(--panel); color: var(--ink); }
 /* ---- welcome ---- */
 .welcome { text-align: center; }
 .welcome img { width: 96px; height: 96px; margin: 0 auto; border-radius: 24px; border: 3px solid var(--brown); box-shadow: 4px 4px 0 var(--hard); }
@@ -436,7 +441,7 @@ footer a { color: var(--muted); font-weight: 700; }
 
 <div class="game">
   <header class="hud">
-    <div class="who"><button class="help" id="helpBtn" aria-label="How to play">?</button><button class="help sound" id="soundBtn" aria-label="Sound" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path class="wave" d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/><path class="mute" d="M16 9l5 6M21 9l-5 6"/></svg></button><h1>Watabish</h1></div>
+    <div class="who"><button class="help" id="helpBtn" aria-label="How to play">?</button><button class="help sound" id="soundBtn" aria-label="Sound" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path class="wave" d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/><path class="mute" d="M16 9l5 6M21 9l-5 6"/></svg></button><div class="nameblock"><h1>Watabish</h1><button class="status" id="acctStatus" type="button">fostering</button></div></div>
     <div class="purse">
       <span class="chip" title="How much he tolerates you"><svg viewBox="0 0 24 24"><path fill="var(--accent)" d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.6.7-1.4 2.2-2.6 4.3-2.6 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/></svg><span id="heartChip">0/10</span></span>
       <button class="chip" id="tokenChip" title="Tokens · open the store"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="var(--gold)"/><path d="M6 12c2-3 6-3 8 0-2 3-6 3-8 0zM14 12l4-3v6z" fill="#fff8e6"/></svg><span id="tokenCount">0</span></button>
@@ -576,6 +581,11 @@ footer a { color: var(--muted); font-weight: 700; }
           <input type="email" id="acctEmailInput" autocomplete="email" placeholder="you@email.com">
           <label class="check"><input type="checkbox" id="acctAge"> <span>I'm 13 or older and agree to the <a href="/terms.html" target="_blank" rel="noopener">terms</a> and <a href="/privacy.html" target="_blank" rel="noopener">privacy policy</a>.</span></label>
           <div class="row"><button class="btn" id="acctSend">Email me my adoption link</button></div>
+          <div class="code" id="acctCodeBox" hidden>
+            <label for="acctCode"><b>Got the email?</b> Tap its link, or type the code here (best for the installed app).</label>
+            <input class="codein" id="acctCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="••••••">
+            <div class="row"><button class="btn" id="acctVerify">Adopt with code</button></div>
+          </div>
         </div>
       </div>
       <div id="acctIn" hidden>
@@ -667,9 +677,9 @@ footer a { color: var(--muted); font-weight: 700; }
       <h2 id="storeTitle">The Store</h2>
       <div class="row"><span class="chip"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="var(--gold)"/><path d="M6 12c2-3 6-3 8 0-2 3-6 3-8 0zM14 12l4-3v6z" fill="#fff8e6"/></svg><span id="storeTokens">0</span></span><button class="close" id="storeClose" aria-label="Close store">×</button></div>
     </div>
+    <h3>Found outside · free</h3><div id="shopFree"></div>
     <h3>Treats</h3><div id="shopTreats"></div>
     <h3>Toys</h3><div id="shopToys"></div>
-    <h3>Found outside · free</h3><div id="shopFree"></div>
     <h3>Favors</h3><div id="shopFavors"></div>
   </div>
 </div>
@@ -1493,7 +1503,9 @@ var sb = null, user = null, cloudDirty = false, pushing = false, lastSyncAt = 0;
 try { if (window.supabase && window.supabase.createClient) sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }); } catch { sb = null; }
 
 function renderAccount() {
-  const out = $("acctOut"), inn = $("acctIn");
+  const out = $("acctOut"), inn = $("acctIn"), st = $("acctStatus");
+  st.textContent = user ? "adopted ✓" : "fostering"; st.classList.toggle("on", !!user);
+  st.setAttribute("aria-label", user ? "Adopted, signed in. Open journal" : "Fostering as a guest. Adopt him");
   if (!sb) { out.hidden = true; inn.hidden = true; $("acctOffline").hidden = false; return; }
   $("acctOffline").hidden = true;
   out.hidden = !!user; inn.hidden = !user;
@@ -1554,10 +1566,23 @@ $("acctSend").onclick = async () => {
   $("acctSend").disabled = true; acctMsg("Sending…");
   try {
     const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
-    acctMsg(error ? "Couldn't send the link. Try again in a minute." : "Check your email for an adoption link from watabish. Open it on this device.");
+    acctMsg(error ? "Couldn't send the link. Try again in a minute." : "Sent! Check your email from watabish.");
+    if (!error) { $("acctCodeBox").hidden = false; $("acctCode").focus(); }
   } catch { acctMsg("Couldn't send the link. Check your connection."); }
   $("acctSend").disabled = false;
 };
+$("acctVerify").onclick = async () => {
+  const email = $("acctEmailInput").value.trim(), token = $("acctCode").value.replace(/\D/g, "");
+  if (token.length < 6) { acctMsg("Type the code from the email."); $("acctCode").focus(); return; }
+  $("acctVerify").disabled = true; acctMsg("Checking…");
+  try {
+    const { data, error } = await sb.auth.verifyOtp({ email, token, type: "email" });
+    if (error || !data || !data.session) acctMsg("That code didn't work. It may have expired, so send a new one.");
+    else { $("acctCodeBox").hidden = true; $("acctCode").value = ""; onSignedIn(data.session.user); }
+  } catch { acctMsg("Couldn't check the code. Check your connection."); }
+  $("acctVerify").disabled = false;
+};
+$("acctStatus").onclick = () => openSheet("journalSheet");
 $("acctSignOut").onclick = async () => { await pushCloud(); try { await sb.auth.signOut(); } catch {} onSignedOut(); acctMsg("Signed out. He's back to fostering on this device."); };
 $("acctDelete").onclick = () => { $("acctDeleteConfirm").hidden = false; };
 $("acctDeleteNo").onclick = () => { $("acctDeleteConfirm").hidden = true; };
