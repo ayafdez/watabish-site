@@ -1723,7 +1723,9 @@ function cannedAdvice(q) {
 // ---------- accounts & cloud save (optional) ----------
 const SB_URL = "https://drreubfqwmivmpwpynnt.supabase.co";
 const SB_KEY = "sb_publishable_ZIFNEg8XxN_JW6li0MKReA_yjgPEfyj";
-var sb = null, user = null, cloudDirty = false, pushing = false, lastSyncAt = 0;
+// arriving from an email link: let the sign-in decide what to show
+const FROM_LINK = /access_token|refresh_token|[?&#]code=|token_hash/.test(location.hash + location.search);
+var returning = false, sb = null, user = null, cloudDirty = false, pushing = false, lastSyncAt = 0;
 try { if (window.supabase && window.supabase.createClient) sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }); } catch { sb = null; }
 
 function renderAccount() {
@@ -1765,17 +1767,18 @@ async function onSignedIn(u) {
     if (error) throw error;
     if (!data) { S.uid = u.id; saveLocal(); await pushCloud(); acctMsg("Adopted. He now follows you to every device. Lucky you."); startTourIfNew(); return; }
     const cloud = data.save || {};
-    const welcomeHome = () => { hideTour(); adopt(cloud); closeSheets(); acctMsg("Welcome home. He missed you. (He'll deny it.)"); lastSyncAt = Date.now(); renderAccount(); };
+    const welcomeHome = () => { returning = true; hideTour(); adopt(cloud); S.seenTour = true; S.seenWelcome = true; saveLocal(); closeSheets(); acctMsg("Welcome home. He missed you. (He'll deny it.)"); lastSyncAt = Date.now(); renderAccount(); };
     // a fresh device (nothing played here yet): just bring his saved self home
     if (!S.uid && !S.seenTour && !(S.wisdom || []).length && !Object.keys(S.owned || {}).length) { welcomeHome(); return; }
     if (S.uid === u.id) {
+      returning = true; hideTour();
       if ((cloud.savedAt || 0) > (S.savedAt || 0)) adopt(cloud); else await pushCloud();
       acctMsg("Welcome back. He missed you. (He'll deny it.)");
       lastSyncAt = Date.now(); renderAccount(); return;
     }
     // this device has never been linked to this account: let the player choose
     $("syncChoice").hidden = false;
-    hideTour();
+    returning = true; hideTour();
     $("syncCloud").onclick = () => { $("syncChoice").hidden = true; welcomeHome(); };
     $("syncLocal").onclick = async () => { $("syncChoice").hidden = true; S.uid = u.id; saveLocal(); await pushCloud(); acctMsg("Saved this device's progress to your account."); };
   } catch { acctMsg("Signed in, but we couldn't reach your save right now. We'll keep trying."); cloudDirty = true; }
@@ -1977,7 +1980,7 @@ $("shareLatest").onclick = () => { if (S.wisdom.length) { closeSheets(); openSha
 buildStore(); render(); applyFace();
 // first visit: adopt (sign up), foster (guest) or install, then the walkthrough
 let tourAfterJournal = false;
-function startTourIfNew() { if (!S.seenTour) setTimeout(() => showTour(0), 350); }
+function startTourIfNew() { setTimeout(() => { if (!S.seenTour && !returning) showTour(0); }, 350); }
 function showWelcome() {
   $("wInstall").hidden = !installEvt;
   $("wIOS").hidden = !(isIOS && !installEvt && !isStandalone());
@@ -1994,8 +1997,9 @@ $("wInstall").onclick = async () => { await $("installBtn").onclick(); $("wInsta
 const journalClosed = () => { if (tourAfterJournal) { tourAfterJournal = false; startTourIfNew(); } };
 $("journalSheet").querySelector(".close").addEventListener("click", journalClosed);
 $("journalSheet").addEventListener("click", e => { if (e.target.id === "journalSheet") journalClosed(); });
-if (!S.seenWelcome && !S.seenTour) setTimeout(() => { if (user) { S.seenWelcome = true; startTourIfNew(); } else showWelcome(); }, 700);
-else if (!S.seenTour) setTimeout(() => showTour(0), 500);
+if (FROM_LINK) setTimeout(() => { if (!user && !S.seenWelcome) showWelcome(); }, 5000);
+else if (!S.seenWelcome && !S.seenTour) setTimeout(() => { if (user) S.seenWelcome = true; else showWelcome(); }, 700);
+else if (!S.seenTour) setTimeout(() => { if (!user && !S.seenTour) showTour(0); }, 500);
 if (S.seenTour && S.welcomeQ) nudgeAsk(true);
 setTimeout(() => play("eartwitch"), 1200);
 })();
