@@ -1494,6 +1494,10 @@ function nudgeAsk(on) {
   const t = document.querySelector(".tab[data-sheet=askSheet]");
   t.classList.toggle("nudge", on); $("askTip").hidden = !on;
 }
+function hideTour() {
+  $("tour").hidden = true;
+  document.querySelectorAll(".spot").forEach(el => el.classList.remove("spot"));
+}
 function endTour() {
   $("tour").hidden = true;
   document.querySelectorAll(".spot").forEach(el => el.classList.remove("spot"));
@@ -1754,12 +1758,16 @@ function adopt(save) {
 async function onSignedIn(u) {
   if (user && user.id === u.id) return;
   user = u; renderAccount();
-  if (!$("welcome").hidden) { closeWelcome(); startTourIfNew(); }
+  if (!$("welcome").hidden) closeWelcome();
+  tourAfterJournal = false;
   try {
     const { data, error } = await sb.from("game_saves").select("save, updated_at").eq("user_id", u.id).maybeSingle();
     if (error) throw error;
-    if (!data) { S.uid = u.id; saveLocal(); await pushCloud(); acctMsg("Adopted. He now follows you to every device. Lucky you."); return; }
+    if (!data) { S.uid = u.id; saveLocal(); await pushCloud(); acctMsg("Adopted. He now follows you to every device. Lucky you."); startTourIfNew(); return; }
     const cloud = data.save || {};
+    const welcomeHome = () => { hideTour(); adopt(cloud); closeSheets(); acctMsg("Welcome home. He missed you. (He'll deny it.)"); lastSyncAt = Date.now(); renderAccount(); };
+    // a fresh device (nothing played here yet): just bring his saved self home
+    if (!S.uid && !S.seenTour && !(S.wisdom || []).length && !Object.keys(S.owned || {}).length) { welcomeHome(); return; }
     if (S.uid === u.id) {
       if ((cloud.savedAt || 0) > (S.savedAt || 0)) adopt(cloud); else await pushCloud();
       acctMsg("Welcome back. He missed you. (He'll deny it.)");
@@ -1767,7 +1775,8 @@ async function onSignedIn(u) {
     }
     // this device has never been linked to this account: let the player choose
     $("syncChoice").hidden = false;
-    $("syncCloud").onclick = () => { $("syncChoice").hidden = true; adopt(cloud); acctMsg("Welcome back. He missed you. (He'll deny it.)"); lastSyncAt = Date.now(); renderAccount(); };
+    hideTour();
+    $("syncCloud").onclick = () => { $("syncChoice").hidden = true; welcomeHome(); };
     $("syncLocal").onclick = async () => { $("syncChoice").hidden = true; S.uid = u.id; saveLocal(); await pushCloud(); acctMsg("Saved this device's progress to your account."); };
   } catch { acctMsg("Signed in, but we couldn't reach your save right now. We'll keep trying."); cloudDirty = true; }
 }
