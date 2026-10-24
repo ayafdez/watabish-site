@@ -585,6 +585,7 @@ footer a { color: var(--muted); font-weight: 700; }
       <div id="acctOut" hidden>
         <div style="display:grid;gap:10px">
           <p>Right now you're fostering: he lives on this device only. Adopt him to keep him on every phone and computer. No password, just a link by email.</p>
+          <p class="note"><b>Already adopted him?</b> Use the same email to sign back in and pick up where you left off.</p>
           <label class="sr" for="acctEmailInput">Email</label>
           <input type="email" id="acctEmailInput" autocomplete="email" placeholder="you@email.com">
           <label class="check"><input type="checkbox" id="acctAge"> <span>I'm 13 or older and agree to the <a href="/terms.html" target="_blank" rel="noopener">terms</a> and <a href="/privacy.html" target="_blank" rel="noopener">privacy policy</a>.</span></label>
@@ -661,6 +662,7 @@ footer a { color: var(--muted); font-weight: 700; }
     <div class="stack">
       <button class="btn" id="wAdopt">Adopt him (sign in)</button>
       <button class="btn ghost" id="wFoster">Foster as a guest</button>
+      <button class="btn ghost" id="wReturn">Already adopted him? Sign in</button>
       <button class="btn ghost" id="wInstall" hidden>Get the app</button>
     </div>
     <p class="fine" id="wIOS" hidden>Want the app? In Safari, tap <b>Share</b> then <b>Add to Home Screen</b>.</p>
@@ -1959,6 +1961,7 @@ $("wAdopt").onclick = () => {
   closeWelcome(); tourAfterJournal = true; openSheet("journalSheet");
   setTimeout(() => { const i = $("acctEmailInput"); if (i && !i.closest("[hidden]")) i.focus(); }, 300);
 };
+$("wReturn").onclick = () => { $("wAdopt").onclick(); };
 $("wInstall").onclick = async () => { await $("installBtn").onclick(); $("wInstall").hidden = !installEvt; };
 const journalClosed = () => { if (tourAfterJournal) { tourAfterJournal = false; startTourIfNew(); } };
 $("journalSheet").querySelector(".close").addEventListener("click", journalClosed);
