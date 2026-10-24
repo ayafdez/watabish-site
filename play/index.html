@@ -658,15 +658,15 @@ footer a { color: var(--muted); font-weight: 700; }
     <img src="icon-192.png" alt="">
     <div class="seal">a very rude cat needs a home</div>
     <h2 id="welcomeTitle">Adopt him, or just foster?</h2>
-    <p class="crisis-body"><b>Foster</b> as a guest and he lives on this device only. <b>Adopt</b> him (free sign-in) and he follows you to every phone and computer.</p>
+    <p class="crisis-body"><b>Foster</b> as a guest and he lives on this device only. <b>Adopt</b> him (free sign-up) and he follows you to every phone and computer.</p>
     <div class="stack">
-      <button class="btn" id="wAdopt">Adopt him (sign in)</button>
+      <button class="btn" id="wAdopt">Adopt him (sign up)</button>
       <button class="btn ghost" id="wFoster">Foster as a guest</button>
-      <button class="btn ghost" id="wReturn">I'm his human (sign in)</button>
       <button class="btn ghost" id="wInstall" hidden>Get the app</button>
     </div>
     <p class="fine" id="wIOS" hidden>Want the app? In Safari, tap <b>Share</b> then <b>Add to Home Screen</b>.</p>
     <p class="fine">You can adopt later from the Journal. He won't hold it against you. (He will.)</p>
+    <p class="fine">His human? <button class="linkish" id="wReturn" type="button">Sign in</button></p>
   </div>
 </div>
 
@@ -1803,8 +1803,10 @@ $("acctSend").onclick = async () => {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { acctMsg("That doesn't look like an email address."); $("acctEmailInput").focus(); return; }
   $("acctSend").disabled = true; acctMsg("Sending…");
   try {
-    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
-    acctMsg(error ? "Couldn't send the link. Try again in a minute." : "Sent! Check your email from watabish.");
+    const back = acctMode === "return";
+    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: !back } });
+    if (error && back && /signup|not allowed|not found/i.test(error.message || "")) { acctMsg("No human with that email yet. Tap \u201cAdopt him\u201d above to start fresh."); $("acctSend").disabled = false; return; }
+    acctMsg(error ? "Couldn't send the link. Try again in a minute." : back ? "Sent! Check your email for your sign-in link." : "Sent! Check your email for his adoption papers.");
     if (!error) { $("acctCodeBox").hidden = false; $("acctCode").focus(); }
   } catch { acctMsg("Couldn't send the link. Check your connection."); }
   $("acctSend").disabled = false;
@@ -1964,7 +1966,7 @@ $("modalShare").onclick = () => { const t = $("modalText").textContent; $("modal
 $("shareLatest").onclick = () => { if (S.wisdom.length) { closeSheets(); openShare("wisdom", S.wisdom[0]); } };
 
 buildStore(); render(); applyFace();
-// first visit: adopt (sign in), foster (guest) or install, then the walkthrough
+// first visit: adopt (sign up), foster (guest) or install, then the walkthrough
 let tourAfterJournal = false;
 function startTourIfNew() { if (!S.seenTour) setTimeout(() => showTour(0), 350); }
 function showWelcome() {
