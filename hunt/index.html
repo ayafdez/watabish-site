@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chikadee Hunt · watabish.</title>
+<meta name="description" content="Found a Chikadee card? Check if your code is still valid.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/play/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=JetBrains+Mono:wght@700&display=swap">
+<style>
+:root{
+  --bg:#ffffff; --fg:#111111; --muted:#5f5a55; --soft:#f6f4f1; --brown:#2B1C15;
+  --ok:#1f7a3d; --okbg:#e7f4ea; --warn:#a4561a; --warnbg:#fbeee2; --bad:#b3261e; --badbg:#fbe9e7;
+  --display:"Anton",Impact,"Arial Narrow",sans-serif;
+  --body:"Bricolage Grotesque","Trebuchet MS",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:540px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right)) 48px max(16px,env(safe-area-inset-left));display:grid;gap:26px}
+.brand{font-family:var(--body);font-weight:800;font-size:1.6rem;color:var(--brown);text-decoration:none;justify-self:start}
+header{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+header img{width:76px;height:76px;border:3px solid var(--fg);border-radius:6px;object-fit:cover}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(2rem,9vw,2.8rem);line-height:.95;margin:0;text-transform:uppercase}
+.sub{margin:4px 0 0;color:var(--muted)}
+form{display:grid;grid-template-columns:1fr auto;gap:10px}
+label{grid-column:1/-1;font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+input{font:700 1.4rem var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;border:3px solid var(--fg);border-radius:6px;background:var(--bg);color:var(--fg);min-width:0;width:100%}
+input:focus{outline:3px solid #c98a4b;outline-offset:2px}
+button{font:400 1.2rem var(--display);letter-spacing:.04em;text-transform:uppercase;padding:12px 20px;border:3px solid var(--fg);border-radius:6px;background:var(--fg);color:var(--bg);cursor:pointer}
+button:focus-visible{outline:3px solid #c98a4b;outline-offset:2px}
+.result{border:3px solid var(--fg);border-radius:6px;padding:18px;display:grid;gap:8px}
+.result[hidden]{display:none}
+.big{font-family:var(--display);font-size:clamp(1.9rem,9vw,2.5rem);line-height:1;text-transform:uppercase}
+.result p{margin:0}
+.ok{background:var(--okbg);border-color:var(--ok)} .ok .big{color:var(--ok)}
+.used{background:var(--warnbg);border-color:var(--warn)} .used .big{color:var(--warn)}
+.bad{background:var(--badbg);border-color:var(--bad)} .bad .big{color:var(--bad)}
+.howto{background:var(--soft);border-radius:6px;padding:18px;display:grid;gap:10px}
+h2{font-family:var(--display);font-weight:400;font-size:1.5rem;margin:0;text-transform:uppercase}
+ol{margin:0;padding-left:1.3em;display:grid;gap:6px}
+.note{color:var(--muted);font-size:.88rem;margin:0}
+a{color:var(--fg)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="brand" href="/">watabish.</a>
+  <header>
+    <img src="data:image/jpeg;base64,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" alt="Chikadee the cat, mid-yell">
+    <div>
+      <h1>Is this card legit, human?</h1>
+      <p class="sub">Found a Chikadee card? Check your code.</p>
+    </div>
+  </header>
+
+  <form id="f" autocomplete="off">
+    <label for="code">Code on the front of your card</label>
+    <input id="code" placeholder="CHK-XXXX" maxlength="8" autocapitalize="characters" spellcheck="false">
+    <button type="submit">Check</button>
+  </form>
+
+  <div id="out" class="result" hidden aria-live="polite"></div>
+
+  <section class="howto">
+    <h2>How to claim</h2>
+    <ol>
+      <li>Take a selfie with your card, code showing.</li>
+      <li>Post it on <a href="https://instagram.com/watabish_">Instagram</a> or <a href="https://www.tiktok.com/@watabish_">TikTok</a> and tag <strong>@watabish_</strong>.</li>
+      <li>We DM you a booking link within 24 hours.</li>
+      <li>Pick your time and enter your card code at checkout. Total: $0.</li>
+    </ol>
+    <p class="note">One free hand-painted pet portrait per card. Each code works once. Not for you? Leave the card where you found it so the next human can find Chikadee.</p>
+  </section>
+</div>
+
+<script>
+/* ====== EDIT HERE ======
+   When someone claims a card, add its code to this list, then re-upload this file.
+   Example: const CLAIMED = ["CHK-25F7", "CHK-3433"];                              */
+const CLAIMED = [];
+/* ======================= */
+
+// Valid codes are stored as fingerprints, so nobody can read them from this page.
+const VALID = ["0fdb7cfd671d7897", "68ea91f5cf4227de", "6a1d198d98353b3d", "499d9fbf2d9c6515", "b49cdad3acb3e185", "1f97d708b96ae65c", "6184335899119428", "a451c050c38dca3b", "27c55760021f17ac", "60db0ce50316a957", "8cb0176c1133009c", "035ab2935e36a49a"];
+
+const norm = v => { v = (v || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); if (v.startsWith("CHK")) v = v.slice(3); return v ? "CHK-" + v.slice(0, 4) : ""; };
+async function fp(s){ const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("").slice(0, 16); }
+const out = document.getElementById("out"), input = document.getElementById("code");
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+async function check(code){
+  out.hidden = false;
+  const valid = VALID.includes(await fp(code));
+  const claimed = CLAIMED.map(norm).includes(code);
+  if (!valid) {
+    out.className = "result bad";
+    out.innerHTML = `<div class="big">Not a real code</div><p><strong>${esc(code)}</strong> isn't one of ours. Check for typos: codes never use O, I or L, or the numbers 0 or 1.</p>`;
+  } else if (claimed) {
+    out.className = "result used";
+    out.innerHTML = `<div class="big">Already claimed</div><p><strong>${esc(code)}</strong> has been used. Each card works once. Please leave it where you found it.</p>`;
+  } else {
+    out.className = "result ok";
+    out.innerHTML = `<div class="big">Legit. Go claim it.</div><p><strong>${esc(code)}</strong> is valid and unclaimed. Post your selfie with the card on Instagram or TikTok and tag <strong>@watabish_</strong>.</p>`;
+  }
+}
+document.getElementById("f").addEventListener("submit", e => { e.preventDefault(); const c = norm(input.value); if (c) { input.value = c; check(c); } });
+</script>
+</body>
+</html>
