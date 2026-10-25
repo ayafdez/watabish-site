@@ -1,5 +1,5 @@
 // Watabish offline support. Bump VERSION whenever you upload a new index.html.
-const VERSION = "watabish-v16";
+const VERSION = "watabish-v19";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png", "memes/scream.jpg", "memes/fangs.jpg", "memes/sideeye.jpg", "memes/gasp.jpg"];
 
 self.addEventListener("install", e => {
