@@ -18,7 +18,9 @@
 --    off the map.
 --  * "Found deceased" reports (cats or dogs, e.g. road kill) never use a photo
 --    as their pin and drop off the map after 30 days.
---  * Spotted and maybe-lost animals can be ticked "shelter called".
+--  * Needs-help, maybe-lost and found-deceased animals have "who's been called"
+--    checkmarks (a shelter, a rescue group, the city...). The list of groups
+--    lives in map/index.html; here they are just short keys like 'taag'.
 -- ============================================================================
 
 -- ---------- tables ----------------------------------------------------------
@@ -96,9 +98,6 @@ create table if not exists public.map_reports (
 -- added after the first version: species (dogs only as lost) and "back home"
 alter table public.map_cats add column if not exists species text not null default 'cat';
 alter table public.map_cats add column if not exists home_at timestamptz;
-alter table public.map_cats add column if not exists shelter_called_at timestamptz;
-alter table public.map_cats add column if not exists shelter_called_by uuid references auth.users (id) on delete set null;
-alter table public.map_cats add column if not exists shelter_called_name text check (char_length(shelter_called_name) <= 40);
 alter table public.map_cats drop constraint if exists map_cats_status_check;
 alter table public.map_cats add constraint map_cats_status_check
   check (status in ('spotted', 'help', 'lost', 'deceased'));
@@ -106,14 +105,39 @@ alter table public.map_cats drop constraint if exists map_cats_species_ok;
 alter table public.map_cats add constraint map_cats_species_ok
   check (species in ('cat', 'dog') and (species = 'cat' or status in ('lost', 'deceased')));
 
+-- "who's been called" checkmarks: one row per animal per group
+create table if not exists public.map_calls (
+  cat_id        uuid not null references public.map_cats (id) on delete cascade,
+  org           text not null check (org ~ '^[a-z0-9-]{2,40}$'),
+  user_id       uuid references auth.users (id) on delete set null,
+  display_name  text check (char_length(display_name) <= 40),
+  created_at    timestamptz not null default now(),
+  primary key (cat_id, org)
+);
+-- an earlier draft had a single "shelter called" flag on map_cats: move any into map_calls
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'map_cats' and column_name = 'shelter_called_at') then
+    execute $m$
+      insert into public.map_calls (cat_id, org, user_id, display_name, created_at)
+      select id, 'shelter', shelter_called_by, shelter_called_name, shelter_called_at
+        from public.map_cats
+       where shelter_called_at is not null and status in ('help', 'lost', 'deceased')
+      on conflict do nothing $m$;
+    alter table public.map_cats drop column shelter_called_at, drop column shelter_called_by, drop column shelter_called_name;
+  end if;
+end $$;
+
 -- Closed to the browser: no policies means no direct access even if a grant slips in.
 alter table public.map_cats        enable row level security;
 alter table public.map_sightings   enable row level security;
 alter table public.map_comments    enable row level security;
 alter table public.map_help_offers enable row level security;
 alter table public.map_reports     enable row level security;
+alter table public.map_calls       enable row level security;
 revoke all on public.map_cats, public.map_sightings, public.map_comments,
-              public.map_help_offers, public.map_reports from anon, authenticated;
+              public.map_help_offers, public.map_reports, public.map_calls from anon, authenticated;
 
 -- ---------- helpers ---------------------------------------------------------
 
@@ -156,9 +180,9 @@ begin
   if new.caretaker_id is null then new.caretaker_name := null; end if;
   -- a photo of an animal that died is never shown as its pin or cover
   if new.status = 'deceased' then new.cover_photo := null; end if;
-  -- "shelter called" only applies to spotted and maybe-lost animals
-  if new.status not in ('spotted', 'lost') then
-    new.shelter_called_at := null; new.shelter_called_by := null; new.shelter_called_name := null;
+  -- "who's been called" doesn't apply to spotted animals
+  if tg_op = 'UPDATE' and new.status = 'spotted' and old.status <> 'spotted' then
+    delete from public.map_calls where cat_id = new.id;
   end if;
   return new;
 end $$;
@@ -193,12 +217,12 @@ create function public.map_cats_in(min_lat double precision, min_lng double prec
 returns table (id uuid, species text, name text, status text, description text, needs text[],
                lat double precision, lng double precision, caretaker_name text,
                cover_photo text, sighting_count integer, last_seen_at timestamptz,
-               created_at timestamptz, shelter_called boolean)
+               created_at timestamptz, calls integer)
 language sql stable security definer set search_path = '' as $$
   select c.id, c.species, c.name, c.status, c.description, c.needs,
          c.public_lat, c.public_lng, c.caretaker_name,
          c.cover_photo, c.sighting_count, c.last_seen_at, c.created_at,
-         c.shelter_called_at is not null
+         (select count(*)::int from public.map_calls k where k.cat_id = c.id)
   from public.map_cats c
   where not c.hidden and c.home_at is null
     and not (c.status = 'deceased' and c.created_at < now() - interval '30 days')
@@ -214,8 +238,6 @@ returns jsonb language sql stable security definer set search_path = '' as $$
     'cat', jsonb_build_object(
       'id', c.id, 'species', c.species, 'name', c.name, 'status', c.status, 'description', c.description,
       'home_at', c.home_at,
-      'shelter_called_at', c.shelter_called_at, 'shelter_called_name', c.shelter_called_name,
-      'can_unshelter', (auth.uid() is not null and auth.uid() in (c.shelter_called_by, c.created_by, c.caretaker_id)),
       'needs', to_jsonb(c.needs), 'lat', c.public_lat, 'lng', c.public_lng,
       'caretaker_name', c.caretaker_name, 'cover_photo', c.cover_photo,
       'sighting_count', c.sighting_count, 'last_seen_at', c.last_seen_at,
@@ -233,6 +255,10 @@ returns jsonb language sql stable security definer set search_path = '' as $$
                'mine', coalesce(m.user_id = auth.uid(), false)) order by m.created_at desc)
       from (select * from public.map_comments
             where cat_id = c.id and not hidden order by created_at desc limit 100) m), '[]'::jsonb),
+    'calls', coalesce((
+      select jsonb_agg(jsonb_build_object('org', k.org, 'name', k.display_name, 'at', k.created_at,
+               'can_undo', coalesce(auth.uid() in (k.user_id, c.created_by, c.caretaker_id), false)) order by k.created_at)
+      from public.map_calls k where k.cat_id = c.id), '[]'::jsonb),
     'offers', coalesce((
       select jsonb_agg(jsonb_build_object('need', o.need, 'name', o.display_name,
                'mine', coalesce(o.user_id = auth.uid(), false)) order by o.created_at)
@@ -247,10 +273,11 @@ $$;
 -- Returns the cat id.
 drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text);
 drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text);
+drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, boolean);
 create or replace function public.map_post(
   p_cat uuid, p_new_id uuid, p_name text, p_status text, p_needs text[], p_description text,
   p_photo text, p_note text, p_lat double precision, p_lng double precision, p_display text,
-  p_species text default 'cat', p_shelter boolean default false)
+  p_species text default 'cat', p_calls text[] default '{}')
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare v_cat uuid; v_status text; v_species text := coalesce(p_species, 'cat');
 begin
@@ -314,11 +341,13 @@ begin
      set sighting_count = sighting_count + 1, last_seen_at = now(),
          cover_photo = coalesce(cover_photo, p_photo)
    where id = v_cat;
-  if coalesce(p_shelter, false) then
-    update public.map_cats
-       set shelter_called_at = now(), shelter_called_by = auth.uid(),
-           shelter_called_name = coalesce(nullif(left(btrim(coalesce(p_display, '')), 40), ''), 'a neighbour')
-     where id = v_cat and status in ('spotted', 'lost') and shelter_called_at is null;
+  if coalesce(array_length(p_calls, 1), 0) > 0
+     and exists (select 1 from public.map_cats where id = v_cat and status in ('help', 'lost', 'deceased')) then
+    insert into public.map_calls (cat_id, org, user_id, display_name)
+    select v_cat, o, auth.uid(), coalesce(nullif(left(btrim(coalesce(p_display, '')), 40), ''), 'a neighbour')
+      from unnest(p_calls[1:10]) o
+     where o ~ '^[a-z0-9-]{2,40}$'
+    on conflict do nothing;
   end if;
   return v_cat;
 end $$;
@@ -409,25 +438,31 @@ returns void language sql security definer set search_path = '' as $$
    where id = p_cat and caretaker_id = auth.uid()
 $$;
 
--- "shelter called": any signed-in neighbour can tick it; the person who ticked it,
--- the poster or the Guardian can untick it
-create or replace function public.map_mark_shelter(p_cat uuid, p_on boolean, p_display text)
+-- "who's been called": any signed-in neighbour can tick a group; the person who
+-- ticked it, the poster or the Guardian can untick it
+drop function if exists public.map_mark_shelter(uuid, boolean, text);
+create or replace function public.map_mark_call(p_cat uuid, p_org text, p_on boolean, p_display text)
 returns void language plpgsql security definer set search_path = '' as $$
 begin
   if not public.map_is_full_user() then
     raise exception 'Sign in with your email to tick this.' using errcode = '42501';
   end if;
   if p_on then
-    update public.map_cats
-       set shelter_called_at = now(), shelter_called_by = auth.uid(),
-           shelter_called_name = coalesce(nullif(left(btrim(coalesce(p_display, '')), 40), ''), 'a neighbour')
-     where id = p_cat and not hidden and status in ('spotted', 'lost') and shelter_called_at is null;
-    if not found and not exists (select 1 from public.map_cats where id = p_cat and status in ('spotted', 'lost') and shelter_called_at is not null) then
-      raise exception 'This only applies to spotted or maybe-lost animals.' using errcode = '22023';
+    if p_org !~ '^[a-z0-9-]{2,40}$' then raise exception 'Unknown group.' using errcode = '22023'; end if;
+    if not exists (select 1 from public.map_cats where id = p_cat and not hidden and status in ('help', 'lost', 'deceased')) then
+      raise exception 'This is for animals that need help, might be lost, or were found deceased.' using errcode = '22023';
     end if;
+    if (select count(*) from public.map_calls where cat_id = p_cat) >= 10 then
+      raise exception 'That''s plenty of calls for one animal.' using errcode = '54000';
+    end if;
+    insert into public.map_calls (cat_id, org, user_id, display_name)
+    values (p_cat, p_org, auth.uid(), coalesce(nullif(left(btrim(coalesce(p_display, '')), 40), ''), 'a neighbour'))
+    on conflict do nothing;
   else
-    update public.map_cats set shelter_called_at = null, shelter_called_by = null, shelter_called_name = null
-     where id = p_cat and auth.uid() in (shelter_called_by, created_by, caretaker_id);
+    delete from public.map_calls k
+     using public.map_cats c
+     where k.cat_id = p_cat and k.org = p_org and c.id = k.cat_id
+       and auth.uid() in (k.user_id, c.created_by, c.caretaker_id);
     if not found then raise exception 'Only whoever ticked it, the poster or the Guardian can undo this.' using errcode = '42501'; end if;
   end if;
 end $$;
@@ -468,8 +503,8 @@ revoke execute on function public.map_sightings_gone() from public, anon, authen
 grant execute on function public.map_cats_in(double precision, double precision, double precision, double precision) to anon, authenticated;
 grant execute on function public.map_cat_detail(uuid) to anon, authenticated;
 
-revoke execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, boolean) from public, anon;
-revoke execute on function public.map_mark_shelter(uuid, boolean, text) from public, anon;
+revoke execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[]) from public, anon;
+revoke execute on function public.map_mark_call(uuid, text, boolean, text) from public, anon;
 revoke execute on function public.map_mark_home(uuid, boolean) from public, anon;
 revoke execute on function public.map_comment(uuid, text, text) from public, anon;
 revoke execute on function public.map_delete_comment(uuid) from public, anon;
@@ -478,8 +513,8 @@ revoke execute on function public.map_update_cat(uuid, text, text, text, text[])
 revoke execute on function public.map_claim(uuid, text) from public, anon;
 revoke execute on function public.map_release(uuid) from public, anon;
 revoke execute on function public.map_report(text, uuid, text) from public, anon;
-grant execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, boolean) to authenticated;
-grant execute on function public.map_mark_shelter(uuid, boolean, text) to authenticated;
+grant execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[]) to authenticated;
+grant execute on function public.map_mark_call(uuid, text, boolean, text) to authenticated;
 grant execute on function public.map_mark_home(uuid, boolean) to authenticated;
 grant execute on function public.map_comment(uuid, text, text) to authenticated;
 grant execute on function public.map_delete_comment(uuid) to authenticated;
