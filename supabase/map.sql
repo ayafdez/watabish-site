@@ -18,6 +18,9 @@
 --    off the map.
 --  * "Found deceased" reports (cats or dogs, e.g. road kill) never use a photo
 --    as their pin and drop off the map after 30 days.
+--  * Hotspots: a cat or dog that lives at a business or public place people can
+--    visit (a shop cat, a brewery dog). Exact location, place name, hours and
+--    house rules, and posted only with the owner's okay.
 --  * Needs-help, maybe-lost and found-deceased animals have "who's been called"
 --    checkmarks (a shelter, a rescue group, the city...). The list of groups
 --    lives in map/index.html; here they are just short keys like 'taag'.
@@ -98,12 +101,19 @@ create table if not exists public.map_reports (
 -- added after the first version: species (dogs only as lost) and "back home"
 alter table public.map_cats add column if not exists species text not null default 'cat';
 alter table public.map_cats add column if not exists home_at timestamptz;
+alter table public.map_cats add column if not exists place_name text check (char_length(place_name) <= 80);
+alter table public.map_cats add column if not exists place_hours text check (char_length(place_hours) <= 120);
+alter table public.map_cats add column if not exists place_rules text check (char_length(place_rules) <= 300);
+alter table public.map_cats add column if not exists place_ok_at timestamptz;
 alter table public.map_cats drop constraint if exists map_cats_status_check;
 alter table public.map_cats add constraint map_cats_status_check
-  check (status in ('spotted', 'help', 'lost', 'deceased'));
+  check (status in ('spotted', 'help', 'lost', 'deceased', 'hotspot'));
 alter table public.map_cats drop constraint if exists map_cats_species_ok;
 alter table public.map_cats add constraint map_cats_species_ok
-  check (species in ('cat', 'dog') and (species = 'cat' or status in ('lost', 'deceased')));
+  check (species in ('cat', 'dog') and (species = 'cat' or status in ('lost', 'deceased', 'hotspot')));
+alter table public.map_cats drop constraint if exists map_cats_hotspot_ok;
+alter table public.map_cats add constraint map_cats_hotspot_ok
+  check (status <> 'hotspot' or (place_name is not null and place_ok_at is not null));
 
 -- "who's been called" checkmarks: one row per animal per group
 create table if not exists public.map_calls (
@@ -166,11 +176,15 @@ end $$;
 create or replace function public.map_cats_place()
 returns trigger language plpgsql set search_path = '' as $$
 declare j double precision[];
+        -- how much a status is moved: 0 = exact (hotspots), 1 = a little, 2 = an area
+        k_new int := case when new.status = 'hotspot' then 0 when new.status in ('spotted', 'deceased') then 1 else 2 end;
+        k_old int := case when tg_op = 'INSERT' then -1 when old.status = 'hotspot' then 0
+                          when old.status in ('spotted', 'deceased') then 1 else 2 end;
 begin
   if tg_op = 'INSERT'
-     or new.lat is distinct from old.lat or new.lng is distinct from old.lng
-     or (new.status in ('spotted', 'deceased')) is distinct from (old.status in ('spotted', 'deceased')) then
-    if new.status in ('spotted', 'deceased') then j := public.map_jitter(new.lat, new.lng, 30, 80);
+     or new.lat is distinct from old.lat or new.lng is distinct from old.lng or k_new <> k_old then
+    if k_new = 0 then j := array[new.lat, new.lng];
+    elsif k_new = 1 then j := public.map_jitter(new.lat, new.lng, 30, 80);
     else j := public.map_jitter(new.lat, new.lng, 120, 260);
     end if;
     new.public_lat := j[1];
@@ -217,12 +231,13 @@ create function public.map_cats_in(min_lat double precision, min_lng double prec
 returns table (id uuid, species text, name text, status text, description text, needs text[],
                lat double precision, lng double precision, caretaker_name text,
                cover_photo text, sighting_count integer, last_seen_at timestamptz,
-               created_at timestamptz, calls integer)
+               created_at timestamptz, calls integer, place_name text, place_hours text)
 language sql stable security definer set search_path = '' as $$
   select c.id, c.species, c.name, c.status, c.description, c.needs,
          c.public_lat, c.public_lng, c.caretaker_name,
          c.cover_photo, c.sighting_count, c.last_seen_at, c.created_at,
-         (select count(*)::int from public.map_calls k where k.cat_id = c.id)
+         (select count(*)::int from public.map_calls k where k.cat_id = c.id),
+         c.place_name, c.place_hours
   from public.map_cats c
   where not c.hidden and c.home_at is null
     and not (c.status = 'deceased' and c.created_at < now() - interval '30 days')
@@ -238,6 +253,8 @@ returns jsonb language sql stable security definer set search_path = '' as $$
     'cat', jsonb_build_object(
       'id', c.id, 'species', c.species, 'name', c.name, 'status', c.status, 'description', c.description,
       'home_at', c.home_at,
+      'place_name', c.place_name, 'place_hours', c.place_hours, 'place_rules', c.place_rules,
+      'place_ok', c.place_ok_at is not null,
       'needs', to_jsonb(c.needs), 'lat', c.public_lat, 'lng', c.public_lng,
       'caretaker_name', c.caretaker_name, 'cover_photo', c.cover_photo,
       'sighting_count', c.sighting_count, 'last_seen_at', c.last_seen_at,
@@ -274,17 +291,28 @@ $$;
 drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text);
 drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text);
 drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, boolean);
+drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[]);
 create or replace function public.map_post(
   p_cat uuid, p_new_id uuid, p_name text, p_status text, p_needs text[], p_description text,
   p_photo text, p_note text, p_lat double precision, p_lng double precision, p_display text,
-  p_species text default 'cat', p_calls text[] default '{}')
+  p_species text default 'cat', p_calls text[] default '{}', p_place jsonb default null)
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare v_cat uuid; v_status text; v_species text := coalesce(p_species, 'cat');
 begin
   if v_species not in ('cat', 'dog') then
     raise exception 'Cats and dogs only, for now.' using errcode = '22023';
   end if;
-  if v_species = 'dog' and p_status is distinct from 'deceased' then p_status := 'lost'; p_needs := '{}'; end if;
+  if v_species = 'dog' and p_status is distinct from 'deceased' and p_status is distinct from 'hotspot' then
+    p_status := 'lost'; p_needs := '{}';
+  end if;
+  if p_status = 'hotspot' and p_cat is null then
+    if nullif(btrim(coalesce(p_place ->> 'name', '')), '') is null then
+      raise exception 'Add the name of the place.' using errcode = '22023';
+    end if;
+    if coalesce((p_place ->> 'ok')::boolean, false) is not true then
+      raise exception 'Hotspots need the owner''s okay. Please tick the box.' using errcode = '22023';
+    end if;
+  end if;
   if p_status = 'deceased' and p_cat is not null then
     raise exception 'Reports of an animal that died are always posted on their own.' using errcode = '22023';
   end if;
@@ -323,13 +351,18 @@ begin
         where created_by = auth.uid() and created_at > now() - interval '1 day') >= 10 then
       raise exception 'You''ve added 10 new cats today. Impressive. Try again tomorrow.' using errcode = '54000';
     end if;
-    insert into public.map_cats (id, species, name, status, description, needs, lat, lng, created_by)
+    insert into public.map_cats (id, species, name, status, description, needs, lat, lng, created_by,
+                                 place_name, place_hours, place_rules, place_ok_at)
     values (coalesce(p_new_id, gen_random_uuid()), v_species,
             coalesce(nullif(btrim(p_name), ''), case when v_species = 'dog' then 'Unnamed dog' else 'Unnamed cat' end),
             coalesce(p_status, 'spotted'),
             left(coalesce(p_description, ''), 500),
             case when p_status = 'help' then coalesce(p_needs, '{}') else '{}' end,
-            p_lat, p_lng, auth.uid())
+            p_lat, p_lng, auth.uid(),
+            case when p_status = 'hotspot' then left(btrim(p_place ->> 'name'), 80) end,
+            case when p_status = 'hotspot' then nullif(left(btrim(coalesce(p_place ->> 'hours', '')), 120), '') end,
+            case when p_status = 'hotspot' then nullif(left(btrim(coalesce(p_place ->> 'rules', '')), 300), '') end,
+            case when p_status = 'hotspot' then now() end)
     returning id into v_cat;
   end if;
 
@@ -399,21 +432,37 @@ begin
   return true;
 end $$;
 
+drop function if exists public.map_update_cat(uuid, text, text, text, text[]);
 create or replace function public.map_update_cat(p_cat uuid, p_name text, p_status text,
-                                                 p_description text, p_needs text[])
+                                                 p_description text, p_needs text[], p_place jsonb default null)
 returns void language plpgsql security definer set search_path = '' as $$
+declare r public.map_cats%rowtype;
 begin
-  if p_status is not null and p_status not in ('lost', 'deceased')
-     and exists (select 1 from public.map_cats where id = p_cat and species = 'dog') then
-    raise exception 'Dogs can only be listed as maybe lost (or found deceased).' using errcode = '22023';
+  select * into r from public.map_cats where id = p_cat;
+  if not found or auth.uid() is null or auth.uid() is distinct from r.created_by and auth.uid() is distinct from r.caretaker_id then
+    raise exception 'Only the person who posted this or its Guardian can edit it.' using errcode = '42501';
+  end if;
+  if p_status is not null and p_status not in ('lost', 'deceased', 'hotspot') and r.species = 'dog' then
+    raise exception 'Dogs can be listed as maybe lost, found deceased or a hotspot.' using errcode = '22023';
+  end if;
+  if coalesce(p_status, r.status) = 'hotspot' then
+    if nullif(btrim(coalesce(p_place ->> 'name', r.place_name, '')), '') is null then
+      raise exception 'Add the name of the place.' using errcode = '22023';
+    end if;
+    if r.place_ok_at is null and coalesce((p_place ->> 'ok')::boolean, false) is not true then
+      raise exception 'Hotspots need the owner''s okay. Please tick the box.' using errcode = '22023';
+    end if;
   end if;
   update public.map_cats
      set name = coalesce(nullif(btrim(p_name), ''), name),
          status = coalesce(p_status, status),
          description = left(coalesce(p_description, description), 500),
-         needs = case when coalesce(p_status, status) = 'help' then coalesce(p_needs, needs) else '{}' end
-   where id = p_cat and auth.uid() is not null and auth.uid() in (created_by, caretaker_id);
-  if not found then raise exception 'Only the person who posted this or its Guardian can edit it.' using errcode = '42501'; end if;
+         needs = case when coalesce(p_status, status) = 'help' then coalesce(p_needs, needs) else '{}' end,
+         place_name = case when p_place ? 'name' then nullif(left(btrim(p_place ->> 'name'), 80), '') else place_name end,
+         place_hours = case when p_place ? 'hours' then nullif(left(btrim(p_place ->> 'hours'), 120), '') else place_hours end,
+         place_rules = case when p_place ? 'rules' then nullif(left(btrim(p_place ->> 'rules'), 300), '') else place_rules end,
+         place_ok_at = case when coalesce(p_status, status) = 'hotspot' then coalesce(place_ok_at, now()) else place_ok_at end
+   where id = p_cat;
 end $$;
 
 create or replace function public.map_claim(p_cat uuid, p_display text)
@@ -425,10 +474,13 @@ begin
   if exists (select 1 from public.map_cats where id = p_cat and species = 'dog') then
     raise exception 'Guardians are for neighbourhood cats. A lost dog needs its owner!' using errcode = '22023';
   end if;
+  if exists (select 1 from public.map_cats where id = p_cat and status = 'hotspot') then
+    raise exception 'Hotspot animals are looked after by their place already.' using errcode = '22023';
+  end if;
   update public.map_cats
      set caretaker_id = auth.uid(),
          caretaker_name = coalesce(nullif(left(btrim(coalesce(p_display, '')), 40), ''), 'a neighbour')
-   where id = p_cat and caretaker_id is null and not hidden and species = 'cat';
+   where id = p_cat and caretaker_id is null and not hidden and species = 'cat' and status <> 'hotspot';
   if not found then raise exception 'This cat already has a Guardian.' using errcode = '23505'; end if;
 end $$;
 
@@ -503,23 +555,23 @@ revoke execute on function public.map_sightings_gone() from public, anon, authen
 grant execute on function public.map_cats_in(double precision, double precision, double precision, double precision) to anon, authenticated;
 grant execute on function public.map_cat_detail(uuid) to anon, authenticated;
 
-revoke execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[]) from public, anon;
+revoke execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[], jsonb) from public, anon;
 revoke execute on function public.map_mark_call(uuid, text, boolean, text) from public, anon;
 revoke execute on function public.map_mark_home(uuid, boolean) from public, anon;
 revoke execute on function public.map_comment(uuid, text, text) from public, anon;
 revoke execute on function public.map_delete_comment(uuid) from public, anon;
 revoke execute on function public.map_help_toggle(uuid, text, text) from public, anon;
-revoke execute on function public.map_update_cat(uuid, text, text, text, text[]) from public, anon;
+revoke execute on function public.map_update_cat(uuid, text, text, text, text[], jsonb) from public, anon;
 revoke execute on function public.map_claim(uuid, text) from public, anon;
 revoke execute on function public.map_release(uuid) from public, anon;
 revoke execute on function public.map_report(text, uuid, text) from public, anon;
-grant execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[]) to authenticated;
+grant execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[], jsonb) to authenticated;
 grant execute on function public.map_mark_call(uuid, text, boolean, text) to authenticated;
 grant execute on function public.map_mark_home(uuid, boolean) to authenticated;
 grant execute on function public.map_comment(uuid, text, text) to authenticated;
 grant execute on function public.map_delete_comment(uuid) to authenticated;
 grant execute on function public.map_help_toggle(uuid, text, text) to authenticated;
-grant execute on function public.map_update_cat(uuid, text, text, text, text[]) to authenticated;
+grant execute on function public.map_update_cat(uuid, text, text, text, text[], jsonb) to authenticated;
 grant execute on function public.map_claim(uuid, text) to authenticated;
 grant execute on function public.map_release(uuid) to authenticated;
 grant execute on function public.map_report(text, uuid, text) to authenticated;
