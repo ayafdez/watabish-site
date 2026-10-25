@@ -1,0 +1,975 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>watabish — cat map</title>
+<meta name="description" content="A neighbourhood map of cats: the friendly ones, the ones who need a hand, and the ones who might be lost.">
+<meta name="theme-color" content="#2B1C15">
+<link rel="icon" type="image/png" href="../play/icon-192.png">
+<link rel="apple-touch-icon" href="../play/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root {
+  --bg: #F3EADB; --panel: #FFFFFF; --ink: #2B1C15; --muted: #5A463A; --line: #E4D6C0;
+  --blue: #1F5FA8; --ice: #BFE3FF; --brown: #2B1C15; --cream: #F3EADB;
+  --spotted: #1F5FA8; --help: #B4452F; --lost: #2B1C15; --good: #3F8A5C;
+  --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #2B1C15; --panel: #3E2C23; --ink: #F3EADB; --muted: #CDBBA8; --line: #5A463A; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #2B1C15; --panel: #3E2C23; --ink: #F3EADB; --muted: #CDBBA8; --line: #5A463A; color-scheme: dark }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--font); min-height: 100vh; display: flex; flex-direction: column;
+  background-image: radial-gradient(color-mix(in srgb, var(--blue) 9%, transparent) 1.2px, transparent 1.4px); background-size: 22px 22px; }
+a { color: var(--blue); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) a { color: var(--ice); } }
+button, input, textarea, select { font: inherit; color: inherit; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+/* buttons, the watabish way: brown outline, hard shadow */
+.btn { appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 20px;
+  border: 3px solid var(--brown); border-radius: 999px; background: var(--blue); color: #fff; font-weight: 700; cursor: pointer;
+  box-shadow: 4px 4px 0 var(--brown); text-decoration: none; transition: transform .08s, box-shadow .08s; }
+.btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--brown); }
+.btn.ghost { background: var(--cream); color: var(--brown); }
+.btn.dark { background: var(--brown); color: var(--cream); box-shadow: 4px 4px 0 var(--blue); }
+.btn.help { background: var(--help); }
+.btn.small { min-height: 40px; padding: 0 14px; font-size: 14px; box-shadow: 3px 3px 0 var(--brown); }
+.btn:disabled { opacity: .55; cursor: default; }
+.linkbtn { appearance: none; border: 0; background: none; padding: 6px 0; color: var(--blue); font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.linkbtn.muted { color: var(--muted); font-weight: 600; font-size: 13px; }
+.chip { appearance: none; display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border-radius: 999px;
+  border: 2px solid var(--brown); background: var(--panel); color: var(--ink); font-weight: 700; font-size: 14px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--brown); color: var(--cream); }
+.chip .n { font-weight: 400; opacity: .8; }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex: none; display: inline-block; }
+.dot.spotted { background: var(--spotted); } .dot.help { background: var(--help); } .dot.lost { background: var(--lost); box-shadow: 0 0 0 2px var(--cream); }
+.pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; }
+.pill.spotted { background: var(--spotted); } .pill.help { background: var(--help); } .pill.lost { background: var(--lost); color: var(--cream); }
+.pill.soft { background: transparent; color: var(--ink); border: 2px solid var(--line); padding: 0 9px; }
+.kicker { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; color: var(--muted); }
+.muted { color: var(--muted); }
+.field { display: grid; gap: 6px; }
+.field > span, .label { font-weight: 700; }
+.input { width: 100%; min-height: 46px; padding: 10px 14px; border: 2px solid var(--brown); border-radius: 14px; background: var(--panel); }
+textarea.input { resize: vertical; min-height: 84px; }
+.check { display: flex; gap: 10px; align-items: center; font-size: 14px; }
+.check input { width: 20px; height: 20px; accent-color: var(--blue); flex: none; }
+
+/* ---------- layout ---------- */
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding: 12px max(16px, env(safe-area-inset-left)) 12px; background: var(--bg); border-bottom: 3px solid var(--brown); position: relative; z-index: 500; }
+.brand { display: flex; align-items: baseline; gap: 8px; text-decoration: none; color: var(--ink); }
+.brand b { font-weight: 800; font-size: 26px; letter-spacing: -0.04em; }
+.brand b i { font-style: normal; color: var(--blue); }
+.brand span { font-weight: 700; font-size: 15px; color: var(--muted); }
+.search { flex: 1 1 220px; max-width: 440px; display: flex; gap: 6px; }
+.search .input { min-height: 44px; }
+.topbtns { display: flex; gap: 10px; align-items: center; margin-left: auto; flex-wrap: wrap; }
+.acct { appearance: none; border: 2px solid var(--brown); background: var(--panel); border-radius: 999px; min-height: 44px; padding: 0 14px; font-weight: 700; cursor: pointer; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.layout { flex: 1; display: flex; flex-direction: column; }
+.mapwrap { position: relative; height: 58vh; min-height: 340px; border-bottom: 3px solid var(--brown); }
+#map { position: absolute; inset: 0; background: #E9E4DA; }
+.side { padding: 18px max(16px, env(safe-area-inset-left)) 40px; display: grid; gap: 14px; align-content: start; }
+@media (min-width: 900px) {
+  body { height: 100vh; }
+  .layout { flex-direction: row-reverse; min-height: 0; }
+  .mapwrap { flex: 1; height: auto; border-bottom: 0; border-left: 3px solid var(--brown); }
+  .side { width: 400px; flex: none; overflow-y: auto; }
+}
+.side h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.list { display: grid; gap: 10px; }
+.card { appearance: none; text-align: left; display: flex; gap: 12px; align-items: center; padding: 10px; border: 2px solid var(--brown); border-radius: 18px;
+  background: var(--panel); cursor: pointer; width: 100%; box-shadow: 3px 3px 0 var(--brown); }
+.card:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--brown); }
+.thumb { width: 64px; height: 64px; border-radius: 14px; flex: none; object-fit: cover; display: grid; place-items: center; background: var(--line); color: var(--muted); }
+.card .t { display: grid; gap: 2px; min-width: 0; }
+.card .nm { display: flex; gap: 8px; align-items: center; font-weight: 800; font-size: 16px; }
+.card .sub { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.empty { padding: 18px; border: 2px dashed var(--line); border-radius: 18px; color: var(--muted); text-align: center; }
+
+.overlay { position: absolute; z-index: 450; left: 50%; top: 16px; transform: translateX(-50%); width: min(380px, calc(100% - 32px));
+  background: var(--panel); border: 3px solid var(--brown); border-radius: 18px; box-shadow: 5px 5px 0 var(--brown); padding: 16px; display: grid; gap: 10px; text-align: center; }
+.overlay p { margin: 0; }
+.legend { position: absolute; z-index: 450; left: 12px; bottom: 26px; background: var(--panel); border: 2px solid var(--brown); border-radius: 14px; padding: 8px 12px;
+  display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; font-weight: 700; max-width: calc(100% - 90px); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.legend .ring { width: 12px; height: 12px; border-radius: 50%; border: 2px dashed var(--help); background: color-mix(in srgb, var(--help) 18%, transparent); }
+.locate { position: absolute; z-index: 450; right: 12px; bottom: 26px; width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--brown); background: var(--panel); color: var(--ink);
+  display: grid; place-items: center; cursor: pointer; box-shadow: 3px 3px 0 var(--brown); }
+.locate svg, .icon { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* map pins */
+.pin { width: 44px; height: 44px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px var(--brown), 0 4px 10px rgb(0 0 0 / .3);
+  display: grid; place-items: center; color: #fff; overflow: hidden; font: 800 20px var(--font); }
+.pin img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pin.spotted { background: var(--spotted); border-color: var(--spotted); }
+.pin.help { background: var(--help); border-color: var(--help); }
+.pin.lost { background: var(--lost); border-color: var(--lost); }
+.pin svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.leaflet-container { font-family: var(--font); }
+.leaflet-control-attribution { font-size: 11px; }
+
+/* dialogs */
+dialog { border: 3px solid var(--brown); border-radius: 24px; padding: 0; width: min(560px, calc(100% - 24px)); max-height: calc(100vh - 32px);
+  background: var(--panel); color: var(--ink); box-shadow: 6px 6px 0 var(--brown); }
+dialog::backdrop { background: rgb(43 28 21 / .55); }
+@media (max-width: 600px) {
+  dialog { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 24px 24px 0 0; border-bottom: 0; box-shadow: 0 -5px 0 var(--brown); max-height: 92vh; }
+}
+.dlg { display: grid; gap: 16px; padding: 18px 18px calc(22px + env(safe-area-inset-bottom)); }
+.dlghead { display: flex; justify-content: space-between; align-items: center; gap: 12px; position: sticky; top: 0; background: var(--panel); padding: 14px 18px 10px; z-index: 2; border-bottom: 2px solid var(--line); }
+.dlghead h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+.close { appearance: none; width: 44px; height: 44px; flex: none; border-radius: 50%; border: 3px solid var(--brown); background: var(--cream); color: var(--brown); font: 700 20px var(--font); cursor: pointer; }
+.section { display: grid; gap: 10px; }
+.section h3 { margin: 0; font-size: 18px; font-weight: 800; }
+.gallery { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -18px; padding: 0 18px; }
+.gallery img { height: 220px; max-width: 86%; border-radius: 16px; border: 2px solid var(--brown); object-fit: cover; scroll-snap-align: start; flex: none; background: var(--line); }
+.nophoto { height: 160px; border-radius: 16px; border: 2px dashed var(--line); display: grid; place-items: center; color: var(--muted); }
+.catname { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.catname h2 { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.box { padding: 12px 14px; border: 2px solid var(--line); border-radius: 16px; display: grid; gap: 8px; }
+.box.warm { background: color-mix(in srgb, var(--help) 10%, var(--panel)); border-color: color-mix(in srgb, var(--help) 40%, var(--line)); }
+.needrow { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 10px 12px; border: 2px solid var(--line); border-radius: 14px; }
+.needrow b { display: block; }
+.timeline { display: grid; gap: 0; }
+.ev { padding: 12px 0; border-bottom: 2px solid var(--line); display: grid; gap: 4px; }
+.ev:last-child { border-bottom: 0; }
+.ev .who { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
+.ev .who b { font-size: 14px; }
+.ev p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ev img { width: 120px; height: 90px; object-fit: cover; border-radius: 10px; border: 2px solid var(--line); }
+.tag { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--brown); color: var(--cream); }
+.choices { display: grid; gap: 8px; }
+.choice { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 2px solid var(--line); border-radius: 16px; cursor: pointer; }
+.choice:has(input:checked) { border-color: var(--brown); box-shadow: 3px 3px 0 var(--brown); }
+.choice input { width: 20px; height: 20px; accent-color: var(--brown); flex: none; margin: 0; }
+.choice .t { display: grid; gap: 1px; min-width: 0; }
+.choice .t b { font-size: 15px; }
+.choice .t span { font-size: 13px; color: var(--muted); }
+.choice img, .choice .thumb { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; flex: none; }
+.togglechips { display: flex; flex-wrap: wrap; gap: 8px; }
+.togglechips label { position: relative; }
+.togglechips input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.togglechips span { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 2px solid var(--line); font-weight: 700; font-size: 14px; }
+.togglechips input:checked + span { background: var(--help); border-color: var(--help); color: #fff; }
+.togglechips input:focus-visible + span { outline: 3px solid var(--blue); outline-offset: 2px; }
+.photo { position: relative; display: grid; place-items: center; min-height: 190px; border: 3px dashed var(--line); border-radius: 18px; background: color-mix(in srgb, var(--line) 30%, var(--panel)); overflow: hidden; cursor: pointer; text-align: center; padding: 12px; }
+.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.photo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.photo .ph { display: grid; gap: 6px; justify-items: center; font-weight: 700; }
+.minimap { height: 200px; border-radius: 16px; border: 2px solid var(--brown); overflow: hidden; }
+.note { font-size: 13px; color: var(--muted); margin: 0; }
+.msg { min-height: 1.5em; font-weight: 700; margin: 0; }
+.msg.err { color: var(--help); }
+.toast { position: fixed; z-index: 3000; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--brown); color: var(--cream); padding: 12px 18px; border-radius: 999px; font-weight: 700;
+  box-shadow: 4px 4px 0 var(--blue); max-width: calc(100% - 32px); text-align: center; }
+.foot { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.foot a { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="../"><b>watabish<i>.</i></b><span>cat map</span></a>
+  <form class="search" id="searchForm" role="search">
+    <label for="searchInput" class="sr">Find a place</label>
+    <input class="input" id="searchInput" type="search" placeholder="go to a street or neighbourhood" autocomplete="off">
+    <button class="btn small ghost" type="submit">go</button>
+  </form>
+  <div class="topbtns">
+    <button class="acct" id="acctBtn" type="button">sign in</button>
+    <button class="btn" id="postBtn" type="button">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>post a cat</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="mapwrap" aria-label="Map of cats">
+    <div id="map"></div>
+    <div class="overlay" id="startCard">
+      <p><b>Find the cats near you.</b></p>
+      <p class="muted">We only use your location to move the map. It isn't saved or shared.</p>
+      <button class="btn" id="startLocate" type="button">show cats near me</button>
+      <p class="note">or search for a street above</p>
+    </div>
+    <div class="overlay" id="zoomCard" hidden><p><b>Zoom in to see cats.</b></p><p class="muted">Cats are a neighbourhood thing.</p></div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="dot spotted"></i>spotted</span>
+      <span><i class="ring"></i>needs help (area)</span>
+      <span><i class="dot lost"></i>maybe lost</span>
+    </div>
+    <button class="locate" id="locateBtn" type="button" aria-label="Go to my location">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+    </button>
+  </section>
+
+  <aside class="side">
+    <div>
+      <h1>cats around here</h1>
+      <p class="muted" id="countLine" style="margin: 4px 0 0">move the map to look around</p>
+    </div>
+    <div class="filters" role="group" aria-label="Filter cats">
+      <button class="chip" type="button" data-f="all" aria-pressed="true">all <span class="n" data-n="all"></span></button>
+      <button class="chip" type="button" data-f="spotted" aria-pressed="false"><i class="dot spotted"></i>spotted <span class="n" data-n="spotted"></span></button>
+      <button class="chip" type="button" data-f="help" aria-pressed="false"><i class="dot help"></i>needs help <span class="n" data-n="help"></span></button>
+      <button class="chip" type="button" data-f="lost" aria-pressed="false"><i class="dot lost"></i>maybe lost <span class="n" data-n="lost"></span></button>
+    </div>
+    <div class="list" id="list"></div>
+    <p class="msg err" id="loadMsg" role="status"></p>
+    <div class="foot">
+      <button class="linkbtn muted" id="aboutBtn" type="button">how it works &amp; safety</button>
+      <a href="../play/">play watabish</a>
+      <a href="../privacy.html">privacy</a>
+      <a href="../terms.html">terms</a>
+    </div>
+  </aside>
+</main>
+
+<!-- cat profile -->
+<dialog id="catDlg" aria-labelledby="catTitle">
+  <div class="dlghead"><span class="kicker" id="catKicker">cat</span><button class="close" type="button" data-close aria-label="Close">×</button></div>
+  <div class="dlg" id="catBody"></div>
+</dialog>
+
+<!-- post a cat -->
+<dialog id="postDlg" aria-labelledby="postTitle">
+  <div class="dlghead"><h2 id="postTitle">post a cat</h2><button class="close" type="button" data-close aria-label="Close">×</button></div>
+  <form class="dlg" id="postForm" novalidate>
+    <label class="photo" id="photoBox">
+      <img id="photoPreview" alt="" hidden>
+      <span class="ph" id="photoPh">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="width:34px;height:34px"><rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="3.5"/><path d="M9 6l1.5-2h3L15 6"/></svg>
+        take or add a photo
+        <span class="note">we read where it was taken, then remove that info from the photo</span>
+      </span>
+      <input type="file" id="photoInput" accept="image/*" aria-label="Photo of the cat">
+    </label>
+
+    <div class="section">
+      <div class="row" style="justify-content: space-between"><span class="label">where</span><button class="linkbtn" type="button" id="postLocate">use my location</button></div>
+      <div class="minimap" id="postMap"></div>
+      <p class="note" id="locNote">drag the pin to where you saw the cat. the exact spot stays private.</p>
+    </div>
+
+    <fieldset class="section" style="border:0;margin:0;padding:0">
+      <legend class="label" style="margin-bottom:8px">what's going on?</legend>
+      <div class="choices">
+        <label class="choice"><input type="radio" name="status" value="spotted" checked><i class="dot spotted"></i><span class="t"><b>spotted</b><span>a cat out and about. say hi to the neighbourhood.</span></span></label>
+        <label class="choice"><input type="radio" name="status" value="help"><i class="dot help"></i><span class="t"><b>needs help</b><span>cold, hungry, hurt or needs a shelter.</span></span></label>
+        <label class="choice"><input type="radio" name="status" value="lost"><i class="dot lost"></i><span class="t"><b>maybe lost</b><span>looks like someone's pet: collar, very tame, confused.</span></span></label>
+      </div>
+    </fieldset>
+
+    <fieldset class="section" id="needsBox" hidden style="border:0;margin:0;padding:0">
+      <legend class="label" style="margin-bottom:8px">what does it need?</legend>
+      <div class="togglechips" id="needsChips"></div>
+      <p class="box warm note" style="margin:0">On the map, cats who need help show as an approximate area, never the exact spot. If a cat is badly hurt, call your local animal services first.</p>
+    </fieldset>
+
+    <fieldset class="section" id="matchBox" hidden style="border:0;margin:0;padding:0">
+      <legend class="label">is this one of these cats?</legend>
+      <p class="note" style="margin:0 0 6px">seen near here. matching keeps one profile per cat.</p>
+      <div class="choices" id="matchList"></div>
+    </fieldset>
+
+    <div class="section" id="newCatBox">
+      <label class="field"><span>name <span class="muted" style="font-weight:400">(optional, make one up)</span></span>
+        <input class="input" id="catName" maxlength="40" placeholder="e.g. Marmalade"></label>
+      <label class="field"><span>what's it like?</span>
+        <input class="input" id="catDesc" maxlength="500" placeholder="orange tabby, shy, hangs around the park"></label>
+    </div>
+
+    <label class="field"><span>note <span class="muted" style="font-weight:400">(optional)</span></span>
+      <textarea class="input" id="postNote" maxlength="500" placeholder="anything neighbours should know?"></textarea></label>
+
+    <p class="msg" id="postMsg" role="status"></p>
+    <button class="btn" id="postSubmit" type="submit">post to the map</button>
+  </form>
+</dialog>
+
+<!-- account -->
+<dialog id="acctDlg" aria-labelledby="acctTitle">
+  <div class="dlghead"><h2 id="acctTitle">your account</h2><button class="close" type="button" data-close aria-label="Close">×</button></div>
+  <div class="dlg">
+    <div id="acctOut" class="section">
+      <p style="margin:0">Same account as Watabish: if you've adopted him, use that email. No password, we email you a code.</p>
+      <p class="note" style="margin:0">You need an account to post cats, offer help or become a caretaker. Commenting works without one.</p>
+      <label class="field"><span>email</span><input class="input" id="acctEmail" type="email" autocomplete="email" inputmode="email"></label>
+      <label class="check"><input type="checkbox" id="acctAge"> I'm 13 or older</label>
+      <button class="btn" type="button" id="acctSend">email me a code</button>
+      <div id="acctCodeBox" class="section" hidden>
+        <label class="field"><span>code from the email</span><input class="input" id="acctCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
+        <button class="btn dark" type="button" id="acctVerify">sign in</button>
+      </div>
+    </div>
+    <div id="acctIn" class="section" hidden>
+      <p style="margin:0">Signed in as <b id="acctWho"></b></p>
+      <label class="field"><span>what should neighbours call you?</span>
+        <input class="input" id="acctName" maxlength="40" placeholder="first name or a nickname"></label>
+      <p class="note" style="margin:0">Shown on your posts and comments. Don't use your full name if you'd rather not.</p>
+      <div class="row"><button class="btn small" type="button" id="acctSaveName">save name</button>
+        <button class="btn small ghost" type="button" id="acctSignOut">sign out</button></div>
+      <p class="note" style="margin:0">To delete your account, open the journal in <a href="../play/">Watabish</a>.</p>
+    </div>
+    <p class="msg" id="acctMsg" role="status"></p>
+  </div>
+</dialog>
+
+<!-- report -->
+<dialog id="reportDlg" aria-labelledby="reportTitle">
+  <div class="dlghead"><h2 id="reportTitle">report this</h2><button class="close" type="button" data-close aria-label="Close">×</button></div>
+  <form class="dlg" id="reportForm">
+    <div class="choices">
+      <label class="choice"><input type="radio" name="reason" value="spam or not a cat" checked><span class="t"><b>spam, or not a cat</b></span></label>
+      <label class="choice"><input type="radio" name="reason" value="mean or unsafe"><span class="t"><b>mean, or could put a cat in danger</b></span></label>
+      <label class="choice"><input type="radio" name="reason" value="private info"><span class="t"><b>shares someone's private info</b></span></label>
+      <label class="choice"><input type="radio" name="reason" value="other"><span class="t"><b>something else</b></span></label>
+    </div>
+    <p class="note" style="margin:0">Things reported by a few people are hidden until we take a look.</p>
+    <p class="msg" id="reportMsg" role="status"></p>
+    <button class="btn" type="submit">send report</button>
+  </form>
+</dialog>
+
+<!-- about -->
+<dialog id="aboutDlg" aria-labelledby="aboutTitle">
+  <div class="dlghead"><h2 id="aboutTitle">how it works</h2><button class="close" type="button" data-close aria-label="Close">×</button></div>
+  <div class="dlg">
+    <div class="section"><h3>the map</h3>
+      <p style="margin:0">Neighbours post the cats they meet. Each cat gets one profile that collects sightings, photos and comments, so everyone knows who's who.</p>
+      <p style="margin:0"><b>Spotted</b> is a cat doing cat things. <b>Needs help</b> is a cat that's cold, hungry or hurt. <b>Maybe lost</b> is a cat that looks like someone's missing pet.</p>
+      <p style="margin:0">A <b>Colony Keeper</b> is the neighbour who looks after a cat: feeds it, keeps an eye out, organizes help. Anyone with an account can step up for a cat that doesn't have one.</p></div>
+    <div class="section"><h3>keeping cats (and you) safe</h3>
+      <p style="margin:0">Locations on the map are moved a little on purpose. Cats who need help or might be lost only show as an area. When you post a photo, the location info hidden inside it is removed before it's uploaded.</p>
+      <p style="margin:0">If a cat is badly hurt or in danger, contact your local animal services or a rescue right away. Don't try to catch a scared or feral cat yourself; rescues have traps and know-how.</p>
+      <p style="margin:0">Think a cat is lost? Look for a collar or tag, and ask a vet or shelter to scan it for a microchip. It's free.</p></div>
+    <p class="note" style="margin:0">Map data © OpenStreetMap contributors. Questions: <a href="mailto:aya@likhangmaya.com">aya@likhangmaya.com</a> · <a href="../privacy.html">privacy</a></p>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
+<script>
+"use strict";
+// ---------- setup ----------
+const SB_URL = "https://drreubfqwmivmpwpynnt.supabase.co";
+const SB_KEY = "sb_publishable_ZIFNEg8XxN_JW6li0MKReA_yjgPEfyj";
+// OpenStreetMap's own tiles are fine to start. If the map gets busy, swap in a tile provider here.
+const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const TILES_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const MIN_ZOOM_FOR_CATS = 12;
+
+const STATUS = {
+  spotted: { label: "spotted" },
+  help: { label: "needs help" },
+  lost: { label: "maybe lost" },
+};
+const NEEDS = { shelter: "winter shelter", food: "food", vet: "vet care", tnr: "TNR (spay/neuter)", injured: "injured" };
+const CAT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4l3 4h8l3-4v9a7 7 0 0 1-14 0z"/><path d="M11 16l1 1 1-1"/></svg>';
+const HEART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+
+let sb = null, sbAnon = null;
+try {
+  if (window.supabase && window.supabase.createClient) {
+    // the main client shares its sign-in with /play (same site, same storage)
+    sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+    // anonymous commenting uses its own storage so /play never sees a guest session
+    sbAnon = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: "wb-map-anon" } });
+  }
+} catch { sb = null; sbAnon = null; }
+
+let user = null;          // signed-in email account (never an anonymous session)
+let anonReady = false;    // a guest session exists for commenting
+const myName = () => (user && user.user_metadata && user.user_metadata.map_name) || "";
+const photoUrl = (p) => p && sb ? sb.storage.from("cat-photos").getPublicUrl(p).data.publicUrl : "";
+
+function toast(t) { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 3600); }
+function errText(e, fallback) {
+  const m = (e && (e.message || e.error_description)) || "";
+  if (/fetch|network|Failed to/i.test(m)) return "Couldn't reach the server. Check your connection.";
+  return m && m.length < 140 && !/violates|syntax|function|relation|column/i.test(m) ? m : fallback;
+}
+function ago(ts) {
+  const s = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (s < 90) return "just now";
+  if (s < 3600) return Math.round(s / 60) + " min ago";
+  if (s < 86400) return Math.round(s / 3600) + " h ago";
+  if (s < 86400 * 2) return "yesterday";
+  if (s < 86400 * 30) return Math.round(s / 86400) + " days ago";
+  return new Date(ts).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+}
+function metres(a, b) {
+  const R = 6371000, toR = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * toR, dLng = (b.lng - a.lng) * toR;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * toR) * Math.cos(b.lat * toR) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function distLabel(m, approx) {
+  const t = m < 1000 ? Math.max(10, Math.round(m / 10) * 10) + " m" : (m / 1000).toFixed(1) + " km";
+  return (approx ? "~" : "") + t;
+}
+
+// close buttons and backdrop clicks for every dialog
+document.querySelectorAll("dialog").forEach((d) => {
+  d.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => d.close()));
+  d.addEventListener("click", (e) => { if (e.target === d) d.close(); });
+});
+
+// ---------- map ----------
+const saved = store.get("wb-map-view");
+const map = L.map("map", { zoomControl: true, worldCopyJump: true }).setView(saved ? [saved.lat, saved.lng] : [50, -96], saved ? saved.z : 4);
+L.tileLayer(TILES, { maxZoom: 19, attribution: TILES_ATTR }).addTo(map);
+const layer = L.layerGroup().addTo(map);
+let me = null, meMarker = null;
+let cats = [];
+let filter = "all";
+if (saved) $("startCard").hidden = true;
+
+function locate(onDone) {
+  if (!navigator.geolocation) { toast("Your browser can't share a location. Search for a street instead."); return; }
+  navigator.geolocation.getCurrentPosition((p) => {
+    me = { lat: p.coords.latitude, lng: p.coords.longitude };
+    if (meMarker) meMarker.setLatLng(me); else meMarker = L.circleMarker(me, { radius: 8, color: "#fff", weight: 3, fillColor: "#1F5FA8", fillOpacity: 1 }).addTo(map);
+    $("startCard").hidden = true;
+    map.setView(me, Math.max(map.getZoom(), 15));
+    if (onDone) onDone(me);
+  }, () => toast("Couldn't get your location. Search for a street instead."), { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+}
+$("startLocate").onclick = () => locate();
+$("locateBtn").onclick = () => locate();
+
+$("searchForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const q = $("searchInput").value.trim();
+  if (!q) return;
+  try {
+    const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q), { headers: { "Accept-Language": navigator.language || "en" } });
+    const j = await r.json();
+    if (!j.length) { toast("Couldn't find that place."); return; }
+    $("startCard").hidden = true;
+    map.setView([+j[0].lat, +j[0].lon], 15);
+    $("searchInput").blur();
+  } catch { toast("Search isn't working right now."); }
+});
+
+let loadTimer = null, loadSeq = 0;
+map.on("moveend", () => {
+  const c = map.getCenter();
+  store.set("wb-map-view", { lat: c.lat, lng: c.lng, z: map.getZoom() });
+  clearTimeout(loadTimer); loadTimer = setTimeout(loadCats, 250);
+});
+
+async function loadCats() {
+  const tooFar = map.getZoom() < MIN_ZOOM_FOR_CATS;
+  $("zoomCard").hidden = !tooFar || !$("startCard").hidden;
+  if (tooFar) { cats = []; render(); $("countLine").textContent = "zoom in on a neighbourhood to see its cats"; return; }
+  if (!sb) { $("loadMsg").textContent = "The cat map can't load right now. Try again later."; return; }
+  const b = map.getBounds().pad(0.25), seq = ++loadSeq;
+  const { data, error } = await sb.rpc("map_cats_in", { min_lat: b.getSouth(), min_lng: b.getWest(), max_lat: b.getNorth(), max_lng: b.getEast() });
+  if (seq !== loadSeq) return;
+  if (error) { $("loadMsg").textContent = errText(error, "Couldn't load cats. Try moving the map."); return; }
+  $("loadMsg").textContent = "";
+  cats = data || [];
+  render();
+}
+
+function pinHtml(c) {
+  const img = c.cover_photo ? '<img src="' + esc(photoUrl(c.cover_photo)) + '" alt="">' : "";
+  const inner = img || (c.status === "lost" ? "?" : c.status === "help" ? HEART_SVG : CAT_SVG);
+  return '<div class="pin ' + c.status + '">' + inner + "</div>";
+}
+function render() {
+  layer.clearLayers();
+  const shown = cats.filter((c) => filter === "all" || c.status === filter);
+  for (const c of shown) {
+    if (c.status !== "spotted") {
+      const col = c.status === "help" ? "#B4452F" : "#2B1C15";
+      L.circle([c.lat, c.lng], { radius: 220, color: col, weight: 2, dashArray: "6 6", fillColor: col, fillOpacity: 0.12, interactive: false }).addTo(layer);
+    }
+    const m = L.marker([c.lat, c.lng], {
+      icon: L.divIcon({ className: "", html: pinHtml(c), iconSize: [44, 44], iconAnchor: [22, 22] }),
+      title: c.name + ", " + STATUS[c.status].label, alt: c.name + ", " + STATUS[c.status].label, keyboard: true,
+      zIndexOffset: c.status === "help" ? 300 : c.status === "lost" ? 200 : 0,
+    });
+    m.on("click", () => openCat(c.id));
+    m.addTo(layer);
+  }
+  renderList();
+}
+
+function renderList() {
+  const view = map.getBounds(), center = me || map.getCenter();
+  const inView = cats.filter((c) => view.contains([c.lat, c.lng]));
+  const counts = { all: inView.length, spotted: 0, help: 0, lost: 0 };
+  inView.forEach((c) => counts[c.status]++);
+  document.querySelectorAll("[data-n]").forEach((el) => { el.textContent = counts[el.dataset.n] ? counts[el.dataset.n] : ""; });
+  if (map.getZoom() >= MIN_ZOOM_FOR_CATS) $("countLine").textContent = counts.all ? counts.all + (counts.all === 1 ? " cat" : " cats") + " in this area" : "no cats posted here yet";
+  const list = inView.filter((c) => filter === "all" || c.status === filter)
+    .map((c) => ({ c, d: metres(center, c) })).sort((a, b) => (b.c.status === "help") - (a.c.status === "help") || a.d - b.d).slice(0, 60);
+  if (!list.length) {
+    $("list").innerHTML = map.getZoom() >= MIN_ZOOM_FOR_CATS
+      ? '<div class="empty">No cats here yet. Seen one? <button class="linkbtn" type="button" data-post>Put it on the map.</button></div>' : "";
+    const p = $("list").querySelector("[data-post]"); if (p) p.onclick = () => openPost();
+    return;
+  }
+  $("list").innerHTML = list.map(({ c, d }) => {
+    const what = c.status === "help" && c.needs && c.needs.length ? "needs " + c.needs.map((n) => NEEDS[n]).join(", ") : c.description || STATUS[c.status].label;
+    const thumb = c.cover_photo ? '<img class="thumb" src="' + esc(photoUrl(c.cover_photo)) + '" alt="" loading="lazy">' : '<span class="thumb pin-ish">' + CAT_SVG.replace("<svg", '<svg class="icon"') + "</span>";
+    return '<button class="card" type="button" data-cat="' + esc(c.id) + '">' + thumb +
+      '<span class="t"><span class="nm">' + esc(c.name) + ' <span class="pill ' + c.status + '">' + STATUS[c.status].label + "</span></span>" +
+      '<span class="sub">' + esc(what) + "</span>" +
+      '<span class="sub">' + distLabel(d, c.status !== "spotted") + " · " + c.sighting_count + (c.sighting_count === 1 ? " sighting" : " sightings") + " · seen " + ago(c.last_seen_at) + "</span></span></button>";
+  }).join("");
+  $("list").querySelectorAll("[data-cat]").forEach((b) => { b.onclick = () => openCat(b.dataset.cat); });
+}
+
+document.querySelectorAll(".filters .chip").forEach((b) => b.addEventListener("click", () => {
+  filter = b.dataset.f;
+  document.querySelectorAll(".filters .chip").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  render();
+}));
+
+// ---------- account ----------
+function renderAcct() {
+  $("acctBtn").textContent = user ? (myName() || "signed in") : "sign in";
+  $("acctOut").hidden = !!user; $("acctIn").hidden = !user;
+  if (user) { $("acctWho").textContent = user.email || "your account"; $("acctName").value = myName(); }
+}
+function acctMsg(t, err) { $("acctMsg").textContent = t || ""; $("acctMsg").classList.toggle("err", !!err); }
+let afterSignIn = null;
+function needAccount(why, then) {
+  afterSignIn = then || null;
+  acctMsg(why || "");
+  $("acctDlg").showModal();
+  $("acctEmail").focus();
+}
+if (sb) {
+  sb.auth.onAuthStateChange((event, session) => {
+    const u = session && session.user && !session.user.is_anonymous ? session.user : null;
+    const was = user; user = u; renderAcct();
+    if (u && !was) {
+      // whatever they were doing resumes once the account box closes (after picking a name, if needed)
+      if (!myName() && $("acctDlg").open) acctMsg("You're in. Pick a name for neighbours to see, then you're all set.");
+      else if ($("acctDlg").open) $("acctDlg").close();
+      else runAfterSignIn();
+      if (openCatId) openCat(openCatId, true);
+    }
+  });
+}
+function runAfterSignIn() { const f = afterSignIn; afterSignIn = null; if (f && user) setTimeout(f, 0); }
+$("acctDlg").addEventListener("close", runAfterSignIn);
+if (sbAnon) sbAnon.auth.getSession().then(({ data }) => { anonReady = !!(data && data.session); }).catch(() => {});
+
+$("acctBtn").onclick = () => { acctMsg(""); $("acctDlg").showModal(); };
+$("acctSend").onclick = async () => {
+  const email = $("acctEmail").value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { acctMsg("That doesn't look like an email address.", true); return; }
+  if (!$("acctAge").checked) { acctMsg("Please confirm you're 13 or older.", true); return; }
+  if (!sb) { acctMsg("Sign-in isn't available right now.", true); return; }
+  $("acctSend").disabled = true; acctMsg("Sending…");
+  try {
+    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
+    if (error) acctMsg("Couldn't send the code. Try again in a minute.", true);
+    else { acctMsg("Sent! Check your email for the code (or tap the link in it)."); $("acctCodeBox").hidden = false; $("acctCode").focus(); }
+  } catch { acctMsg("Couldn't send the code. Check your connection.", true); }
+  $("acctSend").disabled = false;
+};
+$("acctVerify").onclick = async () => {
+  const email = $("acctEmail").value.trim(), token = $("acctCode").value.replace(/\D/g, "");
+  if (token.length < 6) { acctMsg("Type the code from the email.", true); return; }
+  $("acctVerify").disabled = true; acctMsg("Checking…");
+  try {
+    const { data, error } = await sb.auth.verifyOtp({ email, token, type: "email" });
+    if (error || !data || !data.session) acctMsg("That code didn't work. It may have expired, so send a new one.", true);
+    else { $("acctCodeBox").hidden = true; $("acctCode").value = ""; }
+  } catch { acctMsg("Couldn't check the code. Check your connection.", true); }
+  $("acctVerify").disabled = false;
+};
+$("acctSaveName").onclick = async () => {
+  const n = $("acctName").value.trim().slice(0, 40);
+  if (!n) { acctMsg("Type a name first.", true); return; }
+  const { data, error } = await sb.auth.updateUser({ data: { map_name: n } });
+  if (error) { acctMsg("Couldn't save that. Try again.", true); return; }
+  user = data.user; renderAcct(); acctMsg("Saved."); setTimeout(() => $("acctDlg").close(), 600);
+};
+$("acctSignOut").onclick = async () => { try { await sb.auth.signOut(); } catch {} user = null; renderAcct(); acctMsg("Signed out."); };
+
+// ---------- cat profile ----------
+let openCatId = null, current = null;
+const catDlg = $("catDlg");
+catDlg.addEventListener("close", () => {
+  openCatId = null; current = null;
+  const u = new URL(location.href); if (u.searchParams.has("cat")) { u.searchParams.delete("cat"); history.replaceState(null, "", u); }
+});
+function readClient() { return !user && anonReady ? sbAnon : sb; }
+
+async function openCat(id, quiet) {
+  if (!sb) return;
+  openCatId = id;
+  const u = new URL(location.href); u.searchParams.set("cat", id); history.replaceState(null, "", u);
+  if (!quiet) { $("catBody").innerHTML = '<p class="muted">loading…</p>'; if (!catDlg.open) catDlg.showModal(); }
+  const { data, error } = await readClient().rpc("map_cat_detail", { p_cat: id });
+  if (openCatId !== id) return;
+  if (error || !data) { $("catBody").innerHTML = '<p class="msg err">' + esc(error ? "Couldn't load this cat." : "This cat isn't on the map anymore.") + "</p>"; if (!catDlg.open) catDlg.showModal(); return; }
+  current = data;
+  renderCat();
+  if (!catDlg.open) catDlg.showModal();
+}
+
+function renderCat(editing) {
+  const { cat, sightings, comments, offers } = current;
+  const photos = sightings.filter((s) => s.photo);
+  const d = me ? distLabel(metres(me, cat), cat.status !== "spotted") + " away · " : "";
+  $("catKicker").textContent = STATUS[cat.status].label;
+  let h = "";
+  h += photos.length
+    ? '<div class="gallery">' + photos.map((s, i) => '<img src="' + esc(photoUrl(s.photo)) + '" alt="' + esc(cat.name) + " photo " + (i + 1) + '" loading="lazy">').join("") + "</div>"
+    : '<div class="nophoto">no photo yet</div>';
+
+  if (editing) {
+    h += '<form class="section" id="editForm">' +
+      '<label class="field"><span>name</span><input class="input" id="edName" maxlength="40" value="' + esc(cat.name) + '"></label>' +
+      '<div class="choices">' + Object.keys(STATUS).map((k) => '<label class="choice"><input type="radio" name="edStatus" value="' + k + '"' + (cat.status === k ? " checked" : "") + '><i class="dot ' + k + '"></i><span class="t"><b>' + STATUS[k].label + "</b></span></label>").join("") + "</div>" +
+      '<div class="togglechips" id="edNeeds">' + Object.keys(NEEDS).map((k) => '<label><input type="checkbox" value="' + k + '"' + (cat.needs.includes(k) ? " checked" : "") + "><span>" + NEEDS[k] + "</span></label>").join("") + "</div>" +
+      '<label class="field"><span>what’s it like?</span><input class="input" id="edDesc" maxlength="500" value="' + esc(cat.description) + '"></label>' +
+      '<p class="msg" id="edMsg" role="status"></p><div class="row"><button class="btn small" type="submit">save</button><button class="btn small ghost" type="button" id="edCancel">cancel</button></div></form>';
+  } else {
+    h += '<div class="section"><div class="catname"><h2 id="catTitle">' + esc(cat.name) + '</h2><span class="pill ' + cat.status + '">' + STATUS[cat.status].label + "</span>" +
+      cat.needs.map((n) => '<span class="pill soft">' + esc(NEEDS[n]) + "</span>").join("") + "</div>" +
+      (cat.description ? '<p style="margin:0">' + esc(cat.description) + "</p>" : "") +
+      '<p class="note" style="margin:0">' + d + cat.sighting_count + (cat.sighting_count === 1 ? " sighting" : " sightings") + " · last seen " + ago(cat.last_seen_at) +
+      (cat.status !== "spotted" ? " · shown as an approximate area" : "") + "</p>" +
+      (cat.can_edit ? '<div><button class="linkbtn" type="button" id="editBtn">edit this cat</button></div>' : "") + "</div>";
+  }
+
+  // caretaker
+  h += '<div class="box">';
+  if (cat.caretaker_name) {
+    h += '<div class="row" style="justify-content:space-between"><span><span class="kicker">colony keeper</span><br><b>' + esc(cat.caretaker_name) + "</b>" + (cat.i_care ? " (you)" : "") + "</span>" +
+      (cat.i_care ? '<button class="btn small ghost" type="button" id="releaseBtn">step down</button>' : "") + "</div>" +
+      (cat.i_care ? "" : '<p class="note" style="margin:0">Leave a comment below to reach them.</p>');
+  } else {
+    h += '<div class="row" style="justify-content:space-between"><span><span class="kicker">colony keeper</span><br>nobody yet</span><button class="btn small" type="button" id="claimBtn">I look after this cat</button></div>' +
+      '<p class="note" style="margin:0">Feed it, keep an eye out, or help organize? Say so, and neighbours will know who to talk to.</p>';
+  }
+  h += "</div>";
+
+  // needs + offers
+  if (cat.status === "help") {
+    const needs = cat.needs.length ? cat.needs : [];
+    h += '<div class="section"><h3>what it needs</h3>';
+    if (!needs.length) h += '<p class="note" style="margin:0">Nothing listed yet. ' + (cat.can_edit ? "Edit the cat to add what it needs." : "Ask in the comments.") + "</p>";
+    for (const n of needs) {
+      const os = offers.filter((o) => o.need === n), mine = os.some((o) => o.mine);
+      const who = os.length ? os.map((o) => esc(o.name || "a neighbour")).join(", ") + (os.length === 1 ? " offered" : " offered") : "nobody yet";
+      h += '<div class="needrow"><span><b>' + esc(NEEDS[n]) + '</b><span class="note">' + who + "</span></span>" +
+        '<button class="btn small ' + (mine ? "ghost" : "help") + '" type="button" data-offer="' + n + '" aria-pressed="' + mine + '">' + (mine ? "you offered · undo" : "I can help") + "</button></div>";
+    }
+    h += '<div class="box warm note">If it’s badly hurt or in danger, call your local animal services or a rescue first.</div></div>';
+  }
+  if (cat.status === "lost") {
+    h += '<div class="box warm"><b>Is this your cat, or do you know whose it is?</b><span class="note">Say so in the comments. A vet or shelter can scan it for a microchip for free.</span></div>';
+  }
+
+  // timeline: sightings + comments
+  const ev = [
+    ...sightings.map((s) => ({ kind: "s", at: s.at, s })),
+    ...comments.map((c) => ({ kind: "c", at: c.at, c })),
+  ].sort((a, b) => new Date(b.at) - new Date(a.at));
+  h += '<div class="section"><h3>sightings &amp; comments</h3>';
+  h += '<form class="section" id="commentForm"><label class="sr" for="commentText">Add a comment</label>' +
+    '<textarea class="input" id="commentText" maxlength="1000" placeholder="where and when did you see it? anything useful?"></textarea>' +
+    '<div class="row" style="justify-content:space-between">' +
+    (user ? '<label class="check"><input type="checkbox" id="commentAnon"> post anonymously</label>' : '<span class="note">posting as anonymous · <button class="linkbtn" type="button" id="commentSignIn">sign in</button></span>') +
+    '<button class="btn small" type="submit">comment</button></div><p class="msg" id="commentMsg" role="status"></p></form>';
+  h += '<div class="timeline">' + (ev.length ? ev.map((e) => {
+    if (e.kind === "s") {
+      const s = e.s;
+      return '<div class="ev"><div class="who"><b>' + esc(s.name || "a neighbour") + '</b><span class="muted">spotted it · ' + ago(s.at) + "</span>" +
+        '<button class="linkbtn muted" type="button" data-report="sighting" data-id="' + esc(s.id) + '">report</button></div>' +
+        (s.note ? "<p>" + esc(s.note) + "</p>" : "") + (s.photo ? '<img src="' + esc(photoUrl(s.photo)) + '" alt="sighting photo" loading="lazy">' : "") + "</div>";
+    }
+    const c = e.c;
+    return '<div class="ev"><div class="who"><b>' + esc(c.name || "anonymous") + "</b>" + (c.caretaker ? '<span class="tag">colony keeper</span>' : "") +
+      '<span class="muted">' + ago(c.at) + "</span>" +
+      (c.mine ? '<button class="linkbtn muted" type="button" data-del="' + esc(c.id) + '">delete</button>' : '<button class="linkbtn muted" type="button" data-report="comment" data-id="' + esc(c.id) + '">report</button>') +
+      "</div><p>" + esc(c.body) + "</p></div>";
+  }).join("") : '<p class="note">No comments yet.</p>') + "</div></div>";
+
+  h += '<div class="row"><button class="btn" type="button" id="sawBtn">I saw this cat</button>' +
+    '<button class="btn ghost" type="button" id="shareBtn">share</button>' +
+    '<button class="linkbtn muted" type="button" data-report="cat" data-id="' + esc(cat.id) + '">report this cat</button></div>';
+
+  $("catBody").innerHTML = h;
+  wireCat();
+}
+
+function wireCat() {
+  const { cat } = current, body = $("catBody");
+  const ed = $("editBtn"); if (ed) ed.onclick = () => renderCat(true);
+  const ef = $("editForm");
+  if (ef) {
+    $("edCancel").onclick = () => renderCat();
+    ef.onsubmit = async (e) => {
+      e.preventDefault();
+      const st = ef.querySelector('input[name="edStatus"]:checked').value;
+      const needs = [...$("edNeeds").querySelectorAll("input:checked")].map((i) => i.value);
+      const { error } = await sb.rpc("map_update_cat", { p_cat: cat.id, p_name: $("edName").value, p_status: st, p_description: $("edDesc").value, p_needs: needs });
+      if (error) { $("edMsg").textContent = errText(error, "Couldn't save. Try again."); $("edMsg").classList.add("err"); return; }
+      toast("Saved."); await openCat(cat.id, true); loadCats();
+    };
+  }
+  const cl = $("claimBtn");
+  if (cl) cl.onclick = async () => {
+    if (!user) return needAccount("Sign in to become this cat's Colony Keeper.", () => cl.click());
+    const { error } = await sb.rpc("map_claim", { p_cat: cat.id, p_display: myName() });
+    if (error) { toast(errText(error, "Couldn't do that right now.")); return; }
+    toast("You're its Colony Keeper now. The cat is unmoved, but grateful."); openCat(cat.id, true); loadCats();
+  };
+  const rl = $("releaseBtn");
+  if (rl) rl.onclick = async () => {
+    if (!confirm("Step down as this cat's Colony Keeper?")) return;
+    await sb.rpc("map_release", { p_cat: cat.id }); openCat(cat.id, true); loadCats();
+  };
+  body.querySelectorAll("[data-offer]").forEach((b) => b.onclick = async () => {
+    if (!user) return needAccount("Sign in so the caretaker knows who's helping.", () => openCat(cat.id, true));
+    b.disabled = true;
+    const { data, error } = await sb.rpc("map_help_toggle", { p_cat: cat.id, p_need: b.dataset.offer, p_display: myName() });
+    if (error) { toast(errText(error, "Couldn't do that right now.")); b.disabled = false; return; }
+    toast(data ? "Thank you. Keep an eye on the comments to coordinate." : "Offer withdrawn.");
+    openCat(cat.id, true);
+  });
+  body.querySelectorAll("[data-del]").forEach((b) => b.onclick = async () => {
+    if (!confirm("Delete your comment?")) return;
+    await (user ? sb : sbAnon).rpc("map_delete_comment", { p_id: b.dataset.del }); openCat(cat.id, true);
+  });
+  body.querySelectorAll("[data-report]").forEach((b) => b.onclick = () => openReport(b.dataset.report, b.dataset.id));
+  const si = $("commentSignIn"); if (si) si.onclick = () => needAccount("", () => openCat(cat.id, true));
+  $("commentForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const text = $("commentText").value.trim(), msg = $("commentMsg");
+    msg.classList.remove("err");
+    if (!text) { msg.textContent = "Say something first."; msg.classList.add("err"); return; }
+    let client = sb, display = null;
+    if (user) { display = $("commentAnon").checked ? null : (myName() || null); }
+    else {
+      client = sbAnon;
+      if (!(await ensureAnon())) { msg.textContent = "Anonymous comments are switched off right now. Sign in to comment."; msg.classList.add("err"); return; }
+    }
+    msg.textContent = "Posting…";
+    const { error } = await client.rpc("map_comment", { p_cat: cat.id, p_body: text, p_display: display });
+    if (error) { msg.textContent = errText(error, "Couldn't post that. Try again."); msg.classList.add("err"); return; }
+    msg.textContent = ""; openCat(cat.id, true);
+  };
+  $("sawBtn").onclick = () => { catDlg.close(); openPost(cat); };
+  $("shareBtn").onclick = async () => {
+    const url = location.origin + location.pathname + "?cat=" + cat.id;
+    try {
+      if (navigator.share) await navigator.share({ title: cat.name + " on the cat map", url });
+      else { await navigator.clipboard.writeText(url); toast("Link copied."); }
+    } catch {}
+  };
+}
+
+async function ensureAnon() {
+  if (!sbAnon) return false;
+  if (anonReady) return true;
+  try {
+    const { data, error } = await sbAnon.auth.signInAnonymously();
+    anonReady = !error && !!(data && data.session);
+  } catch { anonReady = false; }
+  return anonReady;
+}
+
+// ---------- reports ----------
+let reportTarget = null;
+function openReport(type, id) { reportTarget = { type, id }; $("reportMsg").textContent = ""; $("reportDlg").showModal(); }
+$("reportForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const reason = new FormData(e.target).get("reason");
+  let client = sb;
+  if (!user) { client = sbAnon; if (!(await ensureAnon())) { $("reportMsg").textContent = "Sign in to report this."; return; } }
+  const { error } = await client.rpc("map_report", { p_type: reportTarget.type, p_id: reportTarget.id, p_reason: reason });
+  if (error) { $("reportMsg").textContent = errText(error, "Couldn't send that. Try again."); return; }
+  $("reportDlg").close(); toast("Thanks. We'll take a look.");
+});
+
+// ---------- post a cat ----------
+const postDlg = $("postDlg");
+let post = null, postMap = null, postMarker = null;
+$("needsChips").innerHTML = Object.keys(NEEDS).map((k) => '<label><input type="checkbox" name="need" value="' + k + '"><span>' + NEEDS[k] + "</span></label>").join("");
+
+function openPost(matchCat) {
+  if (!sb) { toast("Posting isn't available right now."); return; }
+  post = { blob: null, gps: null, loc: null, match: matchCat ? matchCat.id : null, matchCat: matchCat || null };
+  $("postForm").reset();
+  $("photoPreview").hidden = true; $("photoPh").hidden = false; $("photoPreview").removeAttribute("src");
+  $("postMsg").textContent = ""; $("postMsg").classList.remove("err");
+  if (matchCat) { const r = $("postForm").querySelector('input[name="status"][value="' + matchCat.status + '"]'); if (r) r.checked = true; }
+  syncStatus();
+  postDlg.showModal();
+  setTimeout(() => {
+    if (!postMap) {
+      postMap = L.map("postMap", { zoomControl: true, attributionControl: true });
+      L.tileLayer(TILES, { maxZoom: 19, attribution: TILES_ATTR }).addTo(postMap);
+      postMarker = L.marker(map.getCenter(), { draggable: true, keyboard: true, title: "Where you saw the cat", alt: "Where you saw the cat",
+        icon: L.divIcon({ className: "", html: '<div class="pin lost">' + CAT_SVG + "</div>", iconSize: [44, 44], iconAnchor: [22, 22] }) }).addTo(postMap);
+      postMarker.on("dragend", () => setLoc(postMarker.getLatLng(), "pin"));
+      postMap.on("click", (e) => setLoc(e.latlng, "pin"));
+    }
+    postMap.invalidateSize();
+    const start = matchCat ? { lat: matchCat.lat, lng: matchCat.lng } : me || map.getCenter();
+    setLoc(start, matchCat ? "cat" : me ? "me" : "center", map.getZoom() >= 14 ? map.getZoom() : 16);
+  }, 30);
+}
+$("postBtn").onclick = () => openPost();
+
+function setLoc(ll, source, zoom) {
+  post.loc = { lat: ll.lat, lng: ll.lng };
+  postMarker.setLatLng(post.loc);
+  if (zoom) postMap.setView(post.loc, zoom); else postMap.panTo(post.loc);
+  $("locNote").textContent = {
+    photo: "location from your photo. drag the pin if it's off.",
+    me: "using your location. drag the pin to where you saw the cat.",
+    cat: "near where this cat is usually seen. drag the pin to where you saw it.",
+    pin: "got it. the exact spot stays private.",
+    center: "drag the pin to where you saw the cat. the exact spot stays private.",
+  }[source] || "";
+  findMatches();
+}
+$("postLocate").onclick = () => {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition((p) => setLoc({ lat: p.coords.latitude, lng: p.coords.longitude }, "me", 17),
+    () => toast("Couldn't get your location. Drag the pin instead."), { enableHighAccuracy: true, timeout: 12000 });
+};
+
+$("photoInput").addEventListener("change", async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  $("postMsg").textContent = "Reading photo…"; $("postMsg").classList.remove("err");
+  try {
+    let gps = null;
+    try { gps = await exifr.gps(file); } catch {}
+    const blob = await shrink(file);
+    post.blob = blob;
+    $("photoPreview").src = URL.createObjectURL(blob); $("photoPreview").hidden = false; $("photoPh").hidden = true;
+    $("postMsg").textContent = "";
+    if (gps && isFinite(gps.latitude) && isFinite(gps.longitude) && !post.matchCat) setLoc({ lat: gps.latitude, lng: gps.longitude }, "photo", 17);
+  } catch {
+    post.blob = null;
+    $("postMsg").textContent = "Couldn't read that photo. Try a different one (JPEG or PNG works best)."; $("postMsg").classList.add("err");
+  }
+});
+
+// Resize to max 1280 px and re-encode as JPEG. Re-encoding drops all metadata, including GPS.
+async function shrink(file) {
+  let src;
+  try { src = await createImageBitmap(file, { imageOrientation: "from-image" }); }
+  catch {
+    src = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
+  }
+  const w0 = src.width || src.naturalWidth, h0 = src.height || src.naturalHeight;
+  const k = Math.min(1, 1280 / Math.max(w0, h0));
+  const c = document.createElement("canvas");
+  c.width = Math.round(w0 * k); c.height = Math.round(h0 * k);
+  c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+  const blob = await new Promise((res) => c.toBlob(res, "image/jpeg", 0.82));
+  if (!blob) throw new Error("encode");
+  return blob;
+}
+
+function syncStatus() {
+  const st = $("postForm").querySelector('input[name="status"]:checked').value;
+  $("needsBox").hidden = st !== "help";
+  $("newCatBox").hidden = !!post && !!post.match && post.match !== "new";
+}
+$("postForm").querySelectorAll('input[name="status"]').forEach((r) => r.addEventListener("change", syncStatus));
+
+let matchSeq = 0;
+async function findMatches() {
+  const seq = ++matchSeq, loc = post.loc;
+  const dLat = 0.0045, dLng = 0.0045 / Math.max(Math.cos(loc.lat * Math.PI / 180), 0.1);
+  const { data } = await sb.rpc("map_cats_in", { min_lat: loc.lat - dLat, min_lng: loc.lng - dLng, max_lat: loc.lat + dLat, max_lng: loc.lng + dLng });
+  if (seq !== matchSeq || !post) return;
+  let near = (data || []).map((c) => ({ c, d: metres(loc, c) })).filter((x) => x.d <= 450).sort((a, b) => a.d - b.d).slice(0, 5);
+  if (post.matchCat && !near.some((x) => x.c.id === post.matchCat.id)) near.unshift({ c: post.matchCat, d: metres(loc, post.matchCat) });
+  if (!near.length) { $("matchBox").hidden = true; post.match = null; syncStatus(); return; }
+  $("matchBox").hidden = false;
+  $("matchList").innerHTML = near.map(({ c, d }) => {
+    const img = c.cover_photo ? '<img src="' + esc(photoUrl(c.cover_photo)) + '" alt="">' : '<span class="thumb">' + CAT_SVG.replace("<svg", '<svg class="icon"') + "</span>";
+    return '<label class="choice"><input type="radio" name="match" value="' + esc(c.id) + '"' + (post.match === c.id ? " checked" : "") + ">" + img +
+      '<span class="t"><b>' + esc(c.name) + '</b><span>' + STATUS[c.status].label + " · " + c.sighting_count + (c.sighting_count === 1 ? " sighting" : " sightings") + " · " + distLabel(d, true) + "</span></span></label>";
+  }).join("") + '<label class="choice"><input type="radio" name="match" value="new"' + (post.match === "new" ? " checked" : "") + '><span class="thumb"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="t"><b>no, it’s a new cat</b><span>start a new profile</span></span></label>';
+  $("matchList").querySelectorAll('input[name="match"]').forEach((r) => r.addEventListener("change", () => { post.match = r.value; syncStatus(); }));
+  syncStatus();
+}
+
+$("postForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const msg = $("postMsg"), btn = $("postSubmit");
+  const fail = (t) => { msg.textContent = t; msg.classList.add("err"); btn.disabled = false; };
+  msg.classList.remove("err");
+  if (!post.loc) return fail("Put the pin where you saw the cat.");
+  if (!$("matchBox").hidden && !post.match) return fail("Pick the cat you saw, or choose “new cat”.");
+  if (!user) { needAccount("Sign in to post. Your cat is waiting right here.", () => $("postSubmit").click()); return; }
+  btn.disabled = true; msg.textContent = "Posting…";
+  const status = $("postForm").querySelector('input[name="status"]:checked').value;
+  const needs = status === "help" ? [...$("needsChips").querySelectorAll("input:checked")].map((i) => i.value) : [];
+  let photo = null;
+  if (post.blob) {
+    const path = user.id + "/" + crypto.randomUUID() + ".jpg";
+    const { error } = await sb.storage.from("cat-photos").upload(path, post.blob, { contentType: "image/jpeg", upsert: false });
+    if (error) return fail("Couldn't upload the photo. Try again.");
+    photo = path;
+  }
+  const existing = post.match && post.match !== "new" ? post.match : null;
+  const { data, error } = await sb.rpc("map_post", {
+    p_cat: existing, p_new_id: existing ? null : crypto.randomUUID(),
+    p_name: $("catName").value, p_status: status, p_needs: needs, p_description: $("catDesc").value,
+    p_photo: photo, p_note: $("postNote").value, p_lat: post.loc.lat, p_lng: post.loc.lng, p_display: myName(),
+  });
+  if (error) {
+    if (photo) sb.storage.from("cat-photos").remove([photo]).catch(() => {});
+    return fail(errText(error, "Couldn't post that. Try again."));
+  }
+  btn.disabled = false; postDlg.close();
+  toast(existing ? "Sighting added. The neighbourhood thanks you." : "Posted. Welcome to the map, little one.");
+  $("startCard").hidden = true;
+  if (map.getZoom() < 15 || !map.getBounds().contains(post.loc)) map.setView(post.loc, 16); else loadCats();
+  setTimeout(loadCats, 400);
+  openCat(data);
+});
+
+// ---------- about ----------
+$("aboutBtn").onclick = () => $("aboutDlg").showModal();
+
+// ---------- start ----------
+renderAcct();
+if (!sb) $("loadMsg").textContent = "The cat map can't connect right now. Try again later.";
+const linked = new URL(location.href).searchParams.get("cat");
+if (linked && /^[0-9a-f-]{36}$/i.test(linked)) {
+  $("startCard").hidden = true;
+  openCat(linked).then(() => { if (current) map.setView([current.cat.lat, current.cat.lng], 16); });
+}
+loadCats();
+</script>
+</body>
+</html>
