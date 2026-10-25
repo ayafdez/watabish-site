@@ -253,16 +253,25 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
         take or add a photo
         <span class="note">we read where it was taken, then remove that info from the photo</span>
       </span>
-      <input type="file" id="photoInput" accept="image/*" aria-label="Photo of the cat">
+      <input type="file" id="photoInput" accept="image/*" aria-label="Photo of the animal">
     </label>
 
     <div class="section">
       <div class="row" style="justify-content: space-between"><span class="label">where</span><button class="linkbtn" type="button" id="postLocate">use my location</button></div>
       <div class="minimap" id="postMap"></div>
-      <p class="note" id="locNote">drag the pin to where you saw the cat. the exact spot stays private.</p>
+      <p class="note" id="locNote">drag the pin to where you saw it. the exact spot stays private.</p>
     </div>
 
     <fieldset class="section" style="border:0;margin:0;padding:0">
+      <legend class="label" style="margin-bottom:8px">who did you see?</legend>
+      <div class="choices" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+        <label class="choice"><input type="radio" name="species" value="cat" checked><span class="t"><b>a cat</b></span></label>
+        <label class="choice"><input type="radio" name="species" value="dog"><span class="t"><b>a dog that might be lost</b></span></label>
+      </div>
+      <p class="note" id="dogNote" hidden style="margin:0">Dogs go on the map as <b>maybe lost</b>, so their owners can find them. If a dog seems dangerous or hurt, call animal control instead of approaching it.</p>
+    </fieldset>
+
+    <fieldset class="section" id="statusBox" style="border:0;margin:0;padding:0">
       <legend class="label" style="margin-bottom:8px">what's going on?</legend>
       <div class="choices">
         <label class="choice"><input type="radio" name="status" value="spotted" checked><i class="dot spotted"></i><span class="t"><b>spotted</b><span>a cat out and about. say hi to the neighbourhood.</span></span></label>
@@ -278,8 +287,8 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
     </fieldset>
 
     <fieldset class="section" id="matchBox" hidden style="border:0;margin:0;padding:0">
-      <legend class="label">is this one of these cats?</legend>
-      <p class="note" style="margin:0 0 6px">seen near here. matching keeps one profile per cat.</p>
+      <legend class="label" id="matchTitle">is this one of these cats?</legend>
+      <p class="note" style="margin:0 0 6px">seen near here. matching keeps one profile per animal.</p>
       <div class="choices" id="matchList"></div>
     </fieldset>
 
@@ -288,6 +297,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
         <input class="input" id="catName" maxlength="40" placeholder="e.g. Marmalade"></label>
       <label class="field"><span>what's it like?</span>
         <input class="input" id="catDesc" maxlength="500" placeholder="orange tabby, shy, hangs around the park"></label>
+      <p class="note" style="margin:0">For a maybe-lost pet, describe what an owner would recognize: colour, collar, size.</p>
     </div>
 
     <label class="field"><span>note <span class="muted" style="font-weight:400">(optional)</span></span>
@@ -331,8 +341,8 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
   <div class="dlghead"><h2 id="reportTitle">report this</h2><button class="close" type="button" data-close aria-label="Close">×</button></div>
   <form class="dlg" id="reportForm">
     <div class="choices">
-      <label class="choice"><input type="radio" name="reason" value="spam or not a cat" checked><span class="t"><b>spam, or not a cat</b></span></label>
-      <label class="choice"><input type="radio" name="reason" value="mean or unsafe"><span class="t"><b>mean, or could put a cat in danger</b></span></label>
+      <label class="choice"><input type="radio" name="reason" value="spam or not a pet" checked><span class="t"><b>spam, or not a real animal</b></span></label>
+      <label class="choice"><input type="radio" name="reason" value="mean or unsafe"><span class="t"><b>mean, or could put an animal in danger</b></span></label>
       <label class="choice"><input type="radio" name="reason" value="private info"><span class="t"><b>shares someone's private info</b></span></label>
       <label class="choice"><input type="radio" name="reason" value="other"><span class="t"><b>something else</b></span></label>
     </div>
@@ -348,12 +358,13 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
   <div class="dlg">
     <div class="section"><h3>the map</h3>
       <p style="margin:0">Neighbours post the cats they meet. Each cat gets one profile that collects sightings, photos and comments, so everyone knows who's who.</p>
-      <p style="margin:0"><b>Spotted</b> is a cat doing cat things. <b>Needs help</b> is a cat that's cold, hungry or hurt. <b>Maybe lost</b> is a cat that looks like someone's missing pet.</p>
+      <p style="margin:0"><b>Spotted</b> is a cat doing cat things. <b>Needs help</b> is a cat that's cold, hungry or hurt. <b>Maybe lost</b> is a cat or dog that looks like someone's missing pet. When it's found, whoever posted it can mark it <b>back home</b> and it leaves the map.</p>
       <p style="margin:0">A <b>Guardian</b> is the neighbour who looks after a cat: feeds it, keeps an eye out, organizes help. Anyone with an account can step up for a cat that doesn't have one.</p></div>
     <div class="section"><h3>keeping cats (and you) safe</h3>
       <p style="margin:0">Locations on the map are moved a little on purpose. Cats who need help or might be lost only show as an area. When you post a photo, the location info hidden inside it is removed before it's uploaded.</p>
       <p style="margin:0">If a cat is badly hurt or in danger, contact your local animal services or a rescue right away. Don't try to catch a scared or feral cat yourself; rescues have traps and know-how.</p>
-      <p style="margin:0">Think a cat is lost? Look for a collar or tag, and ask a vet or shelter to scan it for a microchip. It's free.</p></div>
+      <p style="margin:0">Think a pet is lost? Look for a collar or tag, and ask a vet or shelter to scan it for a microchip. It's free.</p>
+      <p style="margin:0">Dogs are only on the map as maybe lost. A loose dog that seems aggressive or injured is a job for animal control, not neighbours.</p></div>
     <p class="note" style="margin:0">Map data © OpenStreetMap contributors. Questions: <a href="mailto:aya@likhangmaya.com">aya@likhangmaya.com</a> · <a href="../privacy.html">privacy</a></p>
   </div>
 </dialog>
@@ -380,6 +391,9 @@ const STATUS = {
 };
 const NEEDS = { shelter: "winter shelter", food: "food", vet: "vet care", tnr: "TNR (spay/neuter)", injured: "injured" };
 const CAT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4l3 4h8l3-4v9a7 7 0 0 1-14 0z"/><path d="M11 16l1 1 1-1"/></svg>';
+const DOG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5L4 7v5l3 1"/><path d="M16 5l4 2v5l-3 1"/><path d="M7 7h10v6a5 5 0 0 1-10 0z"/><path d="M11 15h2"/></svg>';
+const noun = (c) => (c && c.species === "dog" ? "dog" : "cat");
+const kindLabel = (c) => (c.species === "dog" ? "lost dog" : STATUS[c.status].label);
 const HEART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
 
 const $ = (id) => document.getElementById(id);
@@ -493,7 +507,7 @@ async function loadCats() {
 
 function pinHtml(c) {
   const img = c.cover_photo ? '<img src="' + esc(photoUrl(c.cover_photo)) + '" alt="">' : "";
-  const inner = img || (c.status === "lost" ? "?" : c.status === "help" ? HEART_SVG : CAT_SVG);
+  const inner = img || (c.species === "dog" ? DOG_SVG : c.status === "lost" ? "?" : c.status === "help" ? HEART_SVG : CAT_SVG);
   return '<div class="pin ' + c.status + '">' + inner + "</div>";
 }
 function render() {
@@ -506,7 +520,7 @@ function render() {
     }
     const m = L.marker([c.lat, c.lng], {
       icon: L.divIcon({ className: "", html: pinHtml(c), iconSize: [44, 44], iconAnchor: [22, 22] }),
-      title: c.name + ", " + STATUS[c.status].label, alt: c.name + ", " + STATUS[c.status].label, keyboard: true,
+      title: c.name + ", " + kindLabel(c), alt: c.name + ", " + kindLabel(c), keyboard: true,
       zIndexOffset: c.status === "help" ? 300 : c.status === "lost" ? 200 : 0,
     });
     m.on("click", () => openCat(c.id));
@@ -521,7 +535,13 @@ function renderList() {
   const counts = { all: inView.length, spotted: 0, help: 0, lost: 0 };
   inView.forEach((c) => counts[c.status]++);
   document.querySelectorAll("[data-n]").forEach((el) => { el.textContent = counts[el.dataset.n] ? counts[el.dataset.n] : ""; });
-  if (map.getZoom() >= MIN_ZOOM_FOR_CATS) $("countLine").textContent = counts.all ? counts.all + (counts.all === 1 ? " cat" : " cats") + " in this area" : "no cats posted here yet";
+  if (map.getZoom() >= MIN_ZOOM_FOR_CATS) {
+    const dogs = inView.filter((c) => c.species === "dog").length, catsN = inView.length - dogs;
+    const parts = [];
+    if (catsN) parts.push(catsN + (catsN === 1 ? " cat" : " cats"));
+    if (dogs) parts.push(dogs + (dogs === 1 ? " lost dog" : " lost dogs"));
+    $("countLine").textContent = parts.length ? parts.join(" and ") + " in this area" : "no cats posted here yet";
+  }
   const list = inView.filter((c) => filter === "all" || c.status === filter)
     .map((c) => ({ c, d: metres(center, c) })).sort((a, b) => (b.c.status === "help") - (a.c.status === "help") || a.d - b.d).slice(0, 60);
   if (!list.length) {
@@ -532,9 +552,9 @@ function renderList() {
   }
   $("list").innerHTML = list.map(({ c, d }) => {
     const what = c.status === "help" && c.needs && c.needs.length ? "needs " + c.needs.map((n) => NEEDS[n]).join(", ") : c.description || STATUS[c.status].label;
-    const thumb = c.cover_photo ? '<img class="thumb" src="' + esc(photoUrl(c.cover_photo)) + '" alt="" loading="lazy">' : '<span class="thumb pin-ish">' + CAT_SVG.replace("<svg", '<svg class="icon"') + "</span>";
+    const thumb = c.cover_photo ? '<img class="thumb" src="' + esc(photoUrl(c.cover_photo)) + '" alt="" loading="lazy">' : '<span class="thumb">' + (c.species === "dog" ? DOG_SVG : CAT_SVG).replace("<svg", '<svg class="icon"') + "</span>";
     return '<button class="card" type="button" data-cat="' + esc(c.id) + '">' + thumb +
-      '<span class="t"><span class="nm">' + esc(c.name) + ' <span class="pill ' + c.status + '">' + STATUS[c.status].label + "</span></span>" +
+      '<span class="t"><span class="nm">' + esc(c.name) + ' <span class="pill ' + c.status + '">' + kindLabel(c) + "</span></span>" +
       '<span class="sub">' + esc(what) + "</span>" +
       '<span class="sub">' + distLabel(d, c.status !== "spotted") + " · " + c.sighting_count + (c.sighting_count === 1 ? " sighting" : " sightings") + " · seen " + ago(c.last_seen_at) + "</span></span></button>";
   }).join("");
@@ -628,7 +648,7 @@ async function openCat(id, quiet) {
   if (!quiet) { $("catBody").innerHTML = '<p class="muted">loading…</p>'; if (!catDlg.open) catDlg.showModal(); }
   const { data, error } = await readClient().rpc("map_cat_detail", { p_cat: id });
   if (openCatId !== id) return;
-  if (error || !data) { $("catBody").innerHTML = '<p class="msg err">' + esc(error ? "Couldn't load this cat." : "This cat isn't on the map anymore.") + "</p>"; if (!catDlg.open) catDlg.showModal(); return; }
+  if (error || !data) { $("catBody").innerHTML = '<p class="msg err">' + esc(error ? "Couldn't load this one." : "This animal isn't on the map anymore.") + "</p>"; if (!catDlg.open) catDlg.showModal(); return; }
   current = data;
   renderCat();
   if (!catDlg.open) catDlg.showModal();
@@ -638,7 +658,8 @@ function renderCat(editing) {
   const { cat, sightings, comments, offers } = current;
   const photos = sightings.filter((s) => s.photo);
   const d = me ? distLabel(metres(me, cat), cat.status !== "spotted") + " away · " : "";
-  $("catKicker").textContent = STATUS[cat.status].label;
+  const N = noun(cat), isDog = cat.species === "dog";
+  $("catKicker").textContent = cat.home_at ? "back home" : kindLabel(cat);
   let h = "";
   h += photos.length
     ? '<div class="gallery">' + photos.map((s, i) => '<img src="' + esc(photoUrl(s.photo)) + '" alt="' + esc(cat.name) + " photo " + (i + 1) + '" loading="lazy">').join("") + "</div>"
@@ -647,20 +668,23 @@ function renderCat(editing) {
   if (editing) {
     h += '<form class="section" id="editForm">' +
       '<label class="field"><span>name</span><input class="input" id="edName" maxlength="40" value="' + esc(cat.name) + '"></label>' +
-      '<div class="choices">' + Object.keys(STATUS).map((k) => '<label class="choice"><input type="radio" name="edStatus" value="' + k + '"' + (cat.status === k ? " checked" : "") + '><i class="dot ' + k + '"></i><span class="t"><b>' + STATUS[k].label + "</b></span></label>").join("") + "</div>" +
-      '<div class="togglechips" id="edNeeds">' + Object.keys(NEEDS).map((k) => '<label><input type="checkbox" value="' + k + '"' + (cat.needs.includes(k) ? " checked" : "") + "><span>" + NEEDS[k] + "</span></label>").join("") + "</div>" +
+      '<div class="choices">' + Object.keys(STATUS).filter((k) => !isDog || k === "lost").map((k) => '<label class="choice"><input type="radio" name="edStatus" value="' + k + '"' + (cat.status === k ? " checked" : "") + '><i class="dot ' + k + '"></i><span class="t"><b>' + STATUS[k].label + "</b></span></label>").join("") + "</div>" +
+      '<div class="togglechips" id="edNeeds"' + (isDog ? " hidden" : "") + '>' + Object.keys(NEEDS).map((k) => '<label><input type="checkbox" value="' + k + '"' + (cat.needs.includes(k) ? " checked" : "") + "><span>" + NEEDS[k] + "</span></label>").join("") + "</div>" +
       '<label class="field"><span>what’s it like?</span><input class="input" id="edDesc" maxlength="500" value="' + esc(cat.description) + '"></label>' +
       '<p class="msg" id="edMsg" role="status"></p><div class="row"><button class="btn small" type="submit">save</button><button class="btn small ghost" type="button" id="edCancel">cancel</button></div></form>';
   } else {
-    h += '<div class="section"><div class="catname"><h2 id="catTitle">' + esc(cat.name) + '</h2><span class="pill ' + cat.status + '">' + STATUS[cat.status].label + "</span>" +
+    if (cat.home_at) h += '<div class="box" style="border-color: var(--good)"><b>Back home!</b><span class="note">Marked as found ' + ago(cat.home_at) + '. It\u2019s off the map now.</span></div>';
+    h += '<div class="section"><div class="catname"><h2 id="catTitle">' + esc(cat.name) + '</h2><span class="pill ' + cat.status + '">' + kindLabel(cat) + "</span>" +
       cat.needs.map((n) => '<span class="pill soft">' + esc(NEEDS[n]) + "</span>").join("") + "</div>" +
       (cat.description ? '<p style="margin:0">' + esc(cat.description) + "</p>" : "") +
       '<p class="note" style="margin:0">' + d + cat.sighting_count + (cat.sighting_count === 1 ? " sighting" : " sightings") + " · last seen " + ago(cat.last_seen_at) +
       (cat.status !== "spotted" ? " · shown as an approximate area" : "") + "</p>" +
-      (cat.can_edit ? '<div><button class="linkbtn" type="button" id="editBtn">edit this cat</button></div>' : "") + "</div>";
+      (cat.can_edit ? '<div class="row"><button class="linkbtn" type="button" id="editBtn">edit this ' + N + "</button>" +
+        (cat.status === "lost" ? '<button class="btn small" type="button" id="homeBtn" style="background: var(--good)">' + (cat.home_at ? "not home after all" : "it\u2019s back home!") + "</button>" : "") + "</div>" : "") + "</div>";
   }
 
-  // caretaker
+  // guardian (cats only)
+  if (!isDog) {
   h += '<div class="box">';
   if (cat.caretaker_name) {
     h += '<div class="row" style="justify-content:space-between"><span><span class="kicker">guardian</span><br><b>' + esc(cat.caretaker_name) + "</b>" + (cat.i_care ? " (you)" : "") + "</span>" +
@@ -671,6 +695,7 @@ function renderCat(editing) {
       '<p class="note" style="margin:0">Feed it, keep an eye out, or help organize? Say so, and neighbours will know who to talk to.</p>';
   }
   h += "</div>";
+  }
 
   // needs + offers
   if (cat.status === "help") {
@@ -686,7 +711,7 @@ function renderCat(editing) {
     h += '<div class="box warm note">If it’s badly hurt or in danger, call your local animal services or a rescue first.</div></div>';
   }
   if (cat.status === "lost") {
-    h += '<div class="box warm"><b>Is this your cat, or do you know whose it is?</b><span class="note">Say so in the comments. A vet or shelter can scan it for a microchip for free.</span></div>';
+    h += '<div class="box warm"><b>Is this your ' + N + ', or do you know whose it is?</b><span class="note">Say so in the comments. A vet or shelter can scan it for a microchip for free.</span></div>';
   }
 
   // timeline: sightings + comments
@@ -714,9 +739,9 @@ function renderCat(editing) {
       "</div><p>" + esc(c.body) + "</p></div>";
   }).join("") : '<p class="note">No comments yet.</p>') + "</div></div>";
 
-  h += '<div class="row"><button class="btn" type="button" id="sawBtn">I saw this cat</button>' +
+  h += '<div class="row"><button class="btn" type="button" id="sawBtn">I saw this ' + N + "</button>" +
     '<button class="btn ghost" type="button" id="shareBtn">share</button>' +
-    '<button class="linkbtn muted" type="button" data-report="cat" data-id="' + esc(cat.id) + '">report this cat</button></div>';
+    '<button class="linkbtn muted" type="button" data-report="cat" data-id="' + esc(cat.id) + '">report this ' + N + "</button></div>";
 
   $("catBody").innerHTML = h;
   wireCat();
@@ -731,12 +756,20 @@ function wireCat() {
     ef.onsubmit = async (e) => {
       e.preventDefault();
       const st = ef.querySelector('input[name="edStatus"]:checked').value;
-      const needs = [...$("edNeeds").querySelectorAll("input:checked")].map((i) => i.value);
+      const needs = cat.species === "dog" ? [] : [...$("edNeeds").querySelectorAll("input:checked")].map((i) => i.value);
       const { error } = await sb.rpc("map_update_cat", { p_cat: cat.id, p_name: $("edName").value, p_status: st, p_description: $("edDesc").value, p_needs: needs });
       if (error) { $("edMsg").textContent = errText(error, "Couldn't save. Try again."); $("edMsg").classList.add("err"); return; }
       toast("Saved."); await openCat(cat.id, true); loadCats();
     };
   }
+  const hb = $("homeBtn");
+  if (hb) hb.onclick = async () => {
+    const home = !cat.home_at;
+    if (home && !confirm("Mark " + cat.name + " as back home? It will come off the map.")) return;
+    const { error } = await sb.rpc("map_mark_home", { p_cat: cat.id, p_home: home });
+    if (error) { toast(errText(error, "Couldn't do that right now.")); return; }
+    toast(home ? "Back home! That's the best news." : "Back on the map."); openCat(cat.id, true); loadCats();
+  };
   const cl = $("claimBtn");
   if (cl) cl.onclick = async () => {
     if (!user) return needAccount("Sign in to become this cat's Guardian.", () => cl.click());
@@ -823,19 +856,23 @@ function openPost(matchCat) {
   $("postForm").reset();
   $("photoPreview").hidden = true; $("photoPh").hidden = false; $("photoPreview").removeAttribute("src");
   $("postMsg").textContent = ""; $("postMsg").classList.remove("err");
-  if (matchCat) { const r = $("postForm").querySelector('input[name="status"][value="' + matchCat.status + '"]'); if (r) r.checked = true; }
+  if (matchCat) {
+    const r = $("postForm").querySelector('input[name="status"][value="' + matchCat.status + '"]'); if (r) r.checked = true;
+    $("postForm").querySelector('input[name="species"][value="' + noun(matchCat) + '"]').checked = true;
+  }
   syncStatus();
   postDlg.showModal();
   setTimeout(() => {
     if (!postMap) {
       postMap = L.map("postMap", { zoomControl: true, attributionControl: true });
       L.tileLayer(TILES, { maxZoom: 19, attribution: TILES_ATTR }).addTo(postMap);
-      postMarker = L.marker(map.getCenter(), { draggable: true, keyboard: true, title: "Where you saw the cat", alt: "Where you saw the cat",
+      postMarker = L.marker(map.getCenter(), { draggable: true, keyboard: true, title: "Where you saw it", alt: "Where you saw it",
         icon: L.divIcon({ className: "", html: '<div class="pin lost">' + CAT_SVG + "</div>", iconSize: [44, 44], iconAnchor: [22, 22] }) }).addTo(postMap);
       postMarker.on("dragend", () => setLoc(postMarker.getLatLng(), "pin"));
       postMap.on("click", (e) => setLoc(e.latlng, "pin"));
     }
     postMap.invalidateSize();
+    syncStatus();
     const start = matchCat ? { lat: matchCat.lat, lng: matchCat.lng } : me || map.getCenter();
     setLoc(start, matchCat ? "cat" : me ? "me" : "center", map.getZoom() >= 14 ? map.getZoom() : 16);
   }, 30);
@@ -848,10 +885,10 @@ function setLoc(ll, source, zoom) {
   if (zoom) postMap.setView(post.loc, zoom); else postMap.panTo(post.loc);
   $("locNote").textContent = {
     photo: "location from your photo. drag the pin if it's off.",
-    me: "using your location. drag the pin to where you saw the cat.",
-    cat: "near where this cat is usually seen. drag the pin to where you saw it.",
+    me: "using your location. drag the pin to where you saw it.",
+    cat: "near where it was last seen. drag the pin to where you saw it.",
     pin: "got it. the exact spot stays private.",
-    center: "drag the pin to where you saw the cat. the exact spot stays private.",
+    center: "drag the pin to where you saw it. the exact spot stays private.",
   }[source] || "";
   findMatches();
 }
@@ -896,12 +933,24 @@ async function shrink(file) {
   return blob;
 }
 
+const speciesNow = () => $("postForm").querySelector('input[name="species"]:checked').value;
 function syncStatus() {
+  const dog = speciesNow() === "dog";
+  if (dog) $("postForm").querySelector('input[name="status"][value="lost"]').checked = true;
+  $("statusBox").hidden = dog; $("dogNote").hidden = !dog;
+  $("postTitle").textContent = dog ? "post a lost dog" : "post a cat";
+  $("matchTitle").textContent = dog ? "is this one of these dogs?" : "is this one of these cats?";
+  $("catName").placeholder = dog ? "the name on its tag, or make one up" : "e.g. Marmalade";
+  if (postMarker) postMarker.setIcon(L.divIcon({ className: "", html: '<div class="pin lost">' + (dog ? DOG_SVG : CAT_SVG) + "</div>", iconSize: [44, 44], iconAnchor: [22, 22] }));
   const st = $("postForm").querySelector('input[name="status"]:checked').value;
   $("needsBox").hidden = st !== "help";
   $("newCatBox").hidden = !!post && !!post.match && post.match !== "new";
 }
 $("postForm").querySelectorAll('input[name="status"]').forEach((r) => r.addEventListener("change", syncStatus));
+$("postForm").querySelectorAll('input[name="species"]').forEach((r) => r.addEventListener("change", () => {
+  if (post && post.matchCat && noun(post.matchCat) !== speciesNow()) { post.matchCat = null; post.match = null; }
+  syncStatus(); if (post && post.loc) findMatches();
+}));
 
 let matchSeq = 0;
 async function findMatches() {
@@ -909,15 +958,17 @@ async function findMatches() {
   const dLat = 0.0045, dLng = 0.0045 / Math.max(Math.cos(loc.lat * Math.PI / 180), 0.1);
   const { data } = await sb.rpc("map_cats_in", { min_lat: loc.lat - dLat, min_lng: loc.lng - dLng, max_lat: loc.lat + dLat, max_lng: loc.lng + dLng });
   if (seq !== matchSeq || !post) return;
-  let near = (data || []).map((c) => ({ c, d: metres(loc, c) })).filter((x) => x.d <= 450).sort((a, b) => a.d - b.d).slice(0, 5);
+  const sp = speciesNow();
+  let near = (data || []).filter((c) => noun(c) === sp).map((c) => ({ c, d: metres(loc, c) })).filter((x) => x.d <= 450).sort((a, b) => a.d - b.d).slice(0, 5);
+  if (post.match && post.match !== "new" && !near.some((x) => x.c.id === post.match) && !(post.matchCat && post.matchCat.id === post.match)) post.match = null;
   if (post.matchCat && !near.some((x) => x.c.id === post.matchCat.id)) near.unshift({ c: post.matchCat, d: metres(loc, post.matchCat) });
   if (!near.length) { $("matchBox").hidden = true; post.match = null; syncStatus(); return; }
   $("matchBox").hidden = false;
   $("matchList").innerHTML = near.map(({ c, d }) => {
-    const img = c.cover_photo ? '<img src="' + esc(photoUrl(c.cover_photo)) + '" alt="">' : '<span class="thumb">' + CAT_SVG.replace("<svg", '<svg class="icon"') + "</span>";
+    const img = c.cover_photo ? '<img src="' + esc(photoUrl(c.cover_photo)) + '" alt="">' : '<span class="thumb">' + (c.species === "dog" ? DOG_SVG : CAT_SVG).replace("<svg", '<svg class="icon"') + "</span>";
     return '<label class="choice"><input type="radio" name="match" value="' + esc(c.id) + '"' + (post.match === c.id ? " checked" : "") + ">" + img +
-      '<span class="t"><b>' + esc(c.name) + '</b><span>' + STATUS[c.status].label + " · " + c.sighting_count + (c.sighting_count === 1 ? " sighting" : " sightings") + " · " + distLabel(d, true) + "</span></span></label>";
-  }).join("") + '<label class="choice"><input type="radio" name="match" value="new"' + (post.match === "new" ? " checked" : "") + '><span class="thumb"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="t"><b>no, it’s a new cat</b><span>start a new profile</span></span></label>';
+      '<span class="t"><b>' + esc(c.name) + '</b><span>' + kindLabel(c) + " · " + c.sighting_count + (c.sighting_count === 1 ? " sighting" : " sightings") + " · " + distLabel(d, true) + "</span></span></label>";
+  }).join("") + '<label class="choice"><input type="radio" name="match" value="new"' + (post.match === "new" ? " checked" : "") + '><span class="thumb"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="t"><b>no, it’s a new ' + sp + '</b><span>start a new profile</span></span></label>';
   $("matchList").querySelectorAll('input[name="match"]').forEach((r) => r.addEventListener("change", () => { post.match = r.value; syncStatus(); }));
   syncStatus();
 }
@@ -927,9 +978,9 @@ $("postForm").addEventListener("submit", async (e) => {
   const msg = $("postMsg"), btn = $("postSubmit");
   const fail = (t) => { msg.textContent = t; msg.classList.add("err"); btn.disabled = false; };
   msg.classList.remove("err");
-  if (!post.loc) return fail("Put the pin where you saw the cat.");
-  if (!$("matchBox").hidden && !post.match) return fail("Pick the cat you saw, or choose “new cat”.");
-  if (!user) { needAccount("Sign in to post. Your cat is waiting right here.", () => $("postSubmit").click()); return; }
+  if (!post.loc) return fail("Put the pin where you saw it.");
+  if (!$("matchBox").hidden && !post.match) return fail("Pick the " + speciesNow() + " you saw, or choose “new " + speciesNow() + "”.");
+  if (!user) { needAccount("Sign in to post. Everything you filled in is waiting right here.", () => $("postSubmit").click()); return; }
   btn.disabled = true; msg.textContent = "Posting…";
   const status = $("postForm").querySelector('input[name="status"]:checked').value;
   const needs = status === "help" ? [...$("needsChips").querySelectorAll("input:checked")].map((i) => i.value) : [];
@@ -944,14 +995,14 @@ $("postForm").addEventListener("submit", async (e) => {
   const { data, error } = await sb.rpc("map_post", {
     p_cat: existing, p_new_id: existing ? null : crypto.randomUUID(),
     p_name: $("catName").value, p_status: status, p_needs: needs, p_description: $("catDesc").value,
-    p_photo: photo, p_note: $("postNote").value, p_lat: post.loc.lat, p_lng: post.loc.lng, p_display: myName(),
+    p_photo: photo, p_note: $("postNote").value, p_lat: post.loc.lat, p_lng: post.loc.lng, p_display: myName(), p_species: speciesNow(),
   });
   if (error) {
     if (photo) sb.storage.from("cat-photos").remove([photo]).catch(() => {});
     return fail(errText(error, "Couldn't post that. Try again."));
   }
   btn.disabled = false; postDlg.close();
-  toast(existing ? "Sighting added. The neighbourhood thanks you." : "Posted. Welcome to the map, little one.");
+  toast(existing ? "Sighting added. The neighbourhood thanks you." : speciesNow() === "dog" ? "Posted. Fingers crossed for a quick reunion." : "Posted. Welcome to the map, little one.");
   $("startCard").hidden = true;
   if (map.getZoom() < 15 || !map.getBounds().contains(post.loc)) map.setView(post.loc, 16); else loadCats();
   setTimeout(loadCats, 400);
