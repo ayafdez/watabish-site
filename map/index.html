@@ -16,13 +16,14 @@
 :root {
   --bg: #F3EADB; --panel: #FFFFFF; --ink: #2B1C15; --muted: #5A463A; --line: #E4D6C0;
   --blue: #1F5FA8; --ice: #BFE3FF; --brown: #2B1C15; --cream: #F3EADB;
-  --spotted: #1F5FA8; --help: #B4452F; --lost: #2B1C15; --good: #3F8A5C; --gone: #6B6560; --hot: #6B3FA0;
+  --spotted: #1F5FA8; --help: #B4452F; --lost: #E3A21A; --pick: #2B1C15; --good: #3F8A5C; --gone: #6B6560; --hot: #6B3FA0;
+  --edge: #2B1C15; --shadow: #2B1C15;
   --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #2B1C15; --panel: #3E2C23; --ink: #F3EADB; --muted: #CDBBA8; --line: #5A463A; color-scheme: dark } }
-:root[data-theme="dark"] { --bg: #2B1C15; --panel: #3E2C23; --ink: #F3EADB; --muted: #CDBBA8; --line: #5A463A; color-scheme: dark }
+  --bg: #2B1C15; --panel: #3E2C23; --ink: #F3EADB; --muted: #CDBBA8; --line: #5A463A; --edge: #CDBBA8; --shadow: #1F5FA8; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #2B1C15; --panel: #3E2C23; --ink: #F3EADB; --muted: #CDBBA8; --line: #5A463A; --edge: #CDBBA8; --shadow: #1F5FA8; color-scheme: dark }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -37,36 +38,36 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 /* buttons, the watabish way: brown outline, hard shadow */
 .btn { appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 20px;
-  border: 3px solid var(--brown); border-radius: 999px; background: var(--blue); color: #fff; font-weight: 700; cursor: pointer;
-  box-shadow: 4px 4px 0 var(--brown); text-decoration: none; transition: transform .08s, box-shadow .08s; }
-.btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--brown); }
+  border: 3px solid var(--edge); border-radius: 999px; background: var(--blue); color: #fff; font-weight: 700; cursor: pointer;
+  box-shadow: 4px 4px 0 var(--shadow); text-decoration: none; transition: transform .08s, box-shadow .08s; }
+.btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--shadow); }
 .btn.ghost { background: var(--cream); color: var(--brown); }
 .btn.dark { background: var(--brown); color: var(--cream); box-shadow: 4px 4px 0 var(--blue); }
 .btn.help { background: var(--help); }
-.btn.small { min-height: 40px; padding: 0 14px; font-size: 14px; box-shadow: 3px 3px 0 var(--brown); }
+.btn.small { min-height: 40px; padding: 0 14px; font-size: 14px; box-shadow: 3px 3px 0 var(--shadow); }
 .btn:disabled { opacity: .55; cursor: default; }
 .linkbtn { appearance: none; border: 0; background: none; padding: 6px 0; color: var(--blue); font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .linkbtn.muted { color: var(--muted); font-weight: 600; font-size: 13px; }
 .chip { appearance: none; display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border-radius: 999px;
-  border: 2px solid var(--brown); background: var(--panel); color: var(--ink); font-weight: 700; font-size: 14px; cursor: pointer; }
-.chip[aria-pressed="true"] { background: var(--brown); color: var(--cream); }
+  border: 2px solid var(--edge); background: var(--panel); color: var(--ink); font-weight: 700; font-size: 14px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 .chip .n { font-weight: 400; opacity: .8; }
 .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; display: inline-block; }
-.dot.hotspot { background: var(--hot); } .dot.deceased { background: var(--gone); } .dot.spotted { background: var(--spotted); } .dot.help { background: var(--help); } .dot.lost { background: var(--lost); box-shadow: 0 0 0 2px var(--cream); }
+.dot.hotspot { background: var(--hot); } .dot.deceased { background: var(--gone); } .dot.spotted { background: var(--spotted); } .dot.help { background: var(--help); } .dot.lost { background: var(--lost); }
 .pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; }
-.pill.hotspot { background: var(--hot); } .pill.deceased { background: var(--gone); } .pill.spotted { background: var(--spotted); } .pill.help { background: var(--help); } .pill.lost { background: var(--lost); color: var(--cream); }
+.pill.hotspot { background: var(--hot); } .pill.deceased { background: var(--gone); } .pill.spotted { background: var(--spotted); } .pill.help { background: var(--help); } .pill.lost { background: var(--lost); color: #2B1C15; }
 .pill.soft { background: transparent; color: var(--ink); border: 2px solid var(--line); padding: 0 9px; }
 .kicker { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; color: var(--muted); }
 .muted { color: var(--muted); }
 .field { display: grid; gap: 6px; }
 .field > span, .label { font-weight: 700; }
-.input { width: 100%; min-height: 46px; padding: 10px 14px; border: 2px solid var(--brown); border-radius: 14px; background: var(--panel); }
+.input { width: 100%; min-height: 46px; padding: 10px 14px; border: 2px solid var(--edge); border-radius: 14px; background: var(--panel); }
 textarea.input { resize: vertical; min-height: 84px; }
 .check { display: flex; gap: 10px; align-items: center; font-size: 14px; }
 .check input { width: 20px; height: 20px; accent-color: var(--blue); flex: none; }
 
 /* ---------- layout ---------- */
-.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding: 12px max(16px, env(safe-area-inset-left)) 12px; background: var(--bg); border-bottom: 3px solid var(--brown); position: relative; z-index: 500; }
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding: 12px max(16px, env(safe-area-inset-left)) 12px; background: var(--bg); border-bottom: 3px solid var(--edge); position: relative; z-index: 500; }
 .brand { display: flex; align-items: baseline; gap: 8px; text-decoration: none; color: var(--ink); }
 .brand b { font-weight: 800; font-size: 26px; letter-spacing: -0.04em; }
 .brand b i { font-style: normal; color: var(--blue); }
@@ -74,24 +75,24 @@ textarea.input { resize: vertical; min-height: 84px; }
 .search { flex: 1 1 220px; max-width: 440px; display: flex; gap: 6px; }
 .search .input { min-height: 44px; }
 .topbtns { display: flex; gap: 10px; align-items: center; margin-left: auto; flex-wrap: wrap; }
-.acct { appearance: none; border: 2px solid var(--brown); background: var(--panel); border-radius: 999px; min-height: 44px; padding: 0 14px; font-weight: 700; cursor: pointer; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct { appearance: none; border: 2px solid var(--edge); background: var(--panel); border-radius: 999px; min-height: 44px; padding: 0 14px; font-weight: 700; cursor: pointer; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .layout { flex: 1; display: flex; flex-direction: column; }
-.mapwrap { position: relative; height: 58vh; min-height: 340px; border-bottom: 3px solid var(--brown); }
+.mapwrap { position: relative; height: 58vh; min-height: 340px; border-bottom: 3px solid var(--edge); }
 #map { position: absolute; inset: 0; background: #E9E4DA; }
 .side { padding: 18px max(16px, env(safe-area-inset-left)) 40px; display: grid; gap: 14px; align-content: start; }
 @media (min-width: 900px) {
   body { height: 100vh; }
   .layout { flex-direction: row-reverse; min-height: 0; }
-  .mapwrap { flex: 1; height: auto; border-bottom: 0; border-left: 3px solid var(--brown); }
+  .mapwrap { flex: 1; height: auto; border-bottom: 0; border-left: 3px solid var(--edge); }
   .side { width: 400px; flex: none; overflow-y: auto; }
 }
 .side h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
 .filters { display: flex; gap: 8px; flex-wrap: wrap; }
 .list { display: grid; gap: 10px; }
-.card { appearance: none; text-align: left; display: flex; gap: 12px; align-items: center; padding: 10px; border: 2px solid var(--brown); border-radius: 18px;
-  background: var(--panel); cursor: pointer; width: 100%; box-shadow: 3px 3px 0 var(--brown); }
-.card:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--brown); }
+.card { appearance: none; text-align: left; display: flex; gap: 12px; align-items: center; padding: 10px; border: 2px solid var(--edge); border-radius: 18px;
+  background: var(--panel); cursor: pointer; width: 100%; box-shadow: 3px 3px 0 var(--shadow); }
+.card:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--shadow); }
 .thumb { width: 64px; height: 64px; border-radius: 14px; flex: none; object-fit: cover; display: grid; place-items: center; background: var(--line); color: var(--muted); }
 .card .t { display: grid; gap: 2px; min-width: 0; }
 .card .nm { display: flex; gap: 8px; align-items: center; font-weight: 800; font-size: 16px; }
@@ -99,59 +100,60 @@ textarea.input { resize: vertical; min-height: 84px; }
 .empty { padding: 18px; border: 2px dashed var(--line); border-radius: 18px; color: var(--muted); text-align: center; }
 
 .overlay { position: absolute; z-index: 450; left: 50%; top: 16px; transform: translateX(-50%); width: min(380px, calc(100% - 32px));
-  background: var(--panel); border: 3px solid var(--brown); border-radius: 18px; box-shadow: 5px 5px 0 var(--brown); padding: 16px; display: grid; gap: 10px; text-align: center; }
+  background: var(--panel); border: 3px solid var(--edge); border-radius: 18px; box-shadow: 5px 5px 0 var(--shadow); padding: 16px; display: grid; gap: 10px; text-align: center; }
 .overlay p { margin: 0; }
-.legend { position: absolute; z-index: 450; left: 12px; bottom: 26px; background: var(--panel); border: 2px solid var(--brown); border-radius: 14px; padding: 8px 12px;
+.legend { position: absolute; z-index: 450; left: 12px; bottom: 26px; background: var(--panel); border: 2px solid var(--edge); border-radius: 14px; padding: 8px 12px;
   display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; font-weight: 700; max-width: calc(100% - 90px); }
 .legend span { display: inline-flex; gap: 6px; align-items: center; }
 .legend .ring { width: 12px; height: 12px; border-radius: 50%; border: 2px dashed var(--help); background: color-mix(in srgb, var(--help) 18%, transparent); }
-.locate { position: absolute; z-index: 450; right: 12px; bottom: 26px; width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--brown); background: var(--panel); color: var(--ink);
-  display: grid; place-items: center; cursor: pointer; box-shadow: 3px 3px 0 var(--brown); }
+.locate { position: absolute; z-index: 450; right: 12px; bottom: 26px; width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--edge); background: var(--panel); color: var(--ink);
+  display: grid; place-items: center; cursor: pointer; box-shadow: 3px 3px 0 var(--shadow); }
 .locate svg, .icon { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* map pins */
-.pin { width: 44px; height: 44px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px var(--brown), 0 4px 10px rgb(0 0 0 / .3);
+.pin { width: 44px; height: 44px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px var(--shadow), 0 4px 10px rgb(0 0 0 / .3);
   display: grid; place-items: center; color: #fff; overflow: hidden; font: 800 20px var(--font); }
 .pin img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pin.spotted { background: var(--spotted); border-color: var(--spotted); }
 .pin.help { background: var(--help); border-color: var(--help); }
-.pin.lost { background: var(--lost); border-color: var(--lost); }
+.pin.lost { background: var(--lost); border-color: var(--lost); color: #2B1C15; }
+.pin.pick { background: var(--pick); border-color: var(--pick); }
 .pin.deceased { background: var(--gone); border-color: var(--gone); }
 .pin.hotspot { background: var(--hot); border-color: var(--hot); }
-.place { border: 3px solid var(--brown); border-radius: 18px; box-shadow: 4px 4px 0 var(--brown); padding: 14px; display: grid; gap: 10px; }
+.place { border: 3px solid var(--edge); border-radius: 18px; box-shadow: 4px 4px 0 var(--shadow); padding: 14px; display: grid; gap: 10px; }
 .place .line { display: flex; gap: 10px; align-items: flex-start; }
 .place .line svg { flex: none; width: 22px; height: 22px; fill: none; stroke: var(--hot); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-top: 1px; }
 .calls { display: grid; gap: 8px; }
 .shelter { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 10px 12px; border: 2px solid var(--line); border-radius: 14px; }
 .shelter.on { border-color: var(--good); background: color-mix(in srgb, var(--good) 10%, var(--panel)); }
-.shelter .tick { width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--brown); display: grid; place-items: center; flex: none; font-weight: 800; }
+.shelter .tick { width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--edge); display: grid; place-items: center; flex: none; font-weight: 800; }
 .shelter.on .tick { background: var(--good); border-color: var(--good); color: #fff; }
 .veil { position: relative; flex: none; scroll-snap-align: start; }
 .veil img { filter: blur(22px); }
 .veil button { position: absolute; inset: 0; margin: auto; height: 44px; width: max-content; }
 .pin svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .leaflet-container { font-family: var(--font); }
-.bubble { width: 48px; height: 48px; border-radius: 50%; background: var(--panel); border: 3px solid var(--brown); box-shadow: 3px 3px 0 var(--brown);
+.bubble { width: 48px; height: 48px; border-radius: 50%; background: var(--panel); border: 3px solid var(--edge); box-shadow: 3px 3px 0 var(--shadow);
   display: grid; place-items: center; font: 800 16px var(--font); color: var(--ink); position: relative; }
 .bubble.big { width: 58px; height: 58px; font-size: 18px; }
 .bubble i { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; background: var(--help); border: 2px solid var(--panel); }
 .leaflet-control-attribution { font-size: 11px; }
 
 /* dialogs */
-dialog { border: 3px solid var(--brown); border-radius: 24px; padding: 0; width: min(560px, calc(100% - 24px)); max-height: calc(100vh - 32px);
-  background: var(--panel); color: var(--ink); box-shadow: 6px 6px 0 var(--brown); }
+dialog { border: 3px solid var(--edge); border-radius: 24px; padding: 0; width: min(560px, calc(100% - 24px)); max-height: calc(100vh - 32px);
+  background: var(--panel); color: var(--ink); box-shadow: 6px 6px 0 var(--shadow); }
 dialog::backdrop { background: rgb(43 28 21 / .55); }
 @media (max-width: 600px) {
-  dialog { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 24px 24px 0 0; border-bottom: 0; box-shadow: 0 -5px 0 var(--brown); max-height: 92vh; }
+  dialog { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 24px 24px 0 0; border-bottom: 0; box-shadow: 0 -5px 0 var(--shadow); max-height: 92vh; }
 }
 .dlg { display: grid; gap: 16px; padding: 18px 18px calc(22px + env(safe-area-inset-bottom)); }
 .dlghead { display: flex; justify-content: space-between; align-items: center; gap: 12px; position: sticky; top: 0; background: var(--panel); padding: 14px 18px 10px; z-index: 2; border-bottom: 2px solid var(--line); }
 .dlghead h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
-.close { appearance: none; width: 44px; height: 44px; flex: none; border-radius: 50%; border: 3px solid var(--brown); background: var(--cream); color: var(--brown); font: 700 20px var(--font); cursor: pointer; }
+.close { appearance: none; width: 44px; height: 44px; flex: none; border-radius: 50%; border: 3px solid var(--edge); background: var(--cream); color: var(--brown); font: 700 20px var(--font); cursor: pointer; }
 .section { display: grid; gap: 10px; }
 .section h3 { margin: 0; font-size: 18px; font-weight: 800; }
 .gallery { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -18px; padding: 0 18px; }
-.gallery img { height: 220px; max-width: 86%; border-radius: 16px; border: 2px solid var(--brown); object-fit: cover; scroll-snap-align: start; flex: none; background: var(--line); }
+.gallery img { height: 220px; max-width: 86%; border-radius: 16px; border: 2px solid var(--edge); object-fit: cover; scroll-snap-align: start; flex: none; background: var(--line); }
 .nophoto { height: 160px; border-radius: 16px; border: 2px dashed var(--line); display: grid; place-items: center; color: var(--muted); }
 .catname { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .catname h2 { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
@@ -168,11 +170,11 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
 .ev p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ev img { width: 120px; height: 90px; object-fit: cover; border-radius: 10px; border: 2px solid var(--line); }
 .scam { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; padding: 8px 10px; border-radius: 12px; background: color-mix(in srgb, var(--warn, #C58A1B) 16%, var(--panel)); border: 2px solid #C58A1B; }
-.tag { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--brown); color: var(--cream); }
+.tag { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--ink); color: var(--bg); }
 .choices { display: grid; gap: 8px; }
 .choice { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 2px solid var(--line); border-radius: 16px; cursor: pointer; }
-.choice:has(input:checked) { border-color: var(--brown); box-shadow: 3px 3px 0 var(--brown); }
-.choice input { width: 20px; height: 20px; accent-color: var(--brown); flex: none; margin: 0; }
+.choice:has(input:checked) { border-color: var(--edge); box-shadow: 3px 3px 0 var(--shadow); }
+.choice input { width: 20px; height: 20px; accent-color: var(--edge); flex: none; margin: 0; }
 .choice .t { display: grid; gap: 1px; min-width: 0; }
 .choice .t b { font-size: 15px; }
 .choice .t span { font-size: 13px; color: var(--muted); }
@@ -187,7 +189,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
 .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .photo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .photo .ph { display: grid; gap: 6px; justify-items: center; font-weight: 700; }
-.minimap { height: 200px; border-radius: 16px; border: 2px solid var(--brown); overflow: hidden; position: relative; z-index: 0; isolation: isolate; }
+.minimap { height: 200px; border-radius: 16px; border: 2px solid var(--edge); overflow: hidden; position: relative; z-index: 0; isolation: isolate; }
 .note { font-size: 13px; color: var(--muted); margin: 0; }
 .msg { min-height: 1.5em; font-weight: 700; margin: 0; }
 .msg.err { color: var(--help); }
@@ -225,10 +227,10 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
     <div class="overlay" id="zoomCard" hidden><p><b>Zoom in to a town or city to see its cats.</b></p><p class="muted">Or search for one above.</p></div>
     <div class="legend" aria-hidden="true">
       <span><i class="dot hotspot"></i>hotspot (visit!)</span>
-      <span><i class="dot spotted"></i>spotted</span>
+      <span><i class="dot spotted"></i>regular</span>
       <span><i class="ring"></i>needs help (area)</span>
       <span><i class="dot lost"></i>maybe lost</span>
-      <span><i class="dot" style="background: var(--panel); border: 2px solid var(--brown); position: relative"><b style="position:absolute; top:-5px; right:-5px; width:8px; height:8px; border-radius:50%; background: var(--help)"></b></i>group (red dot: needs help inside)</span>
+      <span><i class="dot" style="background: var(--panel); border: 2px solid var(--edge); position: relative"><b style="position:absolute; top:-5px; right:-5px; width:8px; height:8px; border-radius:50%; background: var(--help)"></b></i>group (red dot: needs help inside)</span>
     </div>
     <button class="locate" id="locateBtn" type="button" aria-label="Go to my location">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
@@ -243,11 +245,12 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
     <div class="filters" role="group" aria-label="Filter cats">
       <button class="chip" type="button" data-f="all" aria-pressed="true">all <span class="n" data-n="all"></span></button>
       <button class="chip" type="button" data-f="hotspot" aria-pressed="false"><i class="dot hotspot"></i>hotspots <span class="n" data-n="hotspot"></span></button>
-      <button class="chip" type="button" data-f="spotted" aria-pressed="false"><i class="dot spotted"></i>spotted <span class="n" data-n="spotted"></span></button>
+      <button class="chip" type="button" data-f="spotted" aria-pressed="false"><i class="dot spotted"></i>regulars <span class="n" data-n="spotted"></span></button>
       <button class="chip" type="button" data-f="help" aria-pressed="false"><i class="dot help"></i>needs help <span class="n" data-n="help"></span></button>
       <button class="chip" type="button" data-f="lost" aria-pressed="false"><i class="dot lost"></i>maybe lost <span class="n" data-n="lost"></span></button>
       <button class="chip" type="button" data-f="deceased" aria-pressed="false"><i class="dot deceased"></i>found deceased <span class="n" data-n="deceased"></span></button>
     </div>
+    <p class="note" id="filterHint" style="margin:-4px 0 0" aria-live="polite"></p>
     <div class="list" id="list"></div>
     <p class="msg err" id="loadMsg" role="status"></p>
     <div class="foot">
@@ -299,14 +302,24 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
       <p class="note" id="locNote">drag the pin to where you saw it. the exact spot stays private.</p>
     </div>
 
+    <fieldset class="section" id="okBox" style="border:0;margin:0;padding:0">
+      <legend class="label" style="margin-bottom:8px">is it okay?</legend>
+      <div class="choices" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+        <label class="choice"><input type="radio" name="okq" value="yes" checked><span class="t"><b>doing fine</b><span>a regular or a hotspot</span></span></label>
+        <label class="choice"><input type="radio" name="okq" value="no"><span class="t"><b>something's wrong</b><span>needs help, lost, or worse</span></span></label>
+      </div>
+    </fieldset>
+
     <fieldset class="section" id="statusBox" style="border:0;margin:0;padding:0">
-      <legend class="label" style="margin-bottom:8px">what's going on?</legend>
-      <div class="choices">
-        <label class="choice"><input type="radio" name="status" value="spotted" checked><i class="dot spotted"></i><span class="t"><b>spotted</b><span>a cat out and about. say hi to the neighbourhood.</span></span></label>
-        <label class="choice"><input type="radio" name="status" value="hotspot"><i class="dot hotspot"></i><span class="t"><b>hotspot</b><span>lives at a shop, café or public place people can visit.</span></span></label>
-        <label class="choice"><input type="radio" name="status" value="help"><i class="dot help"></i><span class="t"><b>needs help</b><span>cold, hungry, hurt or needs a shelter.</span></span></label>
-        <label class="choice"><input type="radio" name="status" value="lost"><i class="dot lost"></i><span class="t"><b>maybe lost</b><span>looks like someone's pet: collar, very tame, confused.</span></span></label>
-        <label class="choice"><input type="radio" name="status" value="deceased"><i class="dot deceased"></i><span class="t"><b>found deceased</b><span>hit by a car or found dead. so an owner can find out.</span></span></label>
+      <legend class="label" style="margin-bottom:8px" id="statusQ">which one?</legend>
+      <div class="choices" id="okYes">
+        <label class="choice"><input type="radio" name="status" value="spotted" checked><i class="dot spotted"></i><span class="t"><b>regular</b><span>a cat who roams the neighbourhood. you'll see it if you're lucky</span></span></label>
+        <label class="choice"><input type="radio" name="status" value="hotspot"><i class="dot hotspot"></i><span class="t"><b>hotspot</b><span>lives somewhere you can visit on purpose: a shop, café or public place</span></span></label>
+      </div>
+      <div class="choices" id="okNo" hidden>
+        <label class="choice"><input type="radio" name="status" value="help"><i class="dot help"></i><span class="t"><b>needs help</b><span>cold, hungry, hurt or needs a shelter</span></span></label>
+        <label class="choice"><input type="radio" name="status" value="lost"><i class="dot lost"></i><span class="t"><b>maybe lost</b><span>looks like someone's pet: collar, very tame, confused</span></span></label>
+        <label class="choice"><input type="radio" name="status" value="deceased"><i class="dot deceased"></i><span class="t"><b>found deceased</b><span>hit by a car or found dead, so an owner can find out</span></span></label>
       </div>
     </fieldset>
 
@@ -415,7 +428,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
     <div class="section"><h3>the map</h3>
       <p style="margin:0">Neighbours post the cats they meet. Each cat gets one profile that collects sightings, photos and comments, so everyone knows who's who.</p>
       <p style="margin:0"><b>Hotspots</b> are cats and dogs who live somewhere you can visit: a bookshop cat, a café cat, a brewery dog. They show the exact spot, opening hours and house rules, and are only listed with the owner's okay.</p>
-      <p style="margin:0"><b>Spotted</b> is a cat doing cat things. <b>Needs help</b> is a cat that's cold, hungry or hurt. <b>Maybe lost</b> is a cat or dog that looks like someone's missing pet. When it's found, whoever posted it can mark it <b>back home</b> and it leaves the map.</p>
+      <p style="margin:0"><b>Regulars</b> are cats who roam the neighbourhood. Each sighting adds to their journal, so everyone gets to know them. <b>Needs help</b> is a cat that's cold, hungry or hurt. <b>Maybe lost</b> is a cat or dog that looks like someone's missing pet. When it's found, whoever posted it can mark it <b>back home</b> and it leaves the map.</p>
       <p style="margin:0"><b>Who's been called</b>: on animals that need help, might be lost or were found deceased, neighbours tick off the groups they've already called (in Sault Ste. Marie: the Humane Society, TAAG and Maddy's Mighty Mutts), so the same group doesn't get ten calls.</p>
       <p style="margin:0"><b>Found deceased</b> reports let owners find out what happened to a missing pet. They're hidden unless you choose that filter, photos stay blurred until tapped, and reports leave the map after 30 days.</p>
       <p style="margin:0">A <b>Guardian</b> is the neighbour who looks after a cat: feeds it, keeps an eye out, organizes help. Anyone with an account can step up for a cat that doesn't have one.</p></div>
@@ -468,9 +481,17 @@ const TILES_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">Ope
 const MIN_ZOOM_FOR_CATS = 10;   // about a whole city on screen
 const MIN_ZOOM_FOR_AREAS = 14;  // dashed "approximate area" circles only when zoomed in enough to mean something
 
+// one short definition per kind, used in the form, under the filters and on the about page
+const DEFS = {
+  hotspot: "lives somewhere you can visit on purpose: a shop, café or public place",
+  spotted: "a cat who roams the neighbourhood. you'll see it if you're lucky",
+  help: "cold, hungry, hurt or needs a shelter",
+  lost: "looks like someone's pet: collar, very tame, confused",
+  deceased: "found dead, so an owner can find out",
+};
 const STATUS = {
   hotspot: { label: "hotspot" },
-  spotted: { label: "spotted" },
+  spotted: { label: "regular" },
   help: { label: "needs help" },
   lost: { label: "maybe lost" },
   deceased: { label: "found deceased" },
@@ -648,7 +669,7 @@ function renderAreas() {
   if (map.getZoom() < MIN_ZOOM_FOR_AREAS) return;
   for (const c of shownCats()) {
     if (c.status === "spotted" || c.status === "deceased" || c.status === "hotspot") continue;
-    const col = c.status === "help" ? "#B4452F" : "#2B1C15";
+    const col = c.status === "help" ? "#B4452F" : "#C98A0E";
     L.circle([c.lat, c.lng], { radius: 220, color: col, weight: 2, dashArray: "6 6", fillColor: col, fillOpacity: 0.12, interactive: false }).addTo(areas);
   }
 }
@@ -707,8 +728,12 @@ function renderList() {
   $("list").querySelectorAll("[data-cat]").forEach((b) => { b.onclick = () => openCat(b.dataset.cat); });
 }
 
+function renderFilterHint() {
+  $("filterHint").textContent = filter === "all" ? "" : (filter === "spotted" ? "regulars" : STATUS[filter].label + (filter === "hotspot" ? "s" : "")) + ": " + DEFS[filter] + ".";
+}
 document.querySelectorAll(".filters .chip").forEach((b) => b.addEventListener("click", () => {
   filter = b.dataset.f;
+  renderFilterHint();
   document.querySelectorAll(".filters .chip").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
   render();
 }));
@@ -800,12 +825,27 @@ async function openCat(id, quiet) {
   if (!catDlg.open) catDlg.showModal();
 }
 
+// a regular's journal at a glance: how often, since when, and what time of day
+function journal(cat, sightings) {
+  const n = cat.sighting_count;
+  if (n < 2) return '<div class="box"><span class="kicker">journal</span><span class="note">Just one sighting so far. Seen this cat too? Add yours and its journal starts to fill in.</span></div>';
+  const first = sightings.length ? sightings[sightings.length - 1].at : cat.created_at;
+  const slots = { mornings: 0, afternoons: 0, evenings: 0, nights: 0 };
+  sightings.forEach((x) => { const hr = new Date(x.at).getHours(); slots[hr >= 5 && hr < 12 ? "mornings" : hr < 17 && hr >= 12 ? "afternoons" : hr >= 17 && hr < 22 ? "evenings" : "nights"]++; });
+  const top = Object.entries(slots).sort((a, b) => b[1] - a[1])[0];
+  const when = sightings.length >= 3 && top[1] / sightings.length >= 0.5 ? " \u00b7 mostly " + top[0] : "";
+  const since = new Date(first).toLocaleDateString([], { month: "long", year: "numeric" });
+  return '<div class="box"><span class="kicker">journal</span><b>Seen ' + n + " times since " + esc(since) + when + "</b>" +
+    '<span class="note">Last seen ' + ago(cat.last_seen_at) + ". " + (n >= 5 ? "A true local regular." : "Seen it too? Add your sighting.") + "</span></div>";
+}
+
 function renderCat(editing) {
   const { cat, sightings, comments, offers } = current;
   const photos = sightings.filter((s) => s.photo);
   const gone = cat.status === "deceased", hot = cat.status === "hotspot";
   const d = me ? distLabel(metres(me, cat), cat.status !== "spotted" && !gone && !hot) + " away · " : "";
   const visits = (n) => n + (hot ? (n === 1 ? " visit" : " visits") : (n === 1 ? " sighting" : " sightings"));
+  const localRegular = cat.status === "spotted" && cat.sighting_count >= 5;
   const N = noun(cat), isDog = cat.species === "dog";
   $("catKicker").textContent = cat.home_at ? "back home" : kindLabel(cat);
   let h = "";
@@ -832,13 +872,16 @@ function renderCat(editing) {
   } else {
     if (cat.home_at) h += '<div class="box" style="border-color: var(--good)"><b>Back home!</b><span class="note">Marked as found ' + ago(cat.home_at) + '. It\u2019s off the map now.</span></div>';
     h += '<div class="section"><div class="catname"><h2 id="catTitle">' + esc(cat.name) + '</h2><span class="pill ' + cat.status + '">' + kindLabel(cat) + "</span>" +
-      cat.needs.map((n) => '<span class="pill soft">' + esc(NEEDS[n]) + "</span>").join("") + "</div>" +
+      cat.needs.map((n) => '<span class="pill soft">' + esc(NEEDS[n]) + "</span>").join("") +
+      (localRegular ? '<span class="pill soft" title="seen 5 or more times">\u2605 local regular</span>' : "") + "</div>" +
       (cat.description ? '<p style="margin:0">' + esc(cat.description) + "</p>" : "") +
       '<p class="note" style="margin:0">' + d + visits(cat.sighting_count) + " · last seen " + ago(cat.last_seen_at) +
       (cat.status !== "spotted" && !gone && !hot ? " · shown as an approximate area" : "") + "</p>" +
       (cat.can_edit ? '<div class="row"><button class="linkbtn" type="button" id="editBtn">edit this ' + N + "</button>" +
         (cat.status === "lost" ? '<button class="btn small" type="button" id="homeBtn" style="background: var(--good)">' + (cat.home_at ? "not home after all" : "it\u2019s back home!") + "</button>" : "") + "</div>" : "") + "</div>";
   }
+
+  if (cat.status === "spotted" && !editing) h += journal(cat, sightings);
 
   if (hot && !editing) {
     const dir = "https://www.google.com/maps/dir/?api=1&destination=" + cat.lat.toFixed(6) + "," + cat.lng.toFixed(6);
@@ -920,7 +963,7 @@ function renderCat(editing) {
   h += '<div class="timeline">' + (ev.length ? ev.map((e) => {
     if (e.kind === "s") {
       const s = e.s;
-      return '<div class="ev"><div class="who"><b>' + esc(s.name || "a neighbour") + '</b><span class="muted">' + (gone ? "reported it" : hot ? "visited" : "spotted it") + " · " + ago(s.at) + "</span>" +
+      return '<div class="ev"><div class="who"><b>' + esc(s.name || "a neighbour") + '</b><span class="muted">' + (gone ? "reported it" : hot ? "visited" : "saw it") + " · " + ago(s.at) + "</span>" +
         '<button class="linkbtn muted" type="button" data-report="sighting" data-id="' + esc(s.id) + '">report</button></div>' +
         (s.note ? "<p>" + esc(s.note) + "</p>" + (MONEY_RE.test(s.note) ? '<p class="scam">This note mentions money. Be careful: don\u2019t send money to people you don\u2019t know.</p>' : "") : "") + (s.photo ? (gone ? '<span class="veil" style="width:max-content"><img src="' + esc(photoUrl(s.photo)) + '" alt="report photo" loading="lazy"><button class="btn small ghost" type="button" data-unveil style="font-size:12px; min-height:32px; height:32px">show</button></span>'
           : '<img src="' + esc(photoUrl(s.photo)) + '" alt="sighting photo" loading="lazy">') : "") + "</div>";
@@ -1064,6 +1107,7 @@ function openPost(matchCat) {
   $("photoPreview").hidden = true; $("photoPh").hidden = false; $("photoPreview").removeAttribute("src");
   $("postMsg").textContent = ""; $("postMsg").classList.remove("err");
   if (matchCat) {
+    $("postForm").querySelector('input[name="okq"][value="' + (matchCat.status === "spotted" || matchCat.status === "hotspot" ? "yes" : "no") + '"]').checked = true;
     const r = $("postForm").querySelector('input[name="status"][value="' + matchCat.status + '"]'); if (r) r.checked = true;
     $("postForm").querySelector('input[name="species"][value="' + noun(matchCat) + '"]').checked = true;
   }
@@ -1074,7 +1118,7 @@ function openPost(matchCat) {
       postMap = L.map("postMap", { zoomControl: true, attributionControl: true });
       L.tileLayer(TILES, { maxZoom: 19, attribution: TILES_ATTR }).addTo(postMap);
       postMarker = L.marker(map.getCenter(), { draggable: true, keyboard: true, title: "Where you saw it", alt: "Where you saw it",
-        icon: L.divIcon({ className: "", html: '<div class="pin lost">' + CAT_SVG + "</div>", iconSize: [44, 44], iconAnchor: [22, 22] }) }).addTo(postMap);
+        icon: L.divIcon({ className: "", html: '<div class="pin pick">' + CAT_SVG + "</div>", iconSize: [44, 44], iconAnchor: [22, 22] }) }).addTo(postMap);
       postMarker.on("dragend", () => setLoc(postMarker.getLatLng(), "pin"));
       postMap.on("click", (e) => setLoc(e.latlng, "pin"));
     }
@@ -1169,9 +1213,14 @@ const speciesNow = () => $("postForm").querySelector('input[name="species"]:chec
 function syncStatus() {
   const dog = speciesNow() === "dog";
   const radio = (v) => $("postForm").querySelector('input[name="status"][value="' + v + '"]');
-  // dogs: maybe lost, hotspot or found deceased
+  // first "is it okay?", then the kinds that fit; dogs can be a hotspot, maybe lost or found deceased
+  const ok = $("postForm").querySelector('input[name="okq"]:checked').value === "yes";
+  $("okYes").hidden = !ok; $("okNo").hidden = ok;
   ["spotted", "help"].forEach((v) => { radio(v).closest(".choice").hidden = dog; });
-  if (dog && !radio("lost").checked && !radio("deceased").checked && !radio("hotspot").checked) radio("lost").checked = true;
+  const fits = (v) => (ok ? ["spotted", "hotspot"] : ["help", "lost", "deceased"]).includes(v) && !(dog && (v === "spotted" || v === "help"));
+  const cur = $("postForm").querySelector('input[name="status"]:checked');
+  if (!cur || !fits(cur.value)) radio(ok ? (dog ? "hotspot" : "spotted") : (dog ? "lost" : "help")).checked = true;
+  $("statusQ").textContent = ok ? (dog ? "a dog who lives somewhere you can visit" : "which one?") : "what's wrong?";
   $("dogNote").hidden = !dog;
   const st0 = $("postForm").querySelector('input[name="status"]:checked').value, gone = st0 === "deceased", hot = st0 === "hotspot";
   const visiting = hot && post && post.match && post.match !== "new";
@@ -1184,7 +1233,7 @@ function syncStatus() {
   if (gone) { $("matchBox").hidden = true; if (post) post.match = null; }
   $("matchTitle").textContent = dog ? "is this one of these dogs?" : "is this one of these cats?";
   $("catName").placeholder = dog ? "the name on its tag, or make one up" : "e.g. Marmalade";
-  if (postMarker) postMarker.setIcon(L.divIcon({ className: "", html: '<div class="pin ' + (gone ? "deceased" : hot ? "hotspot" : "lost") + '">' + (gone ? FLOWER_SVG : hot ? STAR_SVG : dog ? DOG_SVG : CAT_SVG) + "</div>", iconSize: [44, 44], iconAnchor: [22, 22] }));
+  if (postMarker) postMarker.setIcon(L.divIcon({ className: "", html: '<div class="pin ' + (gone ? "deceased" : hot ? "hotspot" : "pick") + '">' + (gone ? FLOWER_SVG : hot ? STAR_SVG : dog ? DOG_SVG : CAT_SVG) + "</div>", iconSize: [44, 44], iconAnchor: [22, 22] }));
   if (hot && !visiting) $("locNote").textContent = "put the pin right on the place. hotspots show the exact spot.";
   const st = $("postForm").querySelector('input[name="status"]:checked').value;
   $("needsBox").hidden = st !== "help";
@@ -1204,7 +1253,7 @@ $("dropPhoto").onclick = () => {
   $("photoPreview").hidden = true; $("photoPreview").removeAttribute("src"); $("photoPh").hidden = false;
   syncStatus();
 };
-$("postForm").querySelectorAll('input[name="status"]').forEach((r) => r.addEventListener("change", () => { syncStatus(); if (post && post.loc) findMatches(); }));
+$("postForm").querySelectorAll('input[name="status"], input[name="okq"]').forEach((r) => r.addEventListener("change", () => { syncStatus(); if (post && post.loc) findMatches(); }));
 $("postForm").querySelectorAll('input[name="species"]').forEach((r) => r.addEventListener("change", () => {
   if (post && post.matchCat && noun(post.matchCat) !== speciesNow()) { post.matchCat = null; post.match = null; }
   syncStatus(); if (post && post.loc) findMatches();
