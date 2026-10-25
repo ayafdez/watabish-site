@@ -269,7 +269,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
     <p class="msg err" id="loadMsg" role="status"></p>
     <div class="foot">
       <button class="linkbtn muted" id="aboutBtn" type="button">how it works &amp; safety</button>
-      <a href="../play/">play watabish</a>
+      <a href="../play/">play with watabish</a>
       <a href="../privacy.html">privacy</a>
       <a href="../terms.html">terms</a>
     </div>
@@ -396,19 +396,22 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
   </form>
 </dialog>
 
-<!-- account -->
+<!-- account: same login as the Watabish game; sign-in is by emailed code only -->
 <dialog id="acctDlg" aria-labelledby="acctTitle">
-  <div class="dlghead"><h2 id="acctTitle">your account</h2><button class="close" type="button" data-close aria-label="Close">×</button></div>
+  <div class="dlghead"><h2 id="acctTitle">Adopt Watabish</h2><button class="close" type="button" data-close aria-label="Close">×</button></div>
   <div class="dlg">
     <div id="acctOut" class="section">
-      <p style="margin:0">Same account as Watabish: if you've adopted him, use that email. No password, we email you a code.</p>
-      <p class="note" style="margin:0">You need an account to post cats, offer help or become a caretaker. Commenting works without one.</p>
+      <p style="margin:0" id="acctIntro"></p>
+      <p class="note" style="margin:0" id="acctWhy">You need an account to post, offer help or become a Guardian. Commenting works without one.</p>
+      <p class="note" style="margin:0"><span id="acctSwitchLead">His human?</span> <button class="linkbtn" type="button" id="acctSwitch">Sign in</button></p>
       <label class="field"><span>email</span><input class="input" id="acctEmail" type="email" autocomplete="email" inputmode="email"></label>
-      <label class="check"><input type="checkbox" id="acctAge"> I'm 13 or older</label>
-      <button class="btn" type="button" id="acctSend">email me a code</button>
+      <label class="check" id="acctAgeRow"><input type="checkbox" id="acctAge"> <span>I'm 13 or older and agree to the <a href="../terms.html" target="_blank" rel="noopener">terms</a> and <a href="../privacy.html" target="_blank" rel="noopener">privacy policy</a>.</span></label>
+      <button class="btn" type="button" id="acctSend">Email me my adoption papers</button>
       <div id="acctCodeBox" class="section" hidden>
-        <label class="field"><span>code from the email</span><input class="input" id="acctCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label>
-        <button class="btn dark" type="button" id="acctVerify">sign in</button>
+        <label class="field" for="acctCode"><span>Got the email? Type the code from it here.</span>
+          <input class="input" id="acctCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="••••••" style="font-size: 22px; letter-spacing: .25em"></label>
+        <button class="btn dark" type="button" id="acctVerify">Adopt with code</button>
+        <p class="note" style="margin:0">Didn't get it? Check your spam folder, or <button class="linkbtn" type="button" id="acctResend">send a new code</button>.</p>
       </div>
     </div>
     <div id="acctIn" class="section" hidden>
@@ -419,7 +422,13 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
       <p class="note" style="margin:0">Never send money to people you meet on the map, and never share sign-in codes.</p>
       <div class="row"><button class="btn small" type="button" id="acctSaveName">save name</button>
         <button class="btn small ghost" type="button" id="acctSignOut">sign out</button></div>
-      <p class="note" style="margin:0">To delete your account, open the journal in <a href="../play/">Watabish</a>.</p>
+      <p style="margin:0"><a href="../play/">Play with Watabish &rarr;</a> <span class="note">same account, he's waiting (he'll deny it)</span></p>
+      <div><button class="linkbtn muted" type="button" id="acctDelete">delete my account</button></div>
+      <div class="box warm" id="acctDeleteConfirm" hidden>
+        <b>Delete your account for good?</b>
+        <span class="note">This deletes it for both the cat map and the Watabish game: your sightings, photos, comments and help offers, and his saved progress. Cats you added stay on the map without your name. This can't be undone.</span>
+        <div class="row"><button class="btn small help" type="button" id="acctDeleteYes">yes, delete it</button><button class="btn small ghost" type="button" id="acctDeleteNo">keep it</button></div>
+      </div>
     </div>
     <p class="msg" id="acctMsg" role="status"></p>
   </div>
@@ -789,37 +798,93 @@ function runAfterSignIn() { const f = afterSignIn; afterSignIn = null; if (f && 
 $("acctDlg").addEventListener("close", runAfterSignIn);
 if (sbAnon) sbAnon.auth.getSession().then(({ data }) => { anonReady = !!(data && data.session); }).catch(() => {});
 
+// Two modes, like the game: adopt (new account) and sign in (returning). Both send a code by email.
+// Note: nothing the map keeps in the browser (map view, money notice, guest ID) is ever written to the account.
+let acctMode = "adopt";
+function setAcctMode(m) {
+  acctMode = m; const back = m === "return";
+  $("acctTitle").textContent = back ? "Welcome home" : "Adopt Watabish";
+  $("acctIntro").textContent = back
+    ? "He's been waiting (he'll deny it). Enter your email and we'll send a code to bring him home."
+    : "One free account for the cat map and the Watabish game. No password: we email you a code.";
+  $("acctSwitchLead").textContent = back ? "New here?" : "His human?";
+  $("acctSwitch").textContent = back ? "Adopt him" : "Sign in";
+  $("acctSend").textContent = back ? "Email me my sign-in code" : "Email me my adoption papers";
+  $("acctVerify").textContent = back ? "Sign in with code" : "Adopt with code";
+  $("acctAgeRow").hidden = back;
+  $("acctCodeBox").hidden = true; $("acctCode").value = "";
+}
+setAcctMode("adopt");
+$("acctSwitch").onclick = () => { setAcctMode(acctMode === "return" ? "adopt" : "return"); acctMsg(""); $("acctEmail").focus(); };
+$("acctEmail").addEventListener("input", () => { $("acctCodeBox").hidden = true; }); // a new email needs a new code
+
 $("acctBtn").onclick = () => { acctMsg(""); $("acctDlg").showModal(); };
-$("acctSend").onclick = async () => {
-  const email = $("acctEmail").value.trim();
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { acctMsg("That doesn't look like an email address.", true); return; }
-  if (!$("acctAge").checked) { acctMsg("Please confirm you're 13 or older.", true); return; }
+async function sendCode() {
+  const email = $("acctEmail").value.trim(), back = acctMode === "return";
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { acctMsg("That doesn't look like an email address.", true); $("acctEmail").focus(); return; }
+  if (!back && !$("acctAge").checked) { acctMsg("Please confirm you're 13 or older.", true); return; }
   if (!sb) { acctMsg("Sign-in isn't available right now.", true); return; }
-  $("acctSend").disabled = true; acctMsg("Sending…");
+  $("acctSend").disabled = true; $("acctResend").disabled = true; acctMsg("Sending…");
   try {
-    const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
-    if (error) acctMsg("Couldn't send the code. Try again in a minute.", true);
-    else { acctMsg("Sent! Check your email for the code (or tap the link in it)."); $("acctCodeBox").hidden = false; $("acctCode").focus(); }
+    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: !back } });
+    if (error && back && /signup|not allowed|not found/i.test(error.message || "")) acctMsg("No human with that email yet. Tap \u201cAdopt him\u201d to start fresh.", true);
+    else if (error && (error.status === 429 || /seconds|rate limit/i.test(error.message || ""))) acctMsg("Hang on a minute, then send a new code.", true);
+    else if (error) acctMsg("Couldn't send the code. Try again in a minute.", true);
+    else {
+      acctMsg(back ? "Sent! Check your email for your sign-in code." : "Sent! Check your email for his adoption papers. Your code is inside.");
+      $("acctCodeBox").hidden = false; $("acctCode").value = ""; $("acctCode").focus();
+    }
   } catch { acctMsg("Couldn't send the code. Check your connection.", true); }
-  $("acctSend").disabled = false;
-};
-$("acctVerify").onclick = async () => {
+  $("acctSend").disabled = false; $("acctResend").disabled = false;
+}
+$("acctSend").onclick = sendCode;
+$("acctResend").onclick = sendCode;
+async function verifyCode() {
   const email = $("acctEmail").value.trim(), token = $("acctCode").value.replace(/\D/g, "");
-  if (token.length < 6) { acctMsg("Type the code from the email.", true); return; }
+  if (token.length < 6) { acctMsg("Type the code from the email.", true); $("acctCode").focus(); return; }
   $("acctVerify").disabled = true; acctMsg("Checking…");
   try {
     const { data, error } = await sb.auth.verifyOtp({ email, token, type: "email" });
-    if (error || !data || !data.session) acctMsg("That code didn't work. It may have expired, so send a new one.", true);
-    else { $("acctCodeBox").hidden = true; $("acctCode").value = ""; }
+    if (error || !data || !data.session) { acctMsg("That code didn't work. Check it, or send a new one.", true); $("acctCode").select(); }
+    else { $("acctCodeBox").hidden = true; $("acctCode").value = ""; } // sign-in itself (and the "pick a name" prompt) is handled by onAuthStateChange
   } catch { acctMsg("Couldn't check the code. Check your connection.", true); }
   $("acctVerify").disabled = false;
-};
+}
+$("acctVerify").onclick = verifyCode;
+$("acctCode").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); verifyCode(); } });
+$("acctEmail").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); sendCode(); } });
 $("acctSaveName").onclick = async () => {
   const n = $("acctName").value.trim().slice(0, 40);
   if (!n) { acctMsg("Type a name first.", true); return; }
-  const { data, error } = await sb.auth.updateUser({ data: { map_name: n } });
+  const { data, error } = await sb.auth.updateUser({ data: { map_name: n } }); // merges into the account's details; game data isn't touched
   if (error) { acctMsg("Couldn't save that. Try again.", true); return; }
   user = data.user; renderAcct(); acctMsg("Saved."); setTimeout(() => $("acctDlg").close(), 600);
+};
+// Photos live in storage, not the database, so they're removed here first, before the account is deleted.
+async function deleteMyPhotos() {
+  const bucket = sb.storage.from("cat-photos");
+  for (let round = 0; round < 50; round++) {
+    const { data, error } = await bucket.list(user.id, { limit: 100 });
+    if (error) throw error;
+    if (!data || !data.length) return;
+    const { error: rmErr } = await bucket.remove(data.map((f) => user.id + "/" + f.name));
+    if (rmErr) throw rmErr;
+  }
+}
+$("acctDelete").onclick = () => { $("acctDeleteConfirm").hidden = false; };
+$("acctDeleteNo").onclick = () => { $("acctDeleteConfirm").hidden = true; };
+$("acctDeleteYes").onclick = async () => {
+  $("acctDeleteYes").disabled = true; acctMsg("Deleting…");
+  try {
+    await deleteMyPhotos();
+    const { error } = await sb.rpc("delete_my_account");
+    if (error) throw error;
+    try { await sb.auth.signOut(); } catch {}
+    user = null; renderAcct(); setAcctMode("adopt"); $("acctDeleteConfirm").hidden = true;
+    acctMsg("Your account, photos and posts are deleted. Take care.");
+    loadCats();
+  } catch { acctMsg("Couldn't delete right now. Try again, or email aya@likhangmaya.com.", true); }
+  $("acctDeleteYes").disabled = false;
 };
 $("acctSignOut").onclick = async () => { try { await sb.auth.signOut(); } catch {} user = null; renderAcct(); acctMsg("Signed out."); };
 
