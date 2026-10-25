@@ -807,6 +807,14 @@ const LINES = {
     ["*flicks his tail once*", "Questions cost tolerance. You're short."]
   ]
 };
+// a usable wisdom: short, finished, and not the AI talking to itself
+function cleanWisdom(t) {
+  t = String(t || "").trim().replace(/^["“'\s]+|["”'\s]+$/g, "");
+  if (!t || t.length > 180) return "";
+  if (/\b(wait|here'?s a|here is a|over the limit|word count|let me|i'll try|clean one|muddled|as requested)\b/i.test(t)) return "";
+  if (!/[.!?)…]$/.test(t)) return "";
+  return t;
+}
 const FALLBACK_WISDOM = [
   "If it fits, sit. If it doesn't fit, sit harder.",
   "Knock it off the table. Find out if it mattered.",
@@ -887,6 +895,8 @@ if (S.freeAdviceAt > Date.now() + ADVICE_MAX_MS) S.freeAdviceAt = Date.now() + A
 for (const [k,v] of Object.entries({ lastTouch: Date.now(), drops: 0, dayFills: 0, dayKey: new Date().toDateString(), freeAdviceAt: Date.now(), passes: 0 })) if (S[k] === undefined) S[k] = v;
 delete S.halfDone;
 if (!Array.isArray(S.advice)) S.advice = [];
+// tidy up any broken wisdom saved before we checked
+if (Array.isArray(S.wisdom)) S.wisdom = S.wisdom.filter(w => cleanWisdom(w));
 function touch() { S.lastTouch = Date.now(); S.drops = 0; }
 function decayTolerance(now) {
   const since = now - S.lastTouch - GRACE_MS;
@@ -1175,7 +1185,7 @@ async function revealWisdom() {
   if (user && sb) {
     try {
       const { data, error } = await sb.functions.invoke("ask-watabish", { body: { kind: "wisdom", seen: S.wisdom.slice(0, 8) } });
-      if (!error && data && data.wisdom) text = String(data.wisdom).trim();
+      if (!error && data && data.wisdom) text = cleanWisdom(data.wisdom);
     } catch {}
   }
   if (!text) { const used = new Set(S.wisdom); const left = FALLBACK_WISDOM.filter(w => !used.has(w)); text = pick(left.length ? left : FALLBACK_WISDOM); }
@@ -1776,9 +1786,10 @@ async function resolveSave(u) {
     const res = await sb.from("game_saves").select("save, updated_at").eq("user_id", u.id).maybeSingle();
     if (res.error) throw res.error;
     data = res.data;
-  } catch {
+  } catch (e) {
     // never overwrite the account while we can't see what's in it: try again shortly
-    acctMsg("Signed in, but we couldn't reach your save yet. Trying again…");
+    const why = [e && e.code, e && (e.message || e.error_description || String(e))].filter(Boolean).join(": ").slice(0, 160);
+    acctMsg("Signed in, but we couldn't reach your save yet. Trying again… (" + (why || "no details") + ")");
     setTimeout(() => resolveSave(u), 15000);
     return;
   }
