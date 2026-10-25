@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
 <style>
 :root {
   --bg: #F3EADB; --panel: #FFFFFF; --ink: #2B1C15; --muted: #5A463A; --line: #E4D6C0;
@@ -117,6 +118,10 @@ textarea.input { resize: vertical; min-height: 84px; }
 .pin.lost { background: var(--lost); border-color: var(--lost); }
 .pin svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .leaflet-container { font-family: var(--font); }
+.bubble { width: 48px; height: 48px; border-radius: 50%; background: var(--panel); border: 3px solid var(--brown); box-shadow: 3px 3px 0 var(--brown);
+  display: grid; place-items: center; font: 800 16px var(--font); color: var(--ink); position: relative; }
+.bubble.big { width: 58px; height: 58px; font-size: 18px; }
+.bubble i { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; border-radius: 50%; background: var(--help); border: 2px solid var(--panel); }
 .leaflet-control-attribution { font-size: 11px; }
 
 /* dialogs */
@@ -204,11 +209,12 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
       <button class="btn" id="startLocate" type="button">show cats near me</button>
       <p class="note">or search for a street above</p>
     </div>
-    <div class="overlay" id="zoomCard" hidden><p><b>Zoom in to see cats.</b></p><p class="muted">Cats are a neighbourhood thing.</p></div>
+    <div class="overlay" id="zoomCard" hidden><p><b>Zoom in to a town or city to see its cats.</b></p><p class="muted">Or search for one above.</p></div>
     <div class="legend" aria-hidden="true">
       <span><i class="dot spotted"></i>spotted</span>
       <span><i class="ring"></i>needs help (area)</span>
       <span><i class="dot lost"></i>maybe lost</span>
+      <span><i class="dot" style="background: var(--panel); border: 2px solid var(--brown); position: relative"><b style="position:absolute; top:-5px; right:-5px; width:8px; height:8px; border-radius:50%; background: var(--help)"></b></i>group (red dot: needs help inside)</span>
     </div>
     <button class="locate" id="locateBtn" type="button" aria-label="Go to my location">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
@@ -402,6 +408,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
 <script>
@@ -412,7 +419,8 @@ const SB_KEY = "sb_publishable_ZIFNEg8XxN_JW6li0MKReA_yjgPEfyj";
 // OpenStreetMap's own tiles are fine to start. If the map gets busy, swap in a tile provider here.
 const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const TILES_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-const MIN_ZOOM_FOR_CATS = 12;
+const MIN_ZOOM_FOR_CATS = 10;   // about a whole city on screen
+const MIN_ZOOM_FOR_AREAS = 14;  // dashed "approximate area" circles only when zoomed in enough to mean something
 
 const STATUS = {
   spotted: { label: "spotted" },
@@ -483,7 +491,18 @@ document.querySelectorAll("dialog").forEach((d) => {
 const saved = store.get("wb-map-view");
 const map = L.map("map", { zoomControl: true, worldCopyJump: true }).setView(saved ? [saved.lat, saved.lng] : [50, -96], saved ? saved.z : 4);
 L.tileLayer(TILES, { maxZoom: 19, attribution: TILES_ATTR }).addTo(map);
-const layer = L.layerGroup().addTo(map);
+// nearby pins group into numbered bubbles when zoomed out; tap a bubble to zoom in
+const layer = (L.markerClusterGroup ? L.markerClusterGroup({
+  showCoverageOnHover: false, maxClusterRadius: 48, disableClusteringAtZoom: 16, spiderfyOnMaxZoom: true,
+  iconCreateFunction: (cl) => {
+    const kids = cl.getAllChildMarkers(), n = cl.getChildCount();
+    const urgent = kids.some((m) => m.options.urgent);
+    return L.divIcon({ className: "", iconSize: n > 20 ? [58, 58] : [48, 48],
+      html: '<div class="bubble' + (n > 20 ? " big" : "") + '" aria-label="' + n + ' animals here">' + n + (urgent ? '<i title="includes animals that need help"></i>' : "") + "</div>" });
+  },
+}) : L.layerGroup()).addTo(map);
+const areas = L.layerGroup().addTo(map);
+map.on("zoomend", () => renderAreas());
 let me = null, meMarker = null;
 let cats = [];
 let filter = "all";
@@ -495,7 +514,7 @@ function locate(onDone) {
     me = { lat: p.coords.latitude, lng: p.coords.longitude };
     if (meMarker) meMarker.setLatLng(me); else meMarker = L.circleMarker(me, { radius: 8, color: "#fff", weight: 3, fillColor: "#1F5FA8", fillOpacity: 1 }).addTo(map);
     $("startCard").hidden = true;
-    map.setView(me, Math.max(map.getZoom(), 15));
+    map.setView(me, Math.max(map.getZoom(), 14));
     if (onDone) onDone(me);
   }, () => toast("Couldn't get your location. Search for a street instead."), { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
 }
@@ -510,7 +529,10 @@ $("searchForm").addEventListener("submit", async (e) => {
     const hit = await geocode(q, $("startCard").hidden ? map.getCenter() : null);
     if (!hit) { toast("Couldn't find that place."); return; }
     $("startCard").hidden = true;
-    map.setView(hit, 15);
+    // a city or neighbourhood: show all of it; a street or address: zoom in close
+    if (hit.bbox && (hit.bbox[1] - hit.bbox[0] > 0.01 || hit.bbox[3] - hit.bbox[2] > 0.01))
+      map.fitBounds([[hit.bbox[0], hit.bbox[2]], [hit.bbox[1], hit.bbox[3]]], { maxZoom: 16, padding: [20, 20] });
+    else map.setView(hit, 16);
     $("searchInput").blur();
   } catch { toast("Search isn't working right now."); }
 });
@@ -525,7 +547,7 @@ map.on("moveend", () => {
 async function loadCats() {
   const tooFar = map.getZoom() < MIN_ZOOM_FOR_CATS;
   $("zoomCard").hidden = !tooFar || !$("startCard").hidden;
-  if (tooFar) { cats = []; render(); $("countLine").textContent = "zoom in on a neighbourhood to see its cats"; return; }
+  if (tooFar) { cats = []; render(); $("countLine").textContent = "zoom in to a town or city to see its cats"; return; }
   if (!sb) { $("loadMsg").textContent = "The cat map can't load right now. Try again later."; return; }
   const b = map.getBounds().pad(0.25), seq = ++loadSeq;
   const { data, error } = await sb.rpc("map_cats_in", { min_lat: b.getSouth(), min_lng: b.getWest(), max_lat: b.getNorth(), max_lng: b.getEast() });
@@ -533,6 +555,7 @@ async function loadCats() {
   if (error) { $("loadMsg").textContent = errText(error, "Couldn't load cats. Try moving the map."); return; }
   $("loadMsg").textContent = "";
   cats = data || [];
+  if (cats.length >= 400) $("loadMsg").textContent = "Lots of animals here! Showing the 400 seen most recently. Zoom in to see the rest.";
   render();
 }
 
@@ -541,22 +564,30 @@ function pinHtml(c) {
   const inner = img || (c.species === "dog" ? DOG_SVG : c.status === "lost" ? "?" : c.status === "help" ? HEART_SVG : CAT_SVG);
   return '<div class="pin ' + c.status + '">' + inner + "</div>";
 }
+const shownCats = () => cats.filter((c) => filter === "all" || c.status === filter);
+function renderAreas() {
+  areas.clearLayers();
+  if (map.getZoom() < MIN_ZOOM_FOR_AREAS) return;
+  for (const c of shownCats()) {
+    if (c.status === "spotted") continue;
+    const col = c.status === "help" ? "#B4452F" : "#2B1C15";
+    L.circle([c.lat, c.lng], { radius: 220, color: col, weight: 2, dashArray: "6 6", fillColor: col, fillOpacity: 0.12, interactive: false }).addTo(areas);
+  }
+}
 function render() {
   layer.clearLayers();
-  const shown = cats.filter((c) => filter === "all" || c.status === filter);
+  renderAreas();
+  const shown = shownCats(), markers = [];
   for (const c of shown) {
-    if (c.status !== "spotted") {
-      const col = c.status === "help" ? "#B4452F" : "#2B1C15";
-      L.circle([c.lat, c.lng], { radius: 220, color: col, weight: 2, dashArray: "6 6", fillColor: col, fillOpacity: 0.12, interactive: false }).addTo(layer);
-    }
-    const m = L.marker([c.lat, c.lng], {
+    const m = L.marker([c.lat, c.lng], { urgent: c.status === "help",
       icon: L.divIcon({ className: "", html: pinHtml(c), iconSize: [44, 44], iconAnchor: [22, 22] }),
       title: c.name + ", " + kindLabel(c), alt: c.name + ", " + kindLabel(c), keyboard: true,
       zIndexOffset: c.status === "help" ? 300 : c.status === "lost" ? 200 : 0,
     });
     m.on("click", () => openCat(c.id));
-    m.addTo(layer);
+    markers.push(m);
   }
+  if (layer.addLayers) layer.addLayers(markers); else markers.forEach((m) => m.addTo(layer));
   renderList();
 }
 
@@ -574,7 +605,9 @@ function renderList() {
     $("countLine").textContent = parts.length ? parts.join(" and ") + " in this area" : "no cats posted here yet";
   }
   const list = inView.filter((c) => filter === "all" || c.status === filter)
-    .map((c) => ({ c, d: metres(center, c) })).sort((a, b) => (b.c.status === "help") - (a.c.status === "help") || a.d - b.d).slice(0, 60);
+    .map((c) => ({ c, d: metres(center, c) })).sort((a, b) => (b.c.status === "help") - (a.c.status === "help") || a.d - b.d);
+  const more = list.length > 60 ? list.length - 60 : 0;
+  list.length = Math.min(list.length, 60);
   if (!list.length) {
     $("list").innerHTML = map.getZoom() >= MIN_ZOOM_FOR_CATS
       ? '<div class="empty">No cats here yet. Seen one? <button class="linkbtn" type="button" data-post>Put it on the map.</button></div>' : "";
@@ -589,6 +622,7 @@ function renderList() {
       '<span class="sub">' + esc(what) + "</span>" +
       '<span class="sub">' + distLabel(d, c.status !== "spotted") + " · " + c.sighting_count + (c.sighting_count === 1 ? " sighting" : " sightings") + " · seen " + ago(c.last_seen_at) + "</span></span></button>";
   }).join("");
+  if (more) $("list").insertAdjacentHTML("beforeend", '<p class="note" style="text-align:center">+ ' + more + " more. Zoom in on the map to see them.</p>");
   $("list").querySelectorAll("[data-cat]").forEach((b) => { b.onclick = () => openCat(b.dataset.cat); });
 }
 
@@ -934,7 +968,9 @@ async function geocode(q, near) {
   if (near) url += "&viewbox=" + [near.lng - 0.3, near.lat + 0.3, near.lng + 0.3, near.lat - 0.3].join(",");
   const r = await fetch(url, { headers: { "Accept-Language": navigator.language || "en" } });
   const j = await r.json();
-  return j.length ? { lat: +j[0].lat, lng: +j[0].lon } : null;
+  if (!j.length) return null;
+  const bb = (j[0].boundingbox || []).map(Number); // [south, north, west, east]
+  return { lat: +j[0].lat, lng: +j[0].lon, bbox: bb.length === 4 && bb.every(isFinite) ? bb : null };
 }
 async function findAddr() {
   const q = $("postAddr").value.trim();
