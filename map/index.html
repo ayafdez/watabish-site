@@ -117,6 +117,7 @@ textarea.input { resize: vertical; min-height: 84px; }
 .pin.help { background: var(--help); border-color: var(--help); }
 .pin.lost { background: var(--lost); border-color: var(--lost); }
 .pin.deceased { background: var(--gone); border-color: var(--gone); }
+.calls { display: grid; gap: 8px; }
 .shelter { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 10px 12px; border: 2px solid var(--line); border-radius: 14px; }
 .shelter.on { border-color: var(--good); background: color-mix(in srgb, var(--good) 10%, var(--panel)); }
 .shelter .tick { width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--brown); display: grid; place-items: center; flex: none; font-weight: 800; }
@@ -310,7 +311,11 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
       <button class="linkbtn" type="button" id="dropPhoto" hidden>remove the photo I added</button>
     </div>
 
-    <label class="check" id="shelterRow"><input type="checkbox" id="postShelter"> I've called the shelter or animal services about this one</label>
+    <fieldset class="section" id="callsBox" hidden style="border:0;margin:0;padding:0">
+      <legend class="label" style="margin-bottom:8px">who have you called about it? <span class="muted" style="font-weight:400">(optional)</span></legend>
+      <div class="choices" id="callChoices"></div>
+      <p class="note" style="margin:0">Ticking these tells neighbours it's already been reported, so the same group doesn't get ten calls.</p>
+    </fieldset>
 
     <fieldset class="section" id="needsBox" hidden style="border:0;margin:0;padding:0">
       <legend class="label" style="margin-bottom:8px">what does it need?</legend>
@@ -392,7 +397,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
     <div class="section"><h3>the map</h3>
       <p style="margin:0">Neighbours post the cats they meet. Each cat gets one profile that collects sightings, photos and comments, so everyone knows who's who.</p>
       <p style="margin:0"><b>Spotted</b> is a cat doing cat things. <b>Needs help</b> is a cat that's cold, hungry or hurt. <b>Maybe lost</b> is a cat or dog that looks like someone's missing pet. When it's found, whoever posted it can mark it <b>back home</b> and it leaves the map.</p>
-      <p style="margin:0"><b>Shelter called</b> means a neighbour has already reported a spotted or lost animal to a shelter or animal services, so others don't need to call again.</p>
+      <p style="margin:0"><b>Who's been called</b>: on animals that need help, might be lost or were found deceased, neighbours tick off the groups they've already called (in Sault Ste. Marie: the Humane Society, TAAG and Maddy's Mighty Mutts), so the same group doesn't get ten calls.</p>
       <p style="margin:0"><b>Found deceased</b> reports let owners find out what happened to a missing pet. They're hidden unless you choose that filter, photos stay blurred until tapped, and reports leave the map after 30 days.</p>
       <p style="margin:0">A <b>Guardian</b> is the neighbour who looks after a cat: feeds it, keeps an eye out, organizes help. Anyone with an account can step up for a cat that doesn't have one.</p></div>
     <div class="section"><h3>about money</h3>
@@ -456,6 +461,31 @@ const DOG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5L4 7v5
 const noun = (c) => (c && c.species === "dog" ? "dog" : "cat");
 const kindLabel = (c) => (c.status === "deceased" ? "found deceased" : c.species === "dog" ? "lost dog" : STATUS[c.status].label);
 const FLOWER_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="2.5"/><path d="M12 6.5c0-3 3.5-3 3.5 0M14.5 9c3 0 3 3.5 0 3.5M12 11.5c0 3-3.5 3-3.5 0M9.5 9c-3 0-3-3.5 0-3.5M12 12v9M12 17c2-2 4-2 5-1"/></svg>';
+// ---------- who to call ----------
+// Local groups show for animals inside their area. To add a group: copy a line, give it a short
+// unique key (lowercase letters, numbers, dashes), and an area from AREAS. Phone numbers are optional.
+const AREAS = {
+  // Sault Ste. Marie, Ontario and nearby (leaves out Sault Ste. Marie, Michigan across the river)
+  ssm: (p) => p.lat > 46.40 && p.lat < 46.75 && p.lng > -84.75 && p.lng < -83.95 && !(p.lat < 46.497 && p.lng > -84.60),
+};
+const ORGS = [
+  { key: "humane-ssm", name: "Sault Ste. Marie Humane Society", note: "the city's shelter and animal control", phone: "705-949-3573", area: "ssm" },
+  { key: "taag", name: "TAAG (The Animal Assistance Group)", note: "rescue", phone: "705-575-7030", area: "ssm" },
+  { key: "maddys-mutts", name: "Maddy's Mighty Mutts", note: "dog rescue", area: "ssm", species: "dog" },
+  // everywhere else
+  { key: "shelter", name: "A shelter or animal services", outside: "ssm" },
+  { key: "rescue", name: "Another rescue group" },
+  { key: "city", name: "The city or town (for pickup)", statuses: ["deceased"] },
+];
+const CALL_STATUSES = ["help", "lost", "deceased"];
+function orgsFor(animal, status, species) {
+  return ORGS.filter((o) =>
+    (!o.area || AREAS[o.area](animal)) && (!o.outside || !AREAS[o.outside](animal)) &&
+    (!o.species || o.species === species) && (!o.statuses || o.statuses.includes(status)));
+}
+const orgName = (key) => (ORGS.find((o) => o.key === key) || { name: key }).name;
+const telLink = (o) => o && o.phone ? ' <a href="tel:' + o.phone.replace(/[^0-9+]/g, "") + '">' + esc(o.phone) + "</a>" : "";
+
 // comments that talk about money get a warning under them
 const MONEY_RE = /e-?transfer|interac|paypal|venmo|cash ?app|zelle|wise\.com|western union|moneygram|gift ?card|bitcoin|btc|crypto|usdt|gofundme|donat|send (me )?money|\$\s?\d|\d+\s?(dollars|bucks)|shipping fee|deposit|reward/i;
 const HEART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
@@ -785,15 +815,21 @@ function renderCat(editing) {
       '<span class="note">If you think it might be your pet, or you know whose it is, say so in the comments, or call your local shelter. If it isn\u2019t collected yet, your city or town (often 311 or animal services) can pick it up.</span></div>';
   }
 
-  // "shelter called" checkmark (spotted and maybe lost)
-  if (cat.status === "spotted" || cat.status === "lost") {
-    const on = !!cat.shelter_called_at;
-    h += '<div class="shelter' + (on ? " on" : "") + '"><span class="row" style="flex-wrap:nowrap"><span class="tick" aria-hidden="true">' + (on ? "\u2713" : "") + "</span><span>" +
-      (on ? "<b>Shelter called</b><br><span class=\"note\">by " + esc(cat.shelter_called_name || "a neighbour") + " \u00b7 " + ago(cat.shelter_called_at) + "</span>"
-          : "<b>Shelter not called yet</b><br><span class=\"note\">Called the shelter or animal services about this " + N + "? Let neighbours know.</span>") +
-      "</span></span>" +
-      (on ? (cat.can_unshelter ? '<button class="linkbtn muted" type="button" id="shelterBtn" data-on="0">undo</button>' : "")
-          : '<button class="btn small" type="button" id="shelterBtn" data-on="1" aria-label="Mark that the shelter was called">I called</button>') + "</div>";
+  // "who's been called" (needs help, maybe lost, found deceased)
+  if (CALL_STATUSES.includes(cat.status)) {
+    const calls = current.calls || [];
+    const keys = orgsFor(cat, cat.status, cat.species).map((o) => o.key);
+    calls.forEach((k) => { if (!keys.includes(k.org)) keys.push(k.org); }); // keep ticks for groups not in today's list
+    h += '<div class="section"><h3>who\u2019s been called</h3><div class="calls">' + keys.map((key) => {
+      const o = ORGS.find((x) => x.key === key), k = calls.find((x) => x.org === key);
+      return '<div class="shelter' + (k ? " on" : "") + '"><span class="row" style="flex-wrap:nowrap; flex: 1 1 200px; min-width: 0"><span class="tick" aria-hidden="true">' + (k ? "\u2713" : "") + "</span><span style=\"min-width:0\">" +
+        "<b>" + esc(orgName(key)) + "</b><br>" + (o && o.note ? '<span class="note">' + esc(o.note) + "</span><br>" : "") +
+        (k ? '<span class="note">called by ' + esc(k.name || "a neighbour") + " \u00b7 " + ago(k.at) + "</span>"
+           : '<span class="note">not called yet' + (o && o.phone ? " \u00b7" + telLink(o) : "") + "</span>") +
+        "</span></span>" +
+        (k ? (k.can_undo ? '<button class="linkbtn muted" type="button" data-call="' + esc(key) + '" data-on="0" aria-label="Undo: ' + esc(orgName(key)) + '">undo</button>' : "")
+           : '<button class="btn small" type="button" data-call="' + esc(key) + '" data-on="1" aria-label="I called ' + esc(orgName(key)) + '">I called</button>') + "</div>";
+    }).join("") + "</div></div>";
   }
 
   // guardian (cats only)
@@ -932,15 +968,14 @@ function wireCat() {
   };
   if ($("sawBtn")) $("sawBtn").onclick = () => { catDlg.close(); openPost(cat); };
   body.querySelectorAll("[data-unveil]").forEach((b) => b.onclick = () => { b.parentElement.classList.remove("veil"); b.remove(); });
-  const sh = $("shelterBtn");
-  if (sh) sh.onclick = async () => {
+  body.querySelectorAll("[data-call]").forEach((b) => b.onclick = async () => {
     if (!user) return needAccount("Sign in so neighbours know who called.", () => openCat(cat.id, true));
-    const on = sh.dataset.on === "1";
-    sh.disabled = true;
-    const { error } = await sb.rpc("map_mark_shelter", { p_cat: cat.id, p_on: on, p_display: myName() });
-    if (error) { toast(errText(error, "Couldn't do that right now.")); sh.disabled = false; return; }
-    toast(on ? "Thanks for calling. Neighbours will see it's been reported." : "Unticked."); openCat(cat.id, true); loadCats();
-  };
+    const on = b.dataset.on === "1";
+    b.disabled = true;
+    const { error } = await sb.rpc("map_mark_call", { p_cat: cat.id, p_org: b.dataset.call, p_on: on, p_display: myName() });
+    if (error) { toast(errText(error, "Couldn't do that right now.")); b.disabled = false; return; }
+    toast(on ? "Thanks for calling. Neighbours will see it's been reported." : "Unticked."); openCat(cat.id, true);
+  });
   $("shareBtn").onclick = async () => {
     const url = location.origin + location.pathname + "?cat=" + cat.id;
     try {
@@ -1020,6 +1055,7 @@ function setLoc(ll, source, zoom) {
     center: "drag the pin to where you saw it. the exact spot stays private.",
   }[source] || "";
   findMatches();
+  syncStatus();
 }
 // look up a typed place with OpenStreetMap's search (only when someone asks, as its usage policy requires)
 async function geocode(q, near) {
@@ -1097,7 +1133,7 @@ function syncStatus() {
   $("postTitle").textContent = gone ? "report an animal found deceased" : dog ? "post a lost dog" : "post a cat";
   $("deceasedBox").hidden = !gone;
   $("dropPhoto").hidden = !(gone && post && post.blob);
-  $("shelterRow").hidden = !(st0 === "spotted" || st0 === "lost");
+  renderCallChoices(st0, dog ? "dog" : "cat");
   $("photoLabel").textContent = gone ? "add a photo (optional, skip it if it's too graphic)" : "take or add a photo";
   if (gone) { $("matchBox").hidden = true; if (post) post.match = null; }
   $("matchTitle").textContent = dog ? "is this one of these dogs?" : "is this one of these cats?";
@@ -1106,6 +1142,15 @@ function syncStatus() {
   const st = $("postForm").querySelector('input[name="status"]:checked').value;
   $("needsBox").hidden = st !== "help";
   $("newCatBox").hidden = !!post && !!post.match && post.match !== "new";
+}
+function renderCallChoices(status, species) {
+  const box = $("callsBox"), list = $("callChoices");
+  if (!CALL_STATUSES.includes(status) || !post || !post.loc) { box.hidden = true; return; }
+  const ticked = new Set([...list.querySelectorAll("input:checked")].map((i) => i.value));
+  const orgs = orgsFor(post.loc, status, species);
+  box.hidden = !orgs.length;
+  list.innerHTML = orgs.map((o) => '<label class="choice"><input type="checkbox" name="called" value="' + esc(o.key) + '"' + (ticked.has(o.key) ? " checked" : "") + '>' +
+    '<span class="t"><b>' + esc(o.name) + "</b>" + (o.note || o.phone ? "<span>" + esc(o.note || "") + (o.note && o.phone ? " \u00b7 " : "") + esc(o.phone || "") + "</span>" : "") + "</span></label>").join("");
 }
 $("dropPhoto").onclick = () => {
   post.blob = null; $("photoInput").value = "";
@@ -1163,7 +1208,7 @@ $("postForm").addEventListener("submit", async (e) => {
     p_cat: existing, p_new_id: existing ? null : crypto.randomUUID(),
     p_name: $("catName").value, p_status: status, p_needs: needs, p_description: $("catDesc").value,
     p_photo: photo, p_note: $("postNote").value, p_lat: post.loc.lat, p_lng: post.loc.lng, p_display: myName(), p_species: speciesNow(),
-    p_shelter: !$("shelterRow").hidden && $("postShelter").checked,
+    p_calls: $("callsBox").hidden ? [] : [...$("callChoices").querySelectorAll("input:checked")].map((i) => i.value),
   });
   if (error) {
     if (photo) sb.storage.from("cat-photos").remove([photo]).catch(() => {});
