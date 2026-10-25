@@ -380,6 +380,25 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
   </div>
 </dialog>
 
+<!-- shown on first visit (and every 30 days): money warning -->
+<dialog id="moneyDlg" aria-labelledby="moneyTitle" aria-describedby="moneyBody">
+  <div class="dlg" style="padding-top: 22px">
+    <div style="display:flex; gap:12px; align-items:center">
+      <span aria-hidden="true" style="flex:none; width:52px; height:52px; border-radius:50%; background:#C58A1B; color:#fff; display:grid; place-items:center; font:800 28px var(--font); border:3px solid var(--brown)">!</span>
+      <h2 id="moneyTitle" style="margin:0; font-size:24px; font-weight:800; letter-spacing:-0.01em; line-height:1.15">Before you start: never send money to people you meet here</h2>
+    </div>
+    <div id="moneyBody" class="section">
+      <p style="margin:0">This map is run by neighbours, not staff. <b>We can't check who anyone is</b>, and Watabish never collects donations for anyone.</p>
+      <ul style="margin:0; padding-left: 20px; display:grid; gap:6px">
+        <li><b>Don't send</b> e-transfers, gift cards, crypto or payment-app money to anyone you meet on the map, even for a cat that needs help.</li>
+        <li><b>Want to help with costs?</b> Give to a registered rescue or shelter directly, or drop off food and supplies yourself.</li>
+        <li><b>Lost pet?</b> A real finder won't ask for a “shipping fee”, deposit or code before giving your pet back. Meet in a public place.</li>
+      </ul>
+    </div>
+    <button class="btn" type="button" id="moneyOk">I understand</button>
+  </div>
+</dialog>
+
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -457,7 +476,7 @@ function distLabel(m, approx) {
 // close buttons and backdrop clicks for every dialog
 document.querySelectorAll("dialog").forEach((d) => {
   d.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => d.close()));
-  d.addEventListener("click", (e) => { if (e.target === d) d.close(); });
+  if (d.id !== "moneyDlg") d.addEventListener("click", (e) => { if (e.target === d) d.close(); });
 });
 
 // ---------- map ----------
@@ -1049,14 +1068,27 @@ $("postForm").addEventListener("submit", async (e) => {
 // ---------- about ----------
 $("aboutBtn").onclick = () => $("aboutDlg").showModal();
 
+// ---------- money warning: first visit, then every 30 days ----------
+const moneyDlg = $("moneyDlg");
+function moneyWarningDue() { const t = store.get("wb-map-money-ok"); return !t || Date.now() - t > 30 * 86400 * 1000; }
+function showMoneyWarning(then) {
+  if (!moneyWarningDue()) { if (then) then(); return; }
+  moneyDlg.addEventListener("close", () => { store.set("wb-map-money-ok", Date.now()); if (then) then(); }, { once: true });
+  moneyDlg.showModal();
+  $("moneyOk").focus();
+}
+$("moneyOk").onclick = () => moneyDlg.close();
+
 // ---------- start ----------
 renderAcct();
 if (!sb) $("loadMsg").textContent = "The cat map can't connect right now. Try again later.";
 const linked = new URL(location.href).searchParams.get("cat");
-if (linked && /^[0-9a-f-]{36}$/i.test(linked)) {
-  $("startCard").hidden = true;
-  openCat(linked).then(() => { if (current) map.setView([current.cat.lat, current.cat.lng], 16); });
-}
+showMoneyWarning(() => {
+  if (linked && /^[0-9a-f-]{36}$/i.test(linked)) {
+    $("startCard").hidden = true;
+    openCat(linked).then(() => { if (current) map.setView([current.cat.lat, current.cat.lng], 16); });
+  }
+});
 loadCats();
 </script>
 </body>
