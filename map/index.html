@@ -8,6 +8,10 @@
 <meta name="theme-color" content="#2B1C15">
 <link rel="icon" type="image/png" href="../play/icon-192.png">
 <link rel="apple-touch-icon" href="../play/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cat Map">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -182,6 +186,15 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
 .species label:has(input:checked) { border-color: var(--edge); background: var(--ink); color: var(--bg); box-shadow: 4px 4px 0 var(--shadow); }
 .species label:has(input:checked) span { color: var(--bg); opacity: .85; }
 .species label:has(input:focus-visible) { outline: 3px solid var(--blue); outline-offset: 2px; }
+.tour h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
+.tour p { margin: 0; }
+.tour .steps { display: flex; gap: 6px; justify-content: center; }
+.tour .steps i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.tour .steps i.on { background: var(--ink); width: 22px; border-radius: 99px; }
+.tour .kinds { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tour .kinds li { display: flex; gap: 10px; align-items: center; font-size: 14px; }
+.tour .big { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; border: 3px solid var(--edge); justify-self: center; }
+.tour .big svg { width: 32px; height: 32px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .callnow { display: grid; gap: 10px; padding: 14px; border: 3px solid var(--help); border-radius: 18px; background: color-mix(in srgb, var(--help) 10%, var(--panel)); }
 .callnow h3 { margin: 0; font-size: 18px; font-weight: 800; }
 .callnow .btn { width: 100%; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 18px; border-radius: 18px; background: var(--help); text-align: left; line-height: 1.25; }
@@ -269,7 +282,8 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
     <p class="msg err" id="loadMsg" role="status"></p>
     <div class="foot">
       <button class="linkbtn muted" id="aboutBtn" type="button">how it works &amp; safety</button>
-      <a href="../play/">play with watabish</a>
+      <a href="../play/">ask watabish for advice</a>
+      <button class="linkbtn muted" type="button" id="getAppBtn" hidden>add to home screen</button>
       <a href="../privacy.html">privacy</a>
       <a href="../terms.html">terms</a>
     </div>
@@ -422,7 +436,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
       <p class="note" style="margin:0">Never send money to people you meet on the map, and never share sign-in codes.</p>
       <div class="row"><button class="btn small" type="button" id="acctSaveName">save name</button>
         <button class="btn small ghost" type="button" id="acctSignOut">sign out</button></div>
-      <p style="margin:0"><a href="../play/">Play with Watabish &rarr;</a> <span class="note">same account, he's waiting (he'll deny it)</span></p>
+      <p style="margin:0"><a href="../play/">Ask Watabish for advice &rarr;</a> <span class="note">same account. he's wise (he'll tell you)</span></p>
       <div><button class="linkbtn muted" type="button" id="acctDelete">delete my account</button></div>
       <div class="box warm" id="acctDeleteConfirm" hidden>
         <b>Delete your account for good?</b>
@@ -461,10 +475,11 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
       <p style="margin:0"><b>Who's been called</b>: on animals that need help, might be lost or were found deceased, neighbours tick off the groups they've already called (in Sault Ste. Marie: the Humane Society, TAAG and Maddy's Mighty Mutts), so the same group doesn't get ten calls.</p>
       <p style="margin:0"><b>Found deceased</b> reports let owners find out what happened to a missing pet. They're hidden unless you choose that filter, photos stay blurred until tapped, and reports leave the map after 30 days.</p>
       <p style="margin:0">A <b>Guardian</b> is the neighbour who looks after a cat: feeds it, keeps an eye out, organizes help. Anyone with an account can step up for a cat that doesn't have one.</p></div>
+    <div><button class="btn small ghost" type="button" id="tourAgain">replay the quick tour</button></div>
     <div class="section"><h3>about money</h3>
-      <p style="margin:0"><b>Never send money, gift cards, crypto or e-transfers to people you meet here.</b> Watabish doesn't collect donations for anyone, and nobody on the map works for us. We can't check who people are.</p>
+      <p style="margin:0"><b>Never send or accept money, gift cards, crypto or e-transfers with people you meet here.</b> The map runs on the honour system. Watabish doesn't collect donations for anyone, and nobody on the map works for us. We can't check who people are.</p>
       <p style="margin:0">Want to help with costs? Give to a registered rescue or shelter directly, or drop off food and supplies yourself.</p>
-      <p style="margin:0">Lost pet? Someone who really found it won't need a \u201cshipping fee\u201d, deposit or verification code first. Meet in a public place, and bring a friend.</p></div>
+      <p style="margin:0">Lost pet? Someone who really found it won't need a “shipping fee”, deposit or verification code first. Meet in a public place, and bring a friend.</p></div>
     <div class="section"><h3>keeping cats (and you) safe</h3>
       <p style="margin:0">Locations on the map are moved a little on purpose. Cats who need help or might be lost only show as an area. When you post a photo, the location info hidden inside it is removed before it's uploaded.</p>
       <p style="margin:0">If a cat is badly hurt or in danger, contact your local animal services or a rescue right away. Don't try to catch a scared or feral cat yourself; rescues have traps and know-how.</p>
@@ -474,22 +489,32 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
   </div>
 </dialog>
 
-<!-- shown on first visit (and every 30 days): money warning -->
-<dialog id="moneyDlg" aria-labelledby="moneyTitle" aria-describedby="moneyBody">
+<!-- first visit: a short walkthrough ending with the money rule; later, every 30 days, just the money rule -->
+<dialog id="tourDlg" class="tour" aria-labelledby="tourTitle" aria-describedby="tourBody">
   <div class="dlg" style="padding-top: 22px">
-    <div style="display:flex; gap:12px; align-items:center">
-      <span aria-hidden="true" style="flex:none; width:52px; height:52px; border-radius:50%; background:#C58A1B; color:#fff; display:grid; place-items:center; font:800 28px var(--font); border:3px solid var(--brown)">!</span>
-      <h2 id="moneyTitle" style="margin:0; font-size:24px; font-weight:800; letter-spacing:-0.01em; line-height:1.15">Before you start: never send money to people you meet here</h2>
+    <div class="steps" id="tourSteps" aria-hidden="true"></div>
+    <div class="section" id="tourBody" aria-live="polite"></div>
+    <div class="row" style="justify-content: space-between">
+      <button class="linkbtn muted" type="button" id="tourSkip">skip</button>
+      <div class="row">
+        <button class="btn small ghost" type="button" id="tourBack">back</button>
+        <button class="btn small" type="button" id="tourNext">next</button>
+        <button class="btn" type="button" id="moneyOk" hidden>I understand</button>
+      </div>
     </div>
-    <div id="moneyBody" class="section">
-      <p style="margin:0">This map is run by neighbours, not staff. <b>We can't check who anyone is</b>, and Watabish never collects donations for anyone.</p>
-      <ul style="margin:0; padding-left: 20px; display:grid; gap:6px">
-        <li><b>Don't send</b> e-transfers, gift cards, crypto or payment-app money to anyone you meet on the map, even for a cat that needs help.</li>
-        <li><b>Want to help with costs?</b> Give to a registered rescue or shelter directly, or drop off food and supplies yourself.</li>
-        <li><b>Lost pet?</b> A real finder won't ask for a “shipping fee”, deposit or code before giving your pet back. Meet in a public place.</li>
-      </ul>
-    </div>
-    <button class="btn" type="button" id="moneyOk">I understand</button>
+  </div>
+</dialog>
+
+<!-- after a post on a phone: offer to add the map to the home screen -->
+<dialog id="installDlg" aria-labelledby="installTitle">
+  <div class="dlghead"><h2 id="installTitle">Enjoying the map so far?</h2><button class="close" type="button" data-close aria-label="Close">×</button></div>
+  <div class="dlg">
+    <p style="margin:0">Add it to your home screen, so it's one tap away the next time you meet a cat.</p>
+    <button class="btn" type="button" id="installBtn" hidden>Add to home screen</button>
+    <div class="box" id="installIOS" hidden><span>In Safari, tap the <b>Share</b> button <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;vertical-align:-3px"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>, then <b>Add to Home Screen</b>.</span></div>
+    <div class="box" id="installOther" hidden><span>Open your browser's menu and choose <b>Install app</b> or <b>Add to Home screen</b>.</span></div>
+    <p class="note" style="margin:0"><b>Adopt him first.</b> The app keeps its own save, separate from your browser. Sign in inside the app to bring everything with you.</p>
+    <button class="linkbtn muted" type="button" id="installLater">not now</button>
   </div>
 </dialog>
 
@@ -610,7 +635,7 @@ function distLabel(m, approx) {
 // close buttons and backdrop clicks for every dialog
 document.querySelectorAll("dialog").forEach((d) => {
   d.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => d.close()));
-  if (d.id !== "moneyDlg") d.addEventListener("click", (e) => { if (e.target === d) d.close(); });
+  if (d.id !== "tourDlg") d.addEventListener("click", (e) => { if (e.target === d) d.close(); });
 });
 
 // ---------- map ----------
@@ -892,6 +917,7 @@ $("acctSignOut").onclick = async () => { try { await sb.auth.signOut(); } catch 
 let openCatId = null, current = null;
 const catDlg = $("catDlg");
 catDlg.addEventListener("close", () => {
+  if (offerInstallAfterPost) { offerInstallAfterPost = false; setTimeout(maybeOfferInstall, 250); }
   openCatId = null; current = null;
   const u = new URL(location.href); if (u.searchParams.has("cat")) { u.searchParams.delete("cat"); history.replaceState(null, "", u); }
 });
@@ -1039,7 +1065,7 @@ function renderCat(editing) {
     ...comments.map((c) => ({ kind: "c", at: c.at, c })),
   ].sort((a, b) => new Date(b.at) - new Date(a.at));
   h += '<div class="section"><h3>' + (hot ? "visits" : "sightings") + ' &amp; comments</h3>' +
-    '<p class="scam" style="margin:0"><span><b>Never send money to people you meet here.</b> We don\u2019t verify anyone. To help with costs, give to a registered rescue or bring supplies yourself. <button class="linkbtn" type="button" data-about>more</button></span></p>';
+    '<p class="scam" style="margin:0"><span><b>Never send or accept money here.</b> This map runs on the honour system. <button class="linkbtn" type="button" data-about>more</button></span></p>';
   h += '<form class="section" id="commentForm"><label class="sr" for="commentText">Add a comment</label>' +
     '<textarea class="input" id="commentText" maxlength="1000" placeholder="where and when did you see it? anything useful?"></textarea>' +
     '<div class="row" style="justify-content:space-between">' +
@@ -1425,28 +1451,92 @@ $("postForm").addEventListener("submit", async (e) => {
   $("startCard").hidden = true;
   if (map.getZoom() < 15 || !map.getBounds().contains(post.loc)) map.setView(post.loc, 16); else loadCats();
   setTimeout(loadCats, 400);
+  offerInstallAfterPost = true;
   openCat(data);
 });
 
 // ---------- about ----------
 $("aboutBtn").onclick = () => $("aboutDlg").showModal();
+$("tourAgain").onclick = () => { $("aboutDlg").close(); showTour(null, { force: true }); };
 
-// ---------- money warning: first visit, then every 30 days ----------
-const moneyDlg = $("moneyDlg");
-function moneyWarningDue() { const t = store.get("wb-map-money-ok"); return !t || Date.now() - t > 30 * 86400 * 1000; }
-function showMoneyWarning(then) {
-  if (!moneyWarningDue()) { if (then) then(); return; }
-  moneyDlg.addEventListener("close", () => { store.set("wb-map-money-ok", Date.now()); if (then) then(); }, { once: true });
-  moneyDlg.showModal();
-  $("moneyOk").focus();
+// ---------- walkthrough: first visit; then every 30 days, just the money rule ----------
+const dot = (k) => '<i class="dot ' + k + '"></i>';
+const TOUR = [
+  { title: "Welcome to the cat map", body:
+    "<p>Neighbours pin the cats they meet, plus lost dogs, so everyone gets to know them and can help when one needs it.</p>" +
+    '<ul class="kinds"><li>' + dot("hotspot") + "<span><b>hotspot</b>: a cat you can visit, at a shop or caf\u00e9</span></li>" +
+    "<li>" + dot("spotted") + "<span><b>regular</b>: roams the neighbourhood</span></li>" +
+    "<li>" + dot("help") + "<span><b>needs help</b>: cold, hungry or hurt</span></li>" +
+    "<li>" + dot("lost") + "<span><b>maybe lost</b>: looks like someone\u2019s pet</span></li></ul>" },
+  { title: "Post what you see", body:
+    "<p>Tap <b>post</b>, add a photo, and answer <b>\u201cis it okay?\u201d</b> Seen a cat that\u2019s already on the map? Add your sighting to its page.</p>" +
+    '<p class="note">Pins are moved a little on purpose, so animals (and the people feeding them) can\u2019t be tracked down.</p>' },
+  { title: "Help without doubling up", body:
+    "<p>If something\u2019s wrong, local rescue numbers show up right away.</p>" +
+    "<p>After you call, tick <b>\u201cwho\u2019s been called\u201d</b> so the same group doesn\u2019t get ten calls about one cat.</p>" },
+  { money: true, title: "One rule: no money", body:
+    '<span class="big" style="background:#C58A1B; color:#fff"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></span>' +
+    "<p><b>Never send or accept money on the map.</b> It\u2019s an independent project with no staff, and it runs on the honour system.</p>" +
+    '<p class="note">Want to help with costs? Give to a registered rescue directly.</p>' },
+];
+const tourDlg = $("tourDlg");
+let tourAt = 0, tourOnlyMoney = false;
+function renderTour() {
+  const steps = tourOnlyMoney ? [TOUR[TOUR.length - 1]] : TOUR, st = steps[tourAt], last = tourAt === steps.length - 1;
+  $("tourSteps").innerHTML = steps.length > 1 ? steps.map((_, i) => '<i class="' + (i === tourAt ? "on" : "") + '"></i>').join("") : "";
+  $("tourBody").innerHTML = '<h2 id="tourTitle">' + st.title + "</h2>" + st.body;
+  $("tourBack").hidden = tourAt === 0; $("tourNext").hidden = last; $("tourSkip").hidden = last; $("moneyOk").hidden = !last;
+  (last ? $("moneyOk") : $("tourNext")).focus();
 }
-$("moneyOk").onclick = () => moneyDlg.close();
+function moneyWarningDue() { const t = store.get("wb-map-money-ok"); return !t || Date.now() - t > 30 * 86400 * 1000; }
+function showTour(then, opts) {
+  const fresh = !store.get("wb-map-tour-done");
+  if (!(opts && opts.force) && !fresh && !moneyWarningDue()) { if (then) then(); return; }
+  tourOnlyMoney = !(opts && opts.force) && !fresh; tourAt = 0; renderTour();
+  tourDlg.addEventListener("close", () => { if (then) then(); }, { once: true });
+  tourDlg.showModal();
+}
+$("tourNext").onclick = () => { tourAt++; renderTour(); };
+$("tourBack").onclick = () => { tourAt--; renderTour(); };
+$("tourSkip").onclick = () => { tourAt = TOUR.length - 1; renderTour(); }; // skipping still lands on the money rule
+$("moneyOk").onclick = () => { store.set("wb-map-money-ok", Date.now()); store.set("wb-map-tour-done", true); tourDlg.close(); };
+tourDlg.addEventListener("cancel", (e) => { if (!$("moneyOk").hidden) return; e.preventDefault(); tourAt = TOUR.length - 1; tourOnlyMoney = false; renderTour(); });
+
+// ---------- add to home screen ----------
+let installEvt = null, offerInstallAfterPost = false;
+const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isPhone = () => window.matchMedia("(pointer: coarse)").matches;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; renderGetApp(); });
+window.addEventListener("appinstalled", () => { installEvt = null; renderGetApp(); toast("Added. The cat map lives on your home screen now."); });
+function renderGetApp() { $("getAppBtn").hidden = isStandalone() || !(isPhone() || installEvt); }
+function openInstall() {
+  $("installBtn").hidden = !installEvt;
+  $("installIOS").hidden = !!installEvt || !isIOS;
+  $("installOther").hidden = !!installEvt || isIOS;
+  $("installDlg").showModal();
+}
+function maybeOfferInstall() {
+  if (isStandalone() || !isPhone()) return;
+  const t = store.get("wb-map-install-later"); if (t && Date.now() - t < 30 * 86400 * 1000) return;
+  openInstall();
+}
+$("installBtn").onclick = async () => {
+  if (!installEvt) return;
+  installEvt.prompt();
+  try { await installEvt.userChoice; } catch {}
+  installEvt = null; $("installDlg").close(); renderGetApp();
+};
+$("installLater").onclick = () => { store.set("wb-map-install-later", Date.now()); $("installDlg").close(); };
+$("getAppBtn").onclick = openInstall;
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
 // ---------- start ----------
 renderAcct();
 if (!sb) $("loadMsg").textContent = "The cat map can't connect right now. Try again later.";
 const linked = new URL(location.href).searchParams.get("cat");
-showMoneyWarning(() => {
+renderGetApp();
+showTour(() => {
   if (linked && /^[0-9a-f-]{36}$/i.test(linked)) {
     $("startCard").hidden = true;
     openCat(linked).then(() => { if (current) map.setView([current.cat.lat, current.cat.lng], 16); });
