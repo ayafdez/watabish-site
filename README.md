@@ -12,7 +12,7 @@ Settings → Pages → Source: "Deploy from a branch" → `main` / root → Save
 Then add a custom domain (`watabish.com`) on the same page and follow GitHub's DNS instructions at your domain registrar.
 
 ## Cat map (`/map`)
-A neighbourhood map where people post cats they meet: **spotted**, **needs help** or **maybe lost**. Dogs can be posted too, but only as **maybe lost**. A lost cat or dog can be marked **back home** by whoever posted it (or its Guardian), which takes it off the map. A **Guardian** is a neighbour who looks after a particular cat. Everything is in `map/index.html`, and it uses the same Supabase project and sign-in as `/play`.
+A neighbourhood map where people post cats they meet: **spotted**, **needs help** or **maybe lost**. Dogs can be posted too, but only as **maybe lost**. A lost cat or dog can be marked **back home** by whoever posted it (or its Guardian), which takes it off the map. A **Guardian** is a neighbour who looks after a particular cat. Spotted and maybe-lost animals have a **shelter called** checkmark so neighbours know it's been reported. **Found deceased** reports (cats or dogs, e.g. hit by a car) are hidden unless that filter is chosen, keep any photo blurred until tapped, and leave the map after 30 days. Everything is in `map/index.html`, and it uses the same Supabase project and sign-in as `/play`.
 
 ### One-time Supabase setup
 1. **SQL Editor** → paste all of `supabase/map.sql` → **Run**. It only adds new `map_*` tables, functions and a `cat-photos` storage bucket; `/play` is untouched. Safe to run again: **whenever this file changes, run the whole thing again** to pick up the changes. Existing cats and comments are kept.
