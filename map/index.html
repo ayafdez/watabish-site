@@ -16,7 +16,7 @@
 :root {
   --bg: #F3EADB; --panel: #FFFFFF; --ink: #2B1C15; --muted: #5A463A; --line: #E4D6C0;
   --blue: #1F5FA8; --ice: #BFE3FF; --brown: #2B1C15; --cream: #F3EADB;
-  --spotted: #1F5FA8; --help: #B4452F; --lost: #2B1C15; --good: #3F8A5C; --gone: #6B6560;
+  --spotted: #1F5FA8; --help: #B4452F; --lost: #2B1C15; --good: #3F8A5C; --gone: #6B6560; --hot: #6B3FA0;
   --font: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: light;
 }
@@ -52,9 +52,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .chip[aria-pressed="true"] { background: var(--brown); color: var(--cream); }
 .chip .n { font-weight: 400; opacity: .8; }
 .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; display: inline-block; }
-.dot.deceased { background: var(--gone); } .dot.spotted { background: var(--spotted); } .dot.help { background: var(--help); } .dot.lost { background: var(--lost); box-shadow: 0 0 0 2px var(--cream); }
+.dot.hotspot { background: var(--hot); } .dot.deceased { background: var(--gone); } .dot.spotted { background: var(--spotted); } .dot.help { background: var(--help); } .dot.lost { background: var(--lost); box-shadow: 0 0 0 2px var(--cream); }
 .pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; }
-.pill.deceased { background: var(--gone); } .pill.spotted { background: var(--spotted); } .pill.help { background: var(--help); } .pill.lost { background: var(--lost); color: var(--cream); }
+.pill.hotspot { background: var(--hot); } .pill.deceased { background: var(--gone); } .pill.spotted { background: var(--spotted); } .pill.help { background: var(--help); } .pill.lost { background: var(--lost); color: var(--cream); }
 .pill.soft { background: transparent; color: var(--ink); border: 2px solid var(--line); padding: 0 9px; }
 .kicker { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; color: var(--muted); }
 .muted { color: var(--muted); }
@@ -117,6 +117,10 @@ textarea.input { resize: vertical; min-height: 84px; }
 .pin.help { background: var(--help); border-color: var(--help); }
 .pin.lost { background: var(--lost); border-color: var(--lost); }
 .pin.deceased { background: var(--gone); border-color: var(--gone); }
+.pin.hotspot { background: var(--hot); border-color: var(--hot); }
+.place { border: 3px solid var(--brown); border-radius: 18px; box-shadow: 4px 4px 0 var(--brown); padding: 14px; display: grid; gap: 10px; }
+.place .line { display: flex; gap: 10px; align-items: flex-start; }
+.place .line svg { flex: none; width: 22px; height: 22px; fill: none; stroke: var(--hot); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-top: 1px; }
 .calls { display: grid; gap: 8px; }
 .shelter { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 10px 12px; border: 2px solid var(--line); border-radius: 14px; }
 .shelter.on { border-color: var(--good); background: color-mix(in srgb, var(--good) 10%, var(--panel)); }
@@ -183,7 +187,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
 .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .photo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .photo .ph { display: grid; gap: 6px; justify-items: center; font-weight: 700; }
-.minimap { height: 200px; border-radius: 16px; border: 2px solid var(--brown); overflow: hidden; }
+.minimap { height: 200px; border-radius: 16px; border: 2px solid var(--brown); overflow: hidden; position: relative; z-index: 0; isolation: isolate; }
 .note { font-size: 13px; color: var(--muted); margin: 0; }
 .msg { min-height: 1.5em; font-weight: 700; margin: 0; }
 .msg.err { color: var(--help); }
@@ -205,7 +209,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
   <div class="topbtns">
     <button class="acct" id="acctBtn" type="button">sign in</button>
     <button class="btn" id="postBtn" type="button">
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>post a cat</button>
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>post</button>
   </div>
 </header>
 
@@ -220,6 +224,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
     </div>
     <div class="overlay" id="zoomCard" hidden><p><b>Zoom in to a town or city to see its cats.</b></p><p class="muted">Or search for one above.</p></div>
     <div class="legend" aria-hidden="true">
+      <span><i class="dot hotspot"></i>hotspot (visit!)</span>
       <span><i class="dot spotted"></i>spotted</span>
       <span><i class="ring"></i>needs help (area)</span>
       <span><i class="dot lost"></i>maybe lost</span>
@@ -237,6 +242,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
     </div>
     <div class="filters" role="group" aria-label="Filter cats">
       <button class="chip" type="button" data-f="all" aria-pressed="true">all <span class="n" data-n="all"></span></button>
+      <button class="chip" type="button" data-f="hotspot" aria-pressed="false"><i class="dot hotspot"></i>hotspots <span class="n" data-n="hotspot"></span></button>
       <button class="chip" type="button" data-f="spotted" aria-pressed="false"><i class="dot spotted"></i>spotted <span class="n" data-n="spotted"></span></button>
       <button class="chip" type="button" data-f="help" aria-pressed="false"><i class="dot help"></i>needs help <span class="n" data-n="help"></span></button>
       <button class="chip" type="button" data-f="lost" aria-pressed="false"><i class="dot lost"></i>maybe lost <span class="n" data-n="lost"></span></button>
@@ -263,6 +269,15 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
 <dialog id="postDlg" aria-labelledby="postTitle">
   <div class="dlghead"><h2 id="postTitle">post a cat</h2><button class="close" type="button" data-close aria-label="Close">×</button></div>
   <form class="dlg" id="postForm" novalidate>
+    <fieldset class="section" style="border:0;margin:0;padding:0">
+      <legend class="label" style="margin-bottom:8px">who did you see?</legend>
+      <div class="choices" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+        <label class="choice"><input type="radio" name="species" value="cat" checked><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4l3 4h8l3-4v9a7 7 0 0 1-14 0z"/></svg><span class="t"><b>a cat</b></span></label>
+        <label class="choice"><input type="radio" name="species" value="dog"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5L4 7v5l3 1"/><path d="M16 5l4 2v5l-3 1"/><path d="M7 7h10v6a5 5 0 0 1-10 0z"/></svg><span class="t"><b>a dog</b><span>lost, a hotspot, or found deceased</span></span></label>
+      </div>
+      <p class="note" id="dogNote" hidden style="margin:0">Dogs go on the map as <b>maybe lost</b>, a <b>hotspot</b> (a dog who lives at a shop or public place), or <b>found deceased</b>. If a dog seems dangerous or hurt, call animal control instead of approaching it.</p>
+    </fieldset>
+
     <label class="photo" id="photoBox">
       <img id="photoPreview" alt="" hidden>
       <span class="ph" id="photoPh">
@@ -284,23 +299,26 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
       <p class="note" id="locNote">drag the pin to where you saw it. the exact spot stays private.</p>
     </div>
 
-    <fieldset class="section" style="border:0;margin:0;padding:0">
-      <legend class="label" style="margin-bottom:8px">who did you see?</legend>
-      <div class="choices" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
-        <label class="choice"><input type="radio" name="species" value="cat" checked><span class="t"><b>a cat</b></span></label>
-        <label class="choice"><input type="radio" name="species" value="dog"><span class="t"><b>a dog</b><span>lost, or found deceased</span></span></label>
-      </div>
-      <p class="note" id="dogNote" hidden style="margin:0">Dogs go on the map only as <b>maybe lost</b> or <b>found deceased</b>, so their owners can find out. If a dog seems dangerous or hurt, call animal control instead of approaching it.</p>
-    </fieldset>
-
     <fieldset class="section" id="statusBox" style="border:0;margin:0;padding:0">
       <legend class="label" style="margin-bottom:8px">what's going on?</legend>
       <div class="choices">
         <label class="choice"><input type="radio" name="status" value="spotted" checked><i class="dot spotted"></i><span class="t"><b>spotted</b><span>a cat out and about. say hi to the neighbourhood.</span></span></label>
+        <label class="choice"><input type="radio" name="status" value="hotspot"><i class="dot hotspot"></i><span class="t"><b>hotspot</b><span>lives at a shop, café or public place people can visit.</span></span></label>
         <label class="choice"><input type="radio" name="status" value="help"><i class="dot help"></i><span class="t"><b>needs help</b><span>cold, hungry, hurt or needs a shelter.</span></span></label>
         <label class="choice"><input type="radio" name="status" value="lost"><i class="dot lost"></i><span class="t"><b>maybe lost</b><span>looks like someone's pet: collar, very tame, confused.</span></span></label>
         <label class="choice"><input type="radio" name="status" value="deceased"><i class="dot deceased"></i><span class="t"><b>found deceased</b><span>hit by a car or found dead. so an owner can find out.</span></span></label>
       </div>
+    </fieldset>
+
+    <fieldset class="section" id="hotspotBox" hidden style="border:0;margin:0;padding:0">
+      <legend class="label" style="margin-bottom:8px">about the place</legend>
+      <label class="field"><span>place name</span><input class="input" id="placeName" maxlength="80" placeholder="e.g. the bookshop, café or marina"></label>
+      <label class="field"><span>when can people visit? <span class="muted" style="font-weight:400">(optional)</span></span><input class="input" id="placeHours" maxlength="120" placeholder="e.g. Tue–Sat 10–6, usually in by noon"></label>
+      <label class="field"><span>house rules <span class="muted" style="font-weight:400">(optional)</span></span><textarea class="input" id="placeRules" maxlength="300" placeholder="e.g. ask staff before petting, no treats please"></textarea></label>
+      <label class="check box" style="display: flex; background: color-mix(in srgb, #C9973A 14%, var(--panel)); border-color: #C9973A; align-items: flex-start">
+        <input type="checkbox" id="placeOk" style="margin-top: 2px">
+        <span><b>This is a business or public place, and the owner is okay with it being listed.</b> Not someone's home or yard.</span></label>
+      <p class="note" style="margin:0">Hotspots show the <b>exact spot</b>, since they're meant to be visited. Every other kind of post stays approximate.</p>
     </fieldset>
 
     <div class="box" id="deceasedBox" hidden>
@@ -396,6 +414,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
   <div class="dlg">
     <div class="section"><h3>the map</h3>
       <p style="margin:0">Neighbours post the cats they meet. Each cat gets one profile that collects sightings, photos and comments, so everyone knows who's who.</p>
+      <p style="margin:0"><b>Hotspots</b> are cats and dogs who live somewhere you can visit: a bookshop cat, a café cat, a brewery dog. They show the exact spot, opening hours and house rules, and are only listed with the owner's okay.</p>
       <p style="margin:0"><b>Spotted</b> is a cat doing cat things. <b>Needs help</b> is a cat that's cold, hungry or hurt. <b>Maybe lost</b> is a cat or dog that looks like someone's missing pet. When it's found, whoever posted it can mark it <b>back home</b> and it leaves the map.</p>
       <p style="margin:0"><b>Who's been called</b>: on animals that need help, might be lost or were found deceased, neighbours tick off the groups they've already called (in Sault Ste. Marie: the Humane Society, TAAG and Maddy's Mighty Mutts), so the same group doesn't get ten calls.</p>
       <p style="margin:0"><b>Found deceased</b> reports let owners find out what happened to a missing pet. They're hidden unless you choose that filter, photos stay blurred until tapped, and reports leave the map after 30 days.</p>
@@ -450,6 +469,7 @@ const MIN_ZOOM_FOR_CATS = 10;   // about a whole city on screen
 const MIN_ZOOM_FOR_AREAS = 14;  // dashed "approximate area" circles only when zoomed in enough to mean something
 
 const STATUS = {
+  hotspot: { label: "hotspot" },
   spotted: { label: "spotted" },
   help: { label: "needs help" },
   lost: { label: "maybe lost" },
@@ -459,7 +479,9 @@ const NEEDS = { shelter: "winter shelter", food: "food", vet: "vet care", tnr: "
 const CAT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4l3 4h8l3-4v9a7 7 0 0 1-14 0z"/><path d="M11 16l1 1 1-1"/></svg>';
 const DOG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5L4 7v5l3 1"/><path d="M16 5l4 2v5l-3 1"/><path d="M7 7h10v6a5 5 0 0 1-10 0z"/><path d="M11 15h2"/></svg>';
 const noun = (c) => (c && c.species === "dog" ? "dog" : "cat");
-const kindLabel = (c) => (c.status === "deceased" ? "found deceased" : c.species === "dog" ? "lost dog" : STATUS[c.status].label);
+const kindLabel = (c) => (c.status === "deceased" ? "found deceased" : c.status === "hotspot" ? (c.species === "dog" ? "dog hotspot" : "cat hotspot")
+  : c.species === "dog" ? "lost dog" : STATUS[c.status].label);
+const STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg>';
 const FLOWER_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="2.5"/><path d="M12 6.5c0-3 3.5-3 3.5 0M14.5 9c3 0 3 3.5 0 3.5M12 11.5c0 3-3.5 3-3.5 0M9.5 9c-3 0-3-3.5 0-3.5M12 12v9M12 17c2-2 4-2 5-1"/></svg>';
 // ---------- who to call ----------
 // Local groups show for animals inside their area. To add a group: copy a line, give it a short
@@ -615,7 +637,7 @@ async function loadCats() {
 
 function pinHtml(c) {
   const img = c.cover_photo && c.status !== "deceased" ? '<img src="' + esc(photoUrl(c.cover_photo)) + '" alt="">' : "";
-  const inner = img || (c.status === "deceased" ? FLOWER_SVG : c.species === "dog" ? DOG_SVG : c.status === "lost" ? "?" : c.status === "help" ? HEART_SVG : CAT_SVG);
+  const inner = img || (c.status === "deceased" ? FLOWER_SVG : c.status === "hotspot" ? STAR_SVG : c.species === "dog" ? DOG_SVG : c.status === "lost" ? "?" : c.status === "help" ? HEART_SVG : CAT_SVG);
   return '<div class="pin ' + c.status + '">' + inner + "</div>";
 }
 // "all" leaves out reports of animals that died; they have their own filter
@@ -625,7 +647,7 @@ function renderAreas() {
   areas.clearLayers();
   if (map.getZoom() < MIN_ZOOM_FOR_AREAS) return;
   for (const c of shownCats()) {
-    if (c.status === "spotted" || c.status === "deceased") continue;
+    if (c.status === "spotted" || c.status === "deceased" || c.status === "hotspot") continue;
     const col = c.status === "help" ? "#B4452F" : "#2B1C15";
     L.circle([c.lat, c.lng], { radius: 220, color: col, weight: 2, dashArray: "6 6", fillColor: col, fillOpacity: 0.12, interactive: false }).addTo(areas);
   }
@@ -650,7 +672,7 @@ function render() {
 function renderList() {
   const view = map.getBounds(), center = me || map.getCenter();
   const inView = cats.filter((c) => view.contains([c.lat, c.lng]));
-  const counts = { all: 0, spotted: 0, help: 0, lost: 0, deceased: 0 };
+  const counts = { all: 0, spotted: 0, help: 0, lost: 0, deceased: 0, hotspot: 0 };
   inView.forEach((c) => { counts[c.status]++; if (c.status !== "deceased") counts.all++; });
   document.querySelectorAll("[data-n]").forEach((el) => { el.textContent = counts[el.dataset.n] ? counts[el.dataset.n] : ""; });
   if (map.getZoom() >= MIN_ZOOM_FOR_CATS) {
@@ -658,7 +680,7 @@ function renderList() {
     const dogs = alive.filter((c) => c.species === "dog").length, catsN = alive.length - dogs;
     const parts = [];
     if (catsN) parts.push(catsN + (catsN === 1 ? " cat" : " cats"));
-    if (dogs) parts.push(dogs + (dogs === 1 ? " lost dog" : " lost dogs"));
+    if (dogs) parts.push(dogs + (dogs === 1 ? " dog" : " dogs"));
     $("countLine").textContent = (parts.length ? parts.join(" and ") + " in this area" : "no cats posted here yet") +
       (filter === "deceased" ? " · showing reports of animals found deceased" : "");
   }
@@ -673,12 +695,13 @@ function renderList() {
     return;
   }
   $("list").innerHTML = list.map(({ c, d }) => {
-    const what = c.status === "help" && c.needs && c.needs.length ? "needs " + c.needs.map((n) => NEEDS[n]).join(", ") : c.description || STATUS[c.status].label;
+    const what = c.status === "hotspot" ? "at " + (c.place_name || "a local spot") + (c.place_hours ? " \u00b7 " + c.place_hours : "")
+      : c.status === "help" && c.needs && c.needs.length ? "needs " + c.needs.map((n) => NEEDS[n]).join(", ") : c.description || STATUS[c.status].label;
     const thumb = c.cover_photo ? '<img class="thumb" src="' + esc(photoUrl(c.cover_photo)) + '" alt="" loading="lazy">' : '<span class="thumb">' + (c.species === "dog" ? DOG_SVG : CAT_SVG).replace("<svg", '<svg class="icon"') + "</span>";
     return '<button class="card" type="button" data-cat="' + esc(c.id) + '">' + thumb +
       '<span class="t"><span class="nm">' + esc(c.name) + ' <span class="pill ' + c.status + '">' + kindLabel(c) + "</span></span>" +
       '<span class="sub">' + esc(what) + "</span>" +
-      '<span class="sub">' + distLabel(d, c.status !== "spotted") + " · " + c.sighting_count + (c.sighting_count === 1 ? " sighting" : " sightings") + " · seen " + ago(c.last_seen_at) + "</span></span></button>";
+      '<span class="sub">' + distLabel(d, c.status !== "spotted" && c.status !== "hotspot") + " · " + c.sighting_count + (c.status === "hotspot" ? (c.sighting_count === 1 ? " visit" : " visits") : (c.sighting_count === 1 ? " sighting" : " sightings")) + " · seen " + ago(c.last_seen_at) + "</span></span></button>";
   }).join("");
   if (more) $("list").insertAdjacentHTML("beforeend", '<p class="note" style="text-align:center">+ ' + more + " more. Zoom in on the map to see them.</p>");
   $("list").querySelectorAll("[data-cat]").forEach((b) => { b.onclick = () => openCat(b.dataset.cat); });
@@ -780,8 +803,9 @@ async function openCat(id, quiet) {
 function renderCat(editing) {
   const { cat, sightings, comments, offers } = current;
   const photos = sightings.filter((s) => s.photo);
-  const gone = cat.status === "deceased";
-  const d = me ? distLabel(metres(me, cat), cat.status !== "spotted" && !gone) + " away · " : "";
+  const gone = cat.status === "deceased", hot = cat.status === "hotspot";
+  const d = me ? distLabel(metres(me, cat), cat.status !== "spotted" && !gone && !hot) + " away · " : "";
+  const visits = (n) => n + (hot ? (n === 1 ? " visit" : " visits") : (n === 1 ? " sighting" : " sightings"));
   const N = noun(cat), isDog = cat.species === "dog";
   $("catKicker").textContent = cat.home_at ? "back home" : kindLabel(cat);
   let h = "";
@@ -795,19 +819,36 @@ function renderCat(editing) {
   if (editing) {
     h += '<form class="section" id="editForm">' +
       '<label class="field"><span>name</span><input class="input" id="edName" maxlength="40" value="' + esc(cat.name) + '"></label>' +
-      '<div class="choices">' + Object.keys(STATUS).filter((k) => !isDog || k === "lost" || k === "deceased").map((k) => '<label class="choice"><input type="radio" name="edStatus" value="' + k + '"' + (cat.status === k ? " checked" : "") + '><i class="dot ' + k + '"></i><span class="t"><b>' + STATUS[k].label + "</b></span></label>").join("") + "</div>" +
+      '<div class="choices">' + Object.keys(STATUS).filter((k) => !isDog || k === "lost" || k === "deceased" || k === "hotspot").map((k) => '<label class="choice"><input type="radio" name="edStatus" value="' + k + '"' + (cat.status === k ? " checked" : "") + '><i class="dot ' + k + '"></i><span class="t"><b>' + STATUS[k].label + "</b></span></label>").join("") + "</div>" +
       '<div class="togglechips" id="edNeeds"' + (isDog ? " hidden" : "") + '>' + Object.keys(NEEDS).map((k) => '<label><input type="checkbox" value="' + k + '"' + (cat.needs.includes(k) ? " checked" : "") + "><span>" + NEEDS[k] + "</span></label>").join("") + "</div>" +
       '<label class="field"><span>what’s it like?</span><input class="input" id="edDesc" maxlength="500" value="' + esc(cat.description) + '"></label>' +
+      '<div class="section" id="edPlace"' + (hot ? "" : " hidden") + '>' +
+        '<label class="field"><span>place name</span><input class="input" id="edPlaceName" maxlength="80" value="' + esc(cat.place_name || "") + '"></label>' +
+        '<label class="field"><span>when can people visit?</span><input class="input" id="edPlaceHours" maxlength="120" value="' + esc(cat.place_hours || "") + '"></label>' +
+        '<label class="field"><span>house rules</span><textarea class="input" id="edPlaceRules" maxlength="300">' + esc(cat.place_rules || "") + "</textarea></label>" +
+        (cat.place_ok ? "" : '<label class="check"><input type="checkbox" id="edPlaceOk"> This is a business or public place, and the owner is okay with it being listed.</label>') +
+      "</div>" +
       '<p class="msg" id="edMsg" role="status"></p><div class="row"><button class="btn small" type="submit">save</button><button class="btn small ghost" type="button" id="edCancel">cancel</button></div></form>';
   } else {
     if (cat.home_at) h += '<div class="box" style="border-color: var(--good)"><b>Back home!</b><span class="note">Marked as found ' + ago(cat.home_at) + '. It\u2019s off the map now.</span></div>';
     h += '<div class="section"><div class="catname"><h2 id="catTitle">' + esc(cat.name) + '</h2><span class="pill ' + cat.status + '">' + kindLabel(cat) + "</span>" +
       cat.needs.map((n) => '<span class="pill soft">' + esc(NEEDS[n]) + "</span>").join("") + "</div>" +
       (cat.description ? '<p style="margin:0">' + esc(cat.description) + "</p>" : "") +
-      '<p class="note" style="margin:0">' + d + cat.sighting_count + (cat.sighting_count === 1 ? " sighting" : " sightings") + " · last seen " + ago(cat.last_seen_at) +
-      (cat.status !== "spotted" && !gone ? " · shown as an approximate area" : "") + "</p>" +
+      '<p class="note" style="margin:0">' + d + visits(cat.sighting_count) + " · last seen " + ago(cat.last_seen_at) +
+      (cat.status !== "spotted" && !gone && !hot ? " · shown as an approximate area" : "") + "</p>" +
       (cat.can_edit ? '<div class="row"><button class="linkbtn" type="button" id="editBtn">edit this ' + N + "</button>" +
         (cat.status === "lost" ? '<button class="btn small" type="button" id="homeBtn" style="background: var(--good)">' + (cat.home_at ? "not home after all" : "it\u2019s back home!") + "</button>" : "") + "</div>" : "") + "</div>";
+  }
+
+  if (hot && !editing) {
+    const dir = "https://www.google.com/maps/dir/?api=1&destination=" + cat.lat.toFixed(6) + "," + cat.lng.toFixed(6);
+    h += '<div class="place">' +
+      '<div class="line"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10l9-6 9 6v10H3z"/><path d="M9 20v-6h6v6"/></svg><span><b>' + esc(cat.place_name || "a local spot") + "</b></span></div>" +
+      (cat.place_hours ? '<div class="line"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>' + esc(cat.place_hours) + "</span></div>" : "") +
+      (cat.place_rules ? '<div class="line"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg><span><b>house rules:</b> ' + esc(cat.place_rules) + "</span></div>" : "") +
+      '<div class="row"><a class="btn small" href="' + dir + '" target="_blank" rel="noopener">directions</a>' +
+      '<button class="btn small ghost" type="button" id="visitBtn">I visited!</button></div>' +
+      (cat.place_ok ? '<span class="note">\u2713 listed with the owner\u2019s okay</span>' : "") + "</div>";
   }
 
   if (gone) {
@@ -832,8 +873,8 @@ function renderCat(editing) {
     }).join("") + "</div></div>";
   }
 
-  // guardian (cats only)
-  if (!isDog && !gone) {
+  // guardian (neighbourhood cats only)
+  if (!isDog && !gone && !hot) {
   h += '<div class="box">';
   if (cat.caretaker_name) {
     h += '<div class="row" style="justify-content:space-between"><span><span class="kicker">guardian</span><br><b>' + esc(cat.caretaker_name) + "</b>" + (cat.i_care ? " (you)" : "") + "</span>" +
@@ -869,7 +910,7 @@ function renderCat(editing) {
     ...sightings.map((s) => ({ kind: "s", at: s.at, s })),
     ...comments.map((c) => ({ kind: "c", at: c.at, c })),
   ].sort((a, b) => new Date(b.at) - new Date(a.at));
-  h += '<div class="section"><h3>sightings &amp; comments</h3>' +
+  h += '<div class="section"><h3>' + (hot ? "visits" : "sightings") + ' &amp; comments</h3>' +
     '<p class="scam" style="margin:0"><span><b>Never send money to people you meet here.</b> We don\u2019t verify anyone. To help with costs, give to a registered rescue or bring supplies yourself. <button class="linkbtn" type="button" data-about>more</button></span></p>';
   h += '<form class="section" id="commentForm"><label class="sr" for="commentText">Add a comment</label>' +
     '<textarea class="input" id="commentText" maxlength="1000" placeholder="where and when did you see it? anything useful?"></textarea>' +
@@ -879,7 +920,7 @@ function renderCat(editing) {
   h += '<div class="timeline">' + (ev.length ? ev.map((e) => {
     if (e.kind === "s") {
       const s = e.s;
-      return '<div class="ev"><div class="who"><b>' + esc(s.name || "a neighbour") + '</b><span class="muted">' + (gone ? "reported it" : "spotted it") + " · " + ago(s.at) + "</span>" +
+      return '<div class="ev"><div class="who"><b>' + esc(s.name || "a neighbour") + '</b><span class="muted">' + (gone ? "reported it" : hot ? "visited" : "spotted it") + " · " + ago(s.at) + "</span>" +
         '<button class="linkbtn muted" type="button" data-report="sighting" data-id="' + esc(s.id) + '">report</button></div>' +
         (s.note ? "<p>" + esc(s.note) + "</p>" + (MONEY_RE.test(s.note) ? '<p class="scam">This note mentions money. Be careful: don\u2019t send money to people you don\u2019t know.</p>' : "") : "") + (s.photo ? (gone ? '<span class="veil" style="width:max-content"><img src="' + esc(photoUrl(s.photo)) + '" alt="report photo" loading="lazy"><button class="btn small ghost" type="button" data-unveil style="font-size:12px; min-height:32px; height:32px">show</button></span>'
           : '<img src="' + esc(photoUrl(s.photo)) + '" alt="sighting photo" loading="lazy">') : "") + "</div>";
@@ -892,7 +933,7 @@ function renderCat(editing) {
       (MONEY_RE.test(c.body) ? '<p class="scam">This comment mentions money. Be careful: don\u2019t send money to people you don\u2019t know.</p>' : "") + "</div>";
   }).join("") : '<p class="note">No comments yet.</p>') + "</div></div>";
 
-  h += '<div class="row">' + (gone ? "" : '<button class="btn" type="button" id="sawBtn">I saw this ' + N + "</button>") +
+  h += '<div class="row">' + (gone ? "" : '<button class="btn" type="button" id="sawBtn">' + (hot ? "I visited!" : "I saw this " + N) + "</button>") +
     '<button class="btn ghost" type="button" id="shareBtn">share</button>' +
     '<button class="linkbtn muted" type="button" data-report="cat" data-id="' + esc(cat.id) + '">report this ' + N + "</button></div>";
 
@@ -906,11 +947,13 @@ function wireCat() {
   const ef = $("editForm");
   if (ef) {
     $("edCancel").onclick = () => renderCat();
+    ef.querySelectorAll('input[name="edStatus"]').forEach((r) => r.addEventListener("change", () => { $("edPlace").hidden = r.value !== "hotspot" || !r.checked; }));
     ef.onsubmit = async (e) => {
       e.preventDefault();
       const st = ef.querySelector('input[name="edStatus"]:checked').value;
       const needs = cat.species === "dog" ? [] : [...$("edNeeds").querySelectorAll("input:checked")].map((i) => i.value);
-      const { error } = await sb.rpc("map_update_cat", { p_cat: cat.id, p_name: $("edName").value, p_status: st, p_description: $("edDesc").value, p_needs: needs });
+      const place = st === "hotspot" ? { name: $("edPlaceName").value, hours: $("edPlaceHours").value, rules: $("edPlaceRules").value, ok: cat.place_ok || ($("edPlaceOk") && $("edPlaceOk").checked) } : null;
+      const { error } = await sb.rpc("map_update_cat", { p_cat: cat.id, p_name: $("edName").value, p_status: st, p_description: $("edDesc").value, p_needs: needs, p_place: place });
       if (error) { $("edMsg").textContent = errText(error, "Couldn't save. Try again."); $("edMsg").classList.add("err"); return; }
       toast("Saved."); await openCat(cat.id, true); loadCats();
     };
@@ -967,6 +1010,7 @@ function wireCat() {
     msg.textContent = ""; openCat(cat.id, true);
   };
   if ($("sawBtn")) $("sawBtn").onclick = () => { catDlg.close(); openPost(cat); };
+  if ($("visitBtn")) $("visitBtn").onclick = () => { catDlg.close(); openPost(cat); };
   body.querySelectorAll("[data-unveil]").forEach((b) => b.onclick = () => { b.parentElement.classList.remove("veil"); b.remove(); });
   body.querySelectorAll("[data-call]").forEach((b) => b.onclick = async () => {
     if (!user) return needAccount("Sign in so neighbours know who called.", () => openCat(cat.id, true));
@@ -1125,12 +1169,14 @@ const speciesNow = () => $("postForm").querySelector('input[name="species"]:chec
 function syncStatus() {
   const dog = speciesNow() === "dog";
   const radio = (v) => $("postForm").querySelector('input[name="status"][value="' + v + '"]');
-  // dogs: only maybe lost or found deceased
+  // dogs: maybe lost, hotspot or found deceased
   ["spotted", "help"].forEach((v) => { radio(v).closest(".choice").hidden = dog; });
-  if (dog && !radio("lost").checked && !radio("deceased").checked) radio("lost").checked = true;
+  if (dog && !radio("lost").checked && !radio("deceased").checked && !radio("hotspot").checked) radio("lost").checked = true;
   $("dogNote").hidden = !dog;
-  const st0 = $("postForm").querySelector('input[name="status"]:checked').value, gone = st0 === "deceased";
-  $("postTitle").textContent = gone ? "report an animal found deceased" : dog ? "post a lost dog" : "post a cat";
+  const st0 = $("postForm").querySelector('input[name="status"]:checked').value, gone = st0 === "deceased", hot = st0 === "hotspot";
+  const visiting = hot && post && post.match && post.match !== "new";
+  $("postTitle").textContent = gone ? "report an animal found deceased" : visiting ? "add a visit" : hot ? "post a " + (dog ? "dog" : "cat") + " hotspot" : dog ? "post a lost dog" : "post a cat";
+  $("hotspotBox").hidden = !hot || visiting;
   $("deceasedBox").hidden = !gone;
   $("dropPhoto").hidden = !(gone && post && post.blob);
   renderCallChoices(st0, dog ? "dog" : "cat");
@@ -1138,7 +1184,8 @@ function syncStatus() {
   if (gone) { $("matchBox").hidden = true; if (post) post.match = null; }
   $("matchTitle").textContent = dog ? "is this one of these dogs?" : "is this one of these cats?";
   $("catName").placeholder = dog ? "the name on its tag, or make one up" : "e.g. Marmalade";
-  if (postMarker) postMarker.setIcon(L.divIcon({ className: "", html: '<div class="pin ' + (gone ? "deceased" : "lost") + '">' + (gone ? FLOWER_SVG : dog ? DOG_SVG : CAT_SVG) + "</div>", iconSize: [44, 44], iconAnchor: [22, 22] }));
+  if (postMarker) postMarker.setIcon(L.divIcon({ className: "", html: '<div class="pin ' + (gone ? "deceased" : hot ? "hotspot" : "lost") + '">' + (gone ? FLOWER_SVG : hot ? STAR_SVG : dog ? DOG_SVG : CAT_SVG) + "</div>", iconSize: [44, 44], iconAnchor: [22, 22] }));
+  if (hot && !visiting) $("locNote").textContent = "put the pin right on the place. hotspots show the exact spot.";
   const st = $("postForm").querySelector('input[name="status"]:checked').value;
   $("needsBox").hidden = st !== "help";
   $("newCatBox").hidden = !!post && !!post.match && post.match !== "new";
@@ -1171,7 +1218,8 @@ async function findMatches() {
   const { data } = await sb.rpc("map_cats_in", { min_lat: loc.lat - dLat, min_lng: loc.lng - dLng, max_lat: loc.lat + dLat, max_lng: loc.lng + dLng });
   if (seq !== matchSeq || !post) return;
   const sp = speciesNow();
-  let near = (data || []).filter((c) => noun(c) === sp && c.status !== "deceased").map((c) => ({ c, d: metres(loc, c) })).filter((x) => x.d <= 450).sort((a, b) => a.d - b.d).slice(0, 5);
+  const stNow = $("postForm").querySelector('input[name="status"]:checked').value;
+  let near = (data || []).filter((c) => noun(c) === sp && c.status !== "deceased" && ((stNow === "hotspot") === (c.status === "hotspot"))).map((c) => ({ c, d: metres(loc, c) })).filter((x) => x.d <= 450).sort((a, b) => a.d - b.d).slice(0, 5);
   if (post.match && post.match !== "new" && !near.some((x) => x.c.id === post.match) && !(post.matchCat && post.matchCat.id === post.match)) post.match = null;
   if (post.matchCat && !near.some((x) => x.c.id === post.matchCat.id)) near.unshift({ c: post.matchCat, d: metres(loc, post.matchCat) });
   if (!near.length) { $("matchBox").hidden = true; post.match = null; syncStatus(); return; }
@@ -1192,6 +1240,9 @@ $("postForm").addEventListener("submit", async (e) => {
   msg.classList.remove("err");
   if (!post.loc) return fail("Put the pin where you saw it.");
   if (!$("matchBox").hidden && !post.match) return fail("Pick the " + speciesNow() + " you saw, or choose “new " + speciesNow() + "”.");
+  const isHot = $("postForm").querySelector('input[name="status"]:checked').value === "hotspot" && !$("hotspotBox").hidden;
+  if (isHot && !$("placeName").value.trim()) { $("placeName").focus(); return fail("Add the name of the place."); }
+  if (isHot && !$("placeOk").checked) return fail("Hotspots need the owner\u2019s okay. Please tick the box.");
   if (!user) { needAccount("Sign in to post. Everything you filled in is waiting right here.", () => $("postSubmit").click()); return; }
   btn.disabled = true; msg.textContent = "Posting…";
   const status = $("postForm").querySelector('input[name="status"]:checked').value;
@@ -1209,13 +1260,15 @@ $("postForm").addEventListener("submit", async (e) => {
     p_name: $("catName").value, p_status: status, p_needs: needs, p_description: $("catDesc").value,
     p_photo: photo, p_note: $("postNote").value, p_lat: post.loc.lat, p_lng: post.loc.lng, p_display: myName(), p_species: speciesNow(),
     p_calls: $("callsBox").hidden ? [] : [...$("callChoices").querySelectorAll("input:checked")].map((i) => i.value),
+    p_place: isHot ? { name: $("placeName").value, hours: $("placeHours").value, rules: $("placeRules").value, ok: $("placeOk").checked } : null,
   });
   if (error) {
     if (photo) sb.storage.from("cat-photos").remove([photo]).catch(() => {});
     return fail(errText(error, "Couldn't post that. Try again."));
   }
   btn.disabled = false; postDlg.close();
-  toast(existing ? "Sighting added. The neighbourhood thanks you." : speciesNow() === "dog" ? "Posted. Fingers crossed for a quick reunion." : "Posted. Welcome to the map, little one.");
+  toast(existing ? (status === "hotspot" ? "Visit added. Hope they were in a good mood." : "Sighting added. The neighbourhood thanks you.")
+    : status === "hotspot" ? "Hotspot added. Go say hi!" : speciesNow() === "dog" ? "Posted. Fingers crossed for a quick reunion." : "Posted. Welcome to the map, little one.");
   $("startCard").hidden = true;
   if (map.getZoom() < 15 || !map.getBounds().contains(post.loc)) map.setView(post.loc, 16); else loadCats();
   setTimeout(loadCats, 400);
