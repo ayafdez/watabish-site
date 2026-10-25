@@ -349,7 +349,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
     <div class="section"><h3>the map</h3>
       <p style="margin:0">Neighbours post the cats they meet. Each cat gets one profile that collects sightings, photos and comments, so everyone knows who's who.</p>
       <p style="margin:0"><b>Spotted</b> is a cat doing cat things. <b>Needs help</b> is a cat that's cold, hungry or hurt. <b>Maybe lost</b> is a cat that looks like someone's missing pet.</p>
-      <p style="margin:0">A <b>Colony Keeper</b> is the neighbour who looks after a cat: feeds it, keeps an eye out, organizes help. Anyone with an account can step up for a cat that doesn't have one.</p></div>
+      <p style="margin:0">A <b>Guardian</b> is the neighbour who looks after a cat: feeds it, keeps an eye out, organizes help. Anyone with an account can step up for a cat that doesn't have one.</p></div>
     <div class="section"><h3>keeping cats (and you) safe</h3>
       <p style="margin:0">Locations on the map are moved a little on purpose. Cats who need help or might be lost only show as an area. When you post a photo, the location info hidden inside it is removed before it's uploaded.</p>
       <p style="margin:0">If a cat is badly hurt or in danger, contact your local animal services or a rescue right away. Don't try to catch a scared or feral cat yourself; rescues have traps and know-how.</p>
@@ -663,11 +663,11 @@ function renderCat(editing) {
   // caretaker
   h += '<div class="box">';
   if (cat.caretaker_name) {
-    h += '<div class="row" style="justify-content:space-between"><span><span class="kicker">colony keeper</span><br><b>' + esc(cat.caretaker_name) + "</b>" + (cat.i_care ? " (you)" : "") + "</span>" +
+    h += '<div class="row" style="justify-content:space-between"><span><span class="kicker">guardian</span><br><b>' + esc(cat.caretaker_name) + "</b>" + (cat.i_care ? " (you)" : "") + "</span>" +
       (cat.i_care ? '<button class="btn small ghost" type="button" id="releaseBtn">step down</button>' : "") + "</div>" +
       (cat.i_care ? "" : '<p class="note" style="margin:0">Leave a comment below to reach them.</p>');
   } else {
-    h += '<div class="row" style="justify-content:space-between"><span><span class="kicker">colony keeper</span><br>nobody yet</span><button class="btn small" type="button" id="claimBtn">I look after this cat</button></div>' +
+    h += '<div class="row" style="justify-content:space-between"><span><span class="kicker">guardian</span><br>nobody yet</span><button class="btn small" type="button" id="claimBtn">I look after this cat</button></div>' +
       '<p class="note" style="margin:0">Feed it, keep an eye out, or help organize? Say so, and neighbours will know who to talk to.</p>';
   }
   h += "</div>";
@@ -708,7 +708,7 @@ function renderCat(editing) {
         (s.note ? "<p>" + esc(s.note) + "</p>" : "") + (s.photo ? '<img src="' + esc(photoUrl(s.photo)) + '" alt="sighting photo" loading="lazy">' : "") + "</div>";
     }
     const c = e.c;
-    return '<div class="ev"><div class="who"><b>' + esc(c.name || "anonymous") + "</b>" + (c.caretaker ? '<span class="tag">colony keeper</span>' : "") +
+    return '<div class="ev"><div class="who"><b>' + esc(c.name || "anonymous") + "</b>" + (c.caretaker ? '<span class="tag">guardian</span>' : "") +
       '<span class="muted">' + ago(c.at) + "</span>" +
       (c.mine ? '<button class="linkbtn muted" type="button" data-del="' + esc(c.id) + '">delete</button>' : '<button class="linkbtn muted" type="button" data-report="comment" data-id="' + esc(c.id) + '">report</button>') +
       "</div><p>" + esc(c.body) + "</p></div>";
@@ -739,14 +739,14 @@ function wireCat() {
   }
   const cl = $("claimBtn");
   if (cl) cl.onclick = async () => {
-    if (!user) return needAccount("Sign in to become this cat's Colony Keeper.", () => cl.click());
+    if (!user) return needAccount("Sign in to become this cat's Guardian.", () => cl.click());
     const { error } = await sb.rpc("map_claim", { p_cat: cat.id, p_display: myName() });
     if (error) { toast(errText(error, "Couldn't do that right now.")); return; }
-    toast("You're its Colony Keeper now. The cat is unmoved, but grateful."); openCat(cat.id, true); loadCats();
+    toast("You're its Guardian now. The cat is unmoved, but grateful."); openCat(cat.id, true); loadCats();
   };
   const rl = $("releaseBtn");
   if (rl) rl.onclick = async () => {
-    if (!confirm("Step down as this cat's Colony Keeper?")) return;
+    if (!confirm("Step down as this cat's Guardian?")) return;
     await sb.rpc("map_release", { p_cat: cat.id }); openCat(cat.id, true); loadCats();
   };
   body.querySelectorAll("[data-offer]").forEach((b) => b.onclick = async () => {
