@@ -149,6 +149,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
 .ev .who b { font-size: 14px; }
 .ev p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ev img { width: 120px; height: 90px; object-fit: cover; border-radius: 10px; border: 2px solid var(--line); }
+.scam { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; padding: 8px 10px; border-radius: 12px; background: color-mix(in srgb, var(--warn, #C58A1B) 16%, var(--panel)); border: 2px solid #C58A1B; }
 .tag { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--brown); color: var(--cream); }
 .choices { display: grid; gap: 8px; }
 .choice { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 2px solid var(--line); border-radius: 16px; cursor: pointer; }
@@ -259,6 +260,11 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
     <div class="section">
       <div class="row" style="justify-content: space-between"><span class="label">where</span><button class="linkbtn" type="button" id="postLocate">use my location</button></div>
       <div class="minimap" id="postMap"></div>
+      <div class="row" style="flex-wrap: nowrap">
+        <label class="sr" for="postAddr">Type an address or intersection</label>
+        <input class="input" id="postAddr" autocomplete="off" placeholder="or type an address or intersection" style="min-height: 44px">
+        <button class="btn small ghost" type="button" id="postAddrGo">find</button>
+      </div>
       <p class="note" id="locNote">drag the pin to where you saw it. the exact spot stays private.</p>
     </div>
 
@@ -328,6 +334,7 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
       <label class="field"><span>what should neighbours call you?</span>
         <input class="input" id="acctName" maxlength="40" placeholder="first name or a nickname"></label>
       <p class="note" style="margin:0">Shown on your posts and comments. Don't use your full name if you'd rather not.</p>
+      <p class="note" style="margin:0">Never send money to people you meet on the map, and never share sign-in codes.</p>
       <div class="row"><button class="btn small" type="button" id="acctSaveName">save name</button>
         <button class="btn small ghost" type="button" id="acctSignOut">sign out</button></div>
       <p class="note" style="margin:0">To delete your account, open the journal in <a href="../play/">Watabish</a>.</p>
@@ -360,6 +367,10 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
       <p style="margin:0">Neighbours post the cats they meet. Each cat gets one profile that collects sightings, photos and comments, so everyone knows who's who.</p>
       <p style="margin:0"><b>Spotted</b> is a cat doing cat things. <b>Needs help</b> is a cat that's cold, hungry or hurt. <b>Maybe lost</b> is a cat or dog that looks like someone's missing pet. When it's found, whoever posted it can mark it <b>back home</b> and it leaves the map.</p>
       <p style="margin:0">A <b>Guardian</b> is the neighbour who looks after a cat: feeds it, keeps an eye out, organizes help. Anyone with an account can step up for a cat that doesn't have one.</p></div>
+    <div class="section"><h3>about money</h3>
+      <p style="margin:0"><b>Never send money, gift cards, crypto or e-transfers to people you meet here.</b> Watabish doesn't collect donations for anyone, and nobody on the map works for us. We can't check who people are.</p>
+      <p style="margin:0">Want to help with costs? Give to a registered rescue or shelter directly, or drop off food and supplies yourself.</p>
+      <p style="margin:0">Lost pet? Someone who really found it won't need a \u201cshipping fee\u201d, deposit or verification code first. Meet in a public place, and bring a friend.</p></div>
     <div class="section"><h3>keeping cats (and you) safe</h3>
       <p style="margin:0">Locations on the map are moved a little on purpose. Cats who need help or might be lost only show as an area. When you post a photo, the location info hidden inside it is removed before it's uploaded.</p>
       <p style="margin:0">If a cat is badly hurt or in danger, contact your local animal services or a rescue right away. Don't try to catch a scared or feral cat yourself; rescues have traps and know-how.</p>
@@ -394,6 +405,8 @@ const CAT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4l3 4h8
 const DOG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5L4 7v5l3 1"/><path d="M16 5l4 2v5l-3 1"/><path d="M7 7h10v6a5 5 0 0 1-10 0z"/><path d="M11 15h2"/></svg>';
 const noun = (c) => (c && c.species === "dog" ? "dog" : "cat");
 const kindLabel = (c) => (c.species === "dog" ? "lost dog" : STATUS[c.status].label);
+// comments that talk about money get a warning under them
+const MONEY_RE = /e-?transfer|interac|paypal|venmo|cash ?app|zelle|wise\.com|western union|moneygram|gift ?card|bitcoin|btc|crypto|usdt|gofundme|donat|send (me )?money|\$\s?\d|\d+\s?(dollars|bucks)|shipping fee|deposit|reward/i;
 const HEART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
 
 const $ = (id) => document.getElementById(id);
@@ -475,11 +488,10 @@ $("searchForm").addEventListener("submit", async (e) => {
   const q = $("searchInput").value.trim();
   if (!q) return;
   try {
-    const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q), { headers: { "Accept-Language": navigator.language || "en" } });
-    const j = await r.json();
-    if (!j.length) { toast("Couldn't find that place."); return; }
+    const hit = await geocode(q, $("startCard").hidden ? map.getCenter() : null);
+    if (!hit) { toast("Couldn't find that place."); return; }
     $("startCard").hidden = true;
-    map.setView([+j[0].lat, +j[0].lon], 15);
+    map.setView(hit, 15);
     $("searchInput").blur();
   } catch { toast("Search isn't working right now."); }
 });
@@ -711,7 +723,8 @@ function renderCat(editing) {
     h += '<div class="box warm note">If it’s badly hurt or in danger, call your local animal services or a rescue first.</div></div>';
   }
   if (cat.status === "lost") {
-    h += '<div class="box warm"><b>Is this your ' + N + ', or do you know whose it is?</b><span class="note">Say so in the comments. A vet or shelter can scan it for a microchip for free.</span></div>';
+    h += '<div class="box warm"><b>Is this your ' + N + ', or do you know whose it is?</b><span class="note">Say so in the comments. A vet or shelter can scan it for a microchip for free.</span>' +
+      '<span class="note"><b>Watch for scams:</b> anyone who asks for money, a \u201cshipping fee\u201d or a code before returning a pet is not the finder. Meet in a public place.</span></div>';
   }
 
   // timeline: sightings + comments
@@ -719,7 +732,8 @@ function renderCat(editing) {
     ...sightings.map((s) => ({ kind: "s", at: s.at, s })),
     ...comments.map((c) => ({ kind: "c", at: c.at, c })),
   ].sort((a, b) => new Date(b.at) - new Date(a.at));
-  h += '<div class="section"><h3>sightings &amp; comments</h3>';
+  h += '<div class="section"><h3>sightings &amp; comments</h3>' +
+    '<p class="scam" style="margin:0"><span><b>Never send money to people you meet here.</b> We don\u2019t verify anyone. To help with costs, give to a registered rescue or bring supplies yourself. <button class="linkbtn" type="button" data-about>more</button></span></p>';
   h += '<form class="section" id="commentForm"><label class="sr" for="commentText">Add a comment</label>' +
     '<textarea class="input" id="commentText" maxlength="1000" placeholder="where and when did you see it? anything useful?"></textarea>' +
     '<div class="row" style="justify-content:space-between">' +
@@ -730,13 +744,14 @@ function renderCat(editing) {
       const s = e.s;
       return '<div class="ev"><div class="who"><b>' + esc(s.name || "a neighbour") + '</b><span class="muted">spotted it · ' + ago(s.at) + "</span>" +
         '<button class="linkbtn muted" type="button" data-report="sighting" data-id="' + esc(s.id) + '">report</button></div>' +
-        (s.note ? "<p>" + esc(s.note) + "</p>" : "") + (s.photo ? '<img src="' + esc(photoUrl(s.photo)) + '" alt="sighting photo" loading="lazy">' : "") + "</div>";
+        (s.note ? "<p>" + esc(s.note) + "</p>" + (MONEY_RE.test(s.note) ? '<p class="scam">This note mentions money. Be careful: don\u2019t send money to people you don\u2019t know.</p>' : "") : "") + (s.photo ? '<img src="' + esc(photoUrl(s.photo)) + '" alt="sighting photo" loading="lazy">' : "") + "</div>";
     }
     const c = e.c;
     return '<div class="ev"><div class="who"><b>' + esc(c.name || "anonymous") + "</b>" + (c.caretaker ? '<span class="tag">guardian</span>' : "") +
       '<span class="muted">' + ago(c.at) + "</span>" +
       (c.mine ? '<button class="linkbtn muted" type="button" data-del="' + esc(c.id) + '">delete</button>' : '<button class="linkbtn muted" type="button" data-report="comment" data-id="' + esc(c.id) + '">report</button>') +
-      "</div><p>" + esc(c.body) + "</p></div>";
+      "</div><p>" + esc(c.body) + "</p>" +
+      (MONEY_RE.test(c.body) ? '<p class="scam">This comment mentions money. Be careful: don\u2019t send money to people you don\u2019t know.</p>' : "") + "</div>";
   }).join("") : '<p class="note">No comments yet.</p>') + "</div></div>";
 
   h += '<div class="row"><button class="btn" type="button" id="sawBtn">I saw this ' + N + "</button>" +
@@ -794,6 +809,7 @@ function wireCat() {
     if (!confirm("Delete your comment?")) return;
     await (user ? sb : sbAnon).rpc("map_delete_comment", { p_id: b.dataset.del }); openCat(cat.id, true);
   });
+  body.querySelectorAll("[data-about]").forEach((b) => b.onclick = () => $("aboutDlg").showModal());
   body.querySelectorAll("[data-report]").forEach((b) => b.onclick = () => openReport(b.dataset.report, b.dataset.id));
   const si = $("commentSignIn"); if (si) si.onclick = () => needAccount("", () => openCat(cat.id, true));
   $("commentForm").onsubmit = async (e) => {
@@ -888,10 +904,31 @@ function setLoc(ll, source, zoom) {
     me: "using your location. drag the pin to where you saw it.",
     cat: "near where it was last seen. drag the pin to where you saw it.",
     pin: "got it. the exact spot stays private.",
+    addr: "found it. drag the pin if it's a little off. the address isn't saved or shown.",
     center: "drag the pin to where you saw it. the exact spot stays private.",
   }[source] || "";
   findMatches();
 }
+// look up a typed place with OpenStreetMap's search (only when someone asks, as its usage policy requires)
+async function geocode(q, near) {
+  let url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q);
+  if (near) url += "&viewbox=" + [near.lng - 0.3, near.lat + 0.3, near.lng + 0.3, near.lat - 0.3].join(",");
+  const r = await fetch(url, { headers: { "Accept-Language": navigator.language || "en" } });
+  const j = await r.json();
+  return j.length ? { lat: +j[0].lat, lng: +j[0].lon } : null;
+}
+async function findAddr() {
+  const q = $("postAddr").value.trim();
+  if (!q) { $("postAddr").focus(); return; }
+  $("postAddrGo").disabled = true;
+  try {
+    const hit = await geocode(q, post.loc || map.getCenter());
+    if (hit) setLoc(hit, "addr", 17); else toast("Couldn't find that. Try a nearby intersection, like \u201cKing St & Bay St\u201d.");
+  } catch { toast("Address search isn't working right now. Drag the pin instead."); }
+  $("postAddrGo").disabled = false;
+}
+$("postAddrGo").onclick = findAddr;
+$("postAddr").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); findAddr(); } });
 $("postLocate").onclick = () => {
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition((p) => setLoc({ lat: p.coords.latitude, lng: p.coords.longitude }, "me", 17),
