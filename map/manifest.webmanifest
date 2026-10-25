@@ -1,0 +1,17 @@
+{
+  "name": "watabish cat map",
+  "short_name": "Cat Map",
+  "description": "A neighbourhood map of cats: the regulars, the hotspots, and the ones who need a hand.",
+  "id": "/map/",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F3EADB",
+  "theme_color": "#2B1C15",
+  "icons": [
+    { "src": "../play/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../play/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "../play/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

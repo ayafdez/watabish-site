@@ -490,6 +490,18 @@ returns void language sql security definer set search_path = '' as $$
    where id = p_cat and caretaker_id = auth.uid()
 $$;
 
+-- when someone deletes their account, their ticks stay (the call still happened) but their name goes
+create or replace function public.map_calls_forget()
+returns trigger language plpgsql set search_path = '' as $$
+begin
+  if new.user_id is null and old.user_id is not null then new.display_name := null; end if;
+  return new;
+end $$;
+drop trigger if exists map_calls_forget on public.map_calls;
+create trigger map_calls_forget before update on public.map_calls
+  for each row execute function public.map_calls_forget();
+update public.map_calls set display_name = null where user_id is null and display_name is not null;
+
 -- "who's been called": any signed-in neighbour can tick a group; the person who
 -- ticked it, the poster or the Guardian can untick it
 drop function if exists public.map_mark_shelter(uuid, boolean, text);
@@ -551,6 +563,7 @@ end $$;
 revoke execute on function public.map_jitter(double precision, double precision, double precision, double precision) from public, anon, authenticated;
 revoke execute on function public.map_cats_place() from public, anon, authenticated;
 revoke execute on function public.map_sightings_gone() from public, anon, authenticated;
+revoke execute on function public.map_calls_forget() from public, anon, authenticated;
 
 grant execute on function public.map_cats_in(double precision, double precision, double precision, double precision) to anon, authenticated;
 grant execute on function public.map_cat_detail(uuid) to anon, authenticated;
@@ -590,6 +603,12 @@ create policy "cat photos: upload own" on storage.objects for insert to authenti
   with check (bucket_id = 'cat-photos'
               and public.map_is_full_user()
               and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- listing and removing your own photos (the map does this before deleting an account)
+-- needs read access to your own folder; everyone else still sees photos only by their public link
+drop policy if exists "cat photos: read own" on storage.objects;
+create policy "cat photos: read own" on storage.objects for select to authenticated
+  using (bucket_id = 'cat-photos' and (storage.foldername(name))[1] = auth.uid()::text);
 
 drop policy if exists "cat photos: delete own" on storage.objects;
 create policy "cat photos: delete own" on storage.objects for delete to authenticated
