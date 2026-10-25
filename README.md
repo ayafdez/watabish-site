@@ -12,10 +12,10 @@ Settings → Pages → Source: "Deploy from a branch" → `main` / root → Save
 Then add a custom domain (`watabish.com`) on the same page and follow GitHub's DNS instructions at your domain registrar.
 
 ## Cat map (`/map`)
-A neighbourhood map where people post cats they meet: **spotted**, **needs help** or **maybe lost**. Everything is in `map/index.html`, and it uses the same Supabase project and sign-in as `/play`.
+A neighbourhood map where people post cats they meet: **spotted**, **needs help** or **maybe lost**. Dogs can be posted too, but only as **maybe lost**. A lost cat or dog can be marked **back home** by whoever posted it (or its Guardian), which takes it off the map. A **Guardian** is a neighbour who looks after a particular cat. Everything is in `map/index.html`, and it uses the same Supabase project and sign-in as `/play`.
 
 ### One-time Supabase setup
-1. **SQL Editor** → paste all of `supabase/map.sql` → **Run**. It only adds new `map_*` tables, functions and a `cat-photos` storage bucket; `/play` is untouched. Safe to run again after changes.
+1. **SQL Editor** → paste all of `supabase/map.sql` → **Run**. It only adds new `map_*` tables, functions and a `cat-photos` storage bucket; `/play` is untouched. Safe to run again: **whenever this file changes, run the whole thing again** to pick up the changes. Existing cats and comments are kept.
 2. **Authentication → Sign In / Providers** → turn on **Allow anonymous sign-ins**. This lets people comment without an account. (Leave it off if you'd rather require accounts; the page tells people to sign in.)
 3. **Authentication → URL Configuration → Redirect URLs** → add `https://watabish.com/map/` so the link in the sign-in email can return to the map.
 

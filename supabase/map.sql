@@ -13,6 +13,9 @@
 --    made from an anonymous session (Supabase "anonymous sign-ins").
 --  * Light spam limits, and anything reported by 3 different people is hidden
 --    until you un-hide it in the Table Editor (set hidden = false).
+--  * Cats can be spotted, need help or be maybe lost. Dogs can only be posted
+--    as maybe lost. Lost animals can be marked "back home", which takes them
+--    off the map.
 -- ============================================================================
 
 -- ---------- tables ----------------------------------------------------------
@@ -86,6 +89,13 @@ create table if not exists public.map_reports (
   created_at   timestamptz not null default now(),
   unique (target_type, target_id, user_id)
 );
+
+-- added after the first version: species (dogs only as lost) and "back home"
+alter table public.map_cats add column if not exists species text not null default 'cat';
+alter table public.map_cats add column if not exists home_at timestamptz;
+alter table public.map_cats drop constraint if exists map_cats_species_ok;
+alter table public.map_cats add constraint map_cats_species_ok
+  check (species in ('cat', 'dog') and (species = 'cat' or status = 'lost'));
 
 -- Closed to the browser: no policies means no direct access even if a grant slips in.
 alter table public.map_cats        enable row level security;
@@ -161,18 +171,19 @@ create trigger map_sightings_gone after delete on public.map_sightings
 
 -- ---------- reads (open to everyone, including guests) ---------------------
 
-create or replace function public.map_cats_in(min_lat double precision, min_lng double precision,
-                                              max_lat double precision, max_lng double precision)
-returns table (id uuid, name text, status text, description text, needs text[],
+drop function if exists public.map_cats_in(double precision, double precision, double precision, double precision);
+create function public.map_cats_in(min_lat double precision, min_lng double precision,
+                                   max_lat double precision, max_lng double precision)
+returns table (id uuid, species text, name text, status text, description text, needs text[],
                lat double precision, lng double precision, caretaker_name text,
                cover_photo text, sighting_count integer, last_seen_at timestamptz,
                created_at timestamptz)
 language sql stable security definer set search_path = '' as $$
-  select c.id, c.name, c.status, c.description, c.needs,
+  select c.id, c.species, c.name, c.status, c.description, c.needs,
          c.public_lat, c.public_lng, c.caretaker_name,
          c.cover_photo, c.sighting_count, c.last_seen_at, c.created_at
   from public.map_cats c
-  where not c.hidden
+  where not c.hidden and c.home_at is null
     and c.public_lat between min_lat and max_lat
     and c.public_lng between min_lng and max_lng
   order by c.last_seen_at desc
@@ -183,7 +194,8 @@ create or replace function public.map_cat_detail(p_cat uuid)
 returns jsonb language sql stable security definer set search_path = '' as $$
   select case when c.id is null then null else jsonb_build_object(
     'cat', jsonb_build_object(
-      'id', c.id, 'name', c.name, 'status', c.status, 'description', c.description,
+      'id', c.id, 'species', c.species, 'name', c.name, 'status', c.status, 'description', c.description,
+      'home_at', c.home_at,
       'needs', to_jsonb(c.needs), 'lat', c.public_lat, 'lng', c.public_lng,
       'caretaker_name', c.caretaker_name, 'cover_photo', c.cover_photo,
       'sighting_count', c.sighting_count, 'last_seen_at', c.last_seen_at,
@@ -213,14 +225,20 @@ $$;
 
 -- Post a photo/sighting. p_cat = an existing cat (a match) or null for a new cat.
 -- Returns the cat id.
+drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text);
 create or replace function public.map_post(
   p_cat uuid, p_new_id uuid, p_name text, p_status text, p_needs text[], p_description text,
-  p_photo text, p_note text, p_lat double precision, p_lng double precision, p_display text)
+  p_photo text, p_note text, p_lat double precision, p_lng double precision, p_display text,
+  p_species text default 'cat')
 returns uuid language plpgsql security definer set search_path = '' as $$
-declare v_cat uuid; v_status text;
+declare v_cat uuid; v_status text; v_species text := coalesce(p_species, 'cat');
 begin
+  if v_species not in ('cat', 'dog') then
+    raise exception 'Cats and dogs only, for now.' using errcode = '22023';
+  end if;
+  if v_species = 'dog' then p_status := 'lost'; p_needs := '{}'; end if;
   if not public.map_is_full_user() then
-    raise exception 'Sign in with your email to post cats.' using errcode = '42501';
+    raise exception 'Sign in with your email to post.' using errcode = '42501';
   end if;
   if p_photo is not null and (p_photo not like auth.uid()::text || '/%' or p_photo like '%..%') then
     raise exception 'Bad photo path.' using errcode = '22023';
@@ -234,9 +252,12 @@ begin
   end if;
 
   if p_cat is not null then
-    select id, status into v_cat, v_status from public.map_cats where id = p_cat and not hidden;
-    if v_cat is null then raise exception 'That cat is gone.' using errcode = '22023'; end if;
-    -- anyone can raise the alarm on a cat; only its poster or caretaker can stand it down
+    select id, status into v_cat, v_status from public.map_cats
+     where id = p_cat and not hidden and species = v_species;
+    if v_cat is null then raise exception 'That animal isn''t on the map anymore.' using errcode = '22023'; end if;
+    -- a new sighting of an animal marked "back home" puts it back on the map
+    update public.map_cats set home_at = null where id = v_cat and home_at is not null;
+    -- anyone can raise the alarm on a cat; only its poster or Guardian can stand it down
     if p_status in ('help', 'lost') and v_status = 'spotted' then
       update public.map_cats set status = p_status,
              needs = (select coalesce(array_agg(distinct n), '{}') from unnest(needs || coalesce(p_needs, '{}')) n)
@@ -251,9 +272,9 @@ begin
         where created_by = auth.uid() and created_at > now() - interval '1 day') >= 10 then
       raise exception 'You''ve added 10 new cats today. Impressive. Try again tomorrow.' using errcode = '54000';
     end if;
-    insert into public.map_cats (id, name, status, description, needs, lat, lng, created_by)
-    values (coalesce(p_new_id, gen_random_uuid()),
-            coalesce(nullif(btrim(p_name), ''), 'Unnamed cat'),
+    insert into public.map_cats (id, species, name, status, description, needs, lat, lng, created_by)
+    values (coalesce(p_new_id, gen_random_uuid()), v_species,
+            coalesce(nullif(btrim(p_name), ''), case when v_species = 'dog' then 'Unnamed dog' else 'Unnamed cat' end),
             coalesce(p_status, 'spotted'),
             left(coalesce(p_description, ''), 500),
             case when p_status = 'help' then coalesce(p_needs, '{}') else '{}' end,
@@ -306,7 +327,7 @@ create or replace function public.map_help_toggle(p_cat uuid, p_need text, p_dis
 returns boolean language plpgsql security definer set search_path = '' as $$
 begin
   if not public.map_is_full_user() then
-    raise exception 'Sign in with your email so the caretaker can reach you.' using errcode = '42501';
+    raise exception 'Sign in with your email so the Guardian can reach you.' using errcode = '42501';
   end if;
   delete from public.map_help_offers where cat_id = p_cat and need = p_need and user_id = auth.uid();
   if found then return false; end if;
@@ -323,26 +344,33 @@ create or replace function public.map_update_cat(p_cat uuid, p_name text, p_stat
                                                  p_description text, p_needs text[])
 returns void language plpgsql security definer set search_path = '' as $$
 begin
+  if p_status is not null and p_status <> 'lost'
+     and exists (select 1 from public.map_cats where id = p_cat and species = 'dog') then
+    raise exception 'Dogs can only be listed as maybe lost.' using errcode = '22023';
+  end if;
   update public.map_cats
      set name = coalesce(nullif(btrim(p_name), ''), name),
          status = coalesce(p_status, status),
          description = left(coalesce(p_description, description), 500),
          needs = case when coalesce(p_status, status) = 'help' then coalesce(p_needs, needs) else '{}' end
    where id = p_cat and auth.uid() is not null and auth.uid() in (created_by, caretaker_id);
-  if not found then raise exception 'Only the person who posted this cat or its caretaker can edit it.' using errcode = '42501'; end if;
+  if not found then raise exception 'Only the person who posted this or its Guardian can edit it.' using errcode = '42501'; end if;
 end $$;
 
 create or replace function public.map_claim(p_cat uuid, p_display text)
 returns void language plpgsql security definer set search_path = '' as $$
 begin
   if not public.map_is_full_user() then
-    raise exception 'Sign in with your email to become a caretaker.' using errcode = '42501';
+    raise exception 'Sign in with your email to become a Guardian.' using errcode = '42501';
+  end if;
+  if exists (select 1 from public.map_cats where id = p_cat and species = 'dog') then
+    raise exception 'Guardians are for neighbourhood cats. A lost dog needs its owner!' using errcode = '22023';
   end if;
   update public.map_cats
      set caretaker_id = auth.uid(),
          caretaker_name = coalesce(nullif(left(btrim(coalesce(p_display, '')), 40), ''), 'a neighbour')
-   where id = p_cat and caretaker_id is null and not hidden;
-  if not found then raise exception 'This cat already has a caretaker.' using errcode = '23505'; end if;
+   where id = p_cat and caretaker_id is null and not hidden and species = 'cat';
+  if not found then raise exception 'This cat already has a Guardian.' using errcode = '23505'; end if;
 end $$;
 
 create or replace function public.map_release(p_cat uuid)
@@ -350,6 +378,15 @@ returns void language sql security definer set search_path = '' as $$
   update public.map_cats set caretaker_id = null, caretaker_name = null
    where id = p_cat and caretaker_id = auth.uid()
 $$;
+
+-- a lost animal is back home (or not): its poster or Guardian can say so
+create or replace function public.map_mark_home(p_cat uuid, p_home boolean)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  update public.map_cats set home_at = case when p_home then now() else null end
+   where id = p_cat and auth.uid() is not null and auth.uid() in (created_by, caretaker_id);
+  if not found then raise exception 'Only the person who posted this or its Guardian can do that.' using errcode = '42501'; end if;
+end $$;
 
 -- report something; 3 different people hides it until you review it
 create or replace function public.map_report(p_type text, p_id uuid, p_reason text)
@@ -378,7 +415,8 @@ revoke execute on function public.map_sightings_gone() from public, anon, authen
 grant execute on function public.map_cats_in(double precision, double precision, double precision, double precision) to anon, authenticated;
 grant execute on function public.map_cat_detail(uuid) to anon, authenticated;
 
-revoke execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text) from public, anon;
+revoke execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text) from public, anon;
+revoke execute on function public.map_mark_home(uuid, boolean) from public, anon;
 revoke execute on function public.map_comment(uuid, text, text) from public, anon;
 revoke execute on function public.map_delete_comment(uuid) from public, anon;
 revoke execute on function public.map_help_toggle(uuid, text, text) from public, anon;
@@ -386,7 +424,8 @@ revoke execute on function public.map_update_cat(uuid, text, text, text, text[])
 revoke execute on function public.map_claim(uuid, text) from public, anon;
 revoke execute on function public.map_release(uuid) from public, anon;
 revoke execute on function public.map_report(text, uuid, text) from public, anon;
-grant execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text) to authenticated;
+grant execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text) to authenticated;
+grant execute on function public.map_mark_home(uuid, boolean) to authenticated;
 grant execute on function public.map_comment(uuid, text, text) to authenticated;
 grant execute on function public.map_delete_comment(uuid) to authenticated;
 grant execute on function public.map_help_toggle(uuid, text, text) to authenticated;
