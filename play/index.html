@@ -584,14 +584,14 @@ footer a { color: var(--muted); font-weight: 700; }
       <span class="kicker" id="acctTitle">Adopt Watabish (optional)</span>
       <div id="acctOut" hidden>
         <div style="display:grid;gap:10px">
-          <p id="acctIntro">Right now you're fostering: he lives on this device only. Adopt him to keep him on every phone and computer. No password, just a link by email.</p>
+          <p id="acctIntro">Right now you're fostering: he lives on this device only. Adopt him to keep him on every phone and computer. No password, just a code by email.</p>
           <p class="note"><span id="acctSwitchLead">His human?</span> <button class="linkish" id="acctSwitch" type="button">Sign in</button></p>
           <label class="sr" for="acctEmailInput">Email</label>
           <input type="email" id="acctEmailInput" autocomplete="email" placeholder="you@email.com">
           <label class="check" id="acctAgeRow"><input type="checkbox" id="acctAge"> <span>I'm 13 or older and agree to the <a href="/terms.html" target="_blank" rel="noopener">terms</a> and <a href="/privacy.html" target="_blank" rel="noopener">privacy policy</a>.</span></label>
-          <div class="row"><button class="btn" id="acctSend">Email me my adoption link</button></div>
+          <div class="row"><button class="btn" id="acctSend">Email me my adoption papers</button></div>
           <div class="code" id="acctCodeBox" hidden>
-            <label for="acctCode"><b>Got the email?</b> Tap its link, or type the code here (best for the installed app).</label>
+            <label for="acctCode"><b>Got the email?</b> Type the code from it here.</label>
             <input class="codein" id="acctCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="••••••">
             <div class="row"><button class="btn" id="acctVerify">Adopt with code</button></div>
           </div>
@@ -612,6 +612,7 @@ footer a { color: var(--muted); font-weight: 700; }
       <div class="row"><button class="btn" id="installBtn" hidden>Install Watabish</button></div>
       <p id="installIOS" hidden>On iPhone or iPad: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b>.</p>
       <p id="installOther" hidden>Open your browser's menu and choose <b>Install app</b> or <b>Add to Home screen</b>.</p>
+      <p class="note"><b>Adopt him first.</b> The app keeps its own save, separate from your browser. Sign in inside the app and your progress comes with you.</p>
     </section>
     <span class="kicker">Collected wisdom</span>
     <p class="wisdom" id="latestWisdom">Sit in the sunbeam first. Explain yourself never.</p>
@@ -664,7 +665,8 @@ footer a { color: var(--muted); font-weight: 700; }
       <button class="btn ghost" id="wFoster">Foster as a guest</button>
       <button class="btn ghost" id="wInstall" hidden>Get the app</button>
     </div>
-    <p class="fine" id="wIOS" hidden>Want the app? In Safari, tap <b>Share</b> then <b>Add to Home Screen</b>.</p>
+    <p class="fine" id="wIOS" hidden>Want the app? Adopt him first, then in Safari tap <b>Share</b> then <b>Add to Home Screen</b>, and sign in there.</p>
+    <p class="fine" id="wApp" hidden><b>Played in your browser before?</b> The app starts fresh. Tap <b>Sign in</b> below to bring him over.</p>
     <p class="fine">You can adopt later from the Journal. He won't hold it against you. (He will.)</p>
     <p class="fine">His human? <button class="linkish" id="wReturn" type="button">Sign in</button></p>
   </div>
@@ -805,6 +807,14 @@ const LINES = {
     ["*flicks his tail once*", "Questions cost tolerance. You're short."]
   ]
 };
+// a usable wisdom: short, finished, and not the AI talking to itself
+function cleanWisdom(t) {
+  t = String(t || "").trim().replace(/^["“'\s]+|["”'\s]+$/g, "");
+  if (!t || t.length > 180) return "";
+  if (/\b(wait|here'?s a|here is a|over the limit|word count|let me|i'll try|clean one|muddled|as requested)\b/i.test(t)) return "";
+  if (!/[.!?)…]$/.test(t)) return "";
+  return t;
+}
 const FALLBACK_WISDOM = [
   "If it fits, sit. If it doesn't fit, sit harder.",
   "Knock it off the table. Find out if it mattered.",
@@ -885,6 +895,8 @@ if (S.freeAdviceAt > Date.now() + ADVICE_MAX_MS) S.freeAdviceAt = Date.now() + A
 for (const [k,v] of Object.entries({ lastTouch: Date.now(), drops: 0, dayFills: 0, dayKey: new Date().toDateString(), freeAdviceAt: Date.now(), passes: 0 })) if (S[k] === undefined) S[k] = v;
 delete S.halfDone;
 if (!Array.isArray(S.advice)) S.advice = [];
+// tidy up any broken wisdom saved before we checked
+if (Array.isArray(S.wisdom)) S.wisdom = S.wisdom.filter(w => cleanWisdom(w));
 function touch() { S.lastTouch = Date.now(); S.drops = 0; }
 function decayTolerance(now) {
   const since = now - S.lastTouch - GRACE_MS;
@@ -1173,7 +1185,7 @@ async function revealWisdom() {
   if (user && sb) {
     try {
       const { data, error } = await sb.functions.invoke("ask-watabish", { body: { kind: "wisdom", seen: S.wisdom.slice(0, 8) } });
-      if (!error && data && data.wisdom) text = String(data.wisdom).trim();
+      if (!error && data && data.wisdom) text = cleanWisdom(data.wisdom);
     } catch {}
   }
   if (!text) { const used = new Set(S.wisdom); const left = FALLBACK_WISDOM.filter(w => !used.has(w)); text = pick(left.length ? left : FALLBACK_WISDOM); }
@@ -1725,7 +1737,7 @@ const SB_URL = "https://drreubfqwmivmpwpynnt.supabase.co";
 const SB_KEY = "sb_publishable_ZIFNEg8XxN_JW6li0MKReA_yjgPEfyj";
 // arriving from an email link: let the sign-in decide what to show
 const FROM_LINK = /access_token|refresh_token|[?&#]code=|token_hash/.test(location.hash + location.search);
-var returning = false, sb = null, user = null, cloudDirty = false, pushing = false, lastSyncAt = 0;
+var returning = false, syncReady = false, sb = null, user = null, cloudDirty = false, pushing = false, lastSyncAt = 0;
 try { if (window.supabase && window.supabase.createClient) sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }); } catch { sb = null; }
 
 function renderAccount() {
@@ -1744,7 +1756,7 @@ function renderAccount() {
 function acctMsg(t) { $("acctMsg").textContent = t || ""; }
 
 async function pushCloud() {
-  if (!sb || !user || pushing) return;
+  if (!sb || !user || pushing || !syncReady) return;
   pushing = true; cloudDirty = false;
   try {
     const { error } = await sb.from("game_saves").upsert({ user_id: user.id, save: S });
@@ -1757,33 +1769,59 @@ function adopt(save) {
   saveLocal(); render(); applyFace(); syncSound();
   say("Oh. It's you again. I remember everything.");
 }
+// how much he's been through on a save: wisdom, advice, things bought
+const progressOf = (x) => ((x && x.wisdom) || []).length + ((x && x.advice) || []).length + Object.keys((x && x.owned) || {}).length;
+const describe = (x) => { const w = ((x && x.wisdom) || []).length, o = Object.keys((x && x.owned) || {}).length; return w + (w === 1 ? " wisdom, " : " wisdoms, ") + o + (o === 1 ? " item" : " items"); };
 async function onSignedIn(u) {
   if (user && user.id === u.id) return;
-  user = u; renderAccount();
+  user = u; syncReady = false; renderAccount();
   if (!$("welcome").hidden) closeWelcome();
   tourAfterJournal = false;
-  try {
-    const { data, error } = await sb.from("game_saves").select("save, updated_at").eq("user_id", u.id).maybeSingle();
-    if (error) throw error;
-    if (!data) { S.uid = u.id; saveLocal(); await pushCloud(); acctMsg("Adopted. He now follows you to every device. Lucky you."); startTourIfNew(); return; }
-    const cloud = data.save || {};
-    const welcomeHome = () => { returning = true; hideTour(); adopt(cloud); S.seenTour = true; S.seenWelcome = true; saveLocal(); closeSheets(); acctMsg("Welcome home. He missed you. (He'll deny it.)"); lastSyncAt = Date.now(); renderAccount(); };
-    // a fresh device (nothing played here yet): just bring his saved self home
-    if (!S.uid && !S.seenTour && !(S.wisdom || []).length && !Object.keys(S.owned || {}).length) { welcomeHome(); return; }
-    if (S.uid === u.id) {
-      returning = true; hideTour();
-      if ((cloud.savedAt || 0) > (S.savedAt || 0)) adopt(cloud); else await pushCloud();
-      acctMsg("Welcome back. He missed you. (He'll deny it.)");
-      lastSyncAt = Date.now(); renderAccount(); return;
-    }
-    // this device has never been linked to this account: let the player choose
-    $("syncChoice").hidden = false;
-    returning = true; hideTour();
-    $("syncCloud").onclick = () => { $("syncChoice").hidden = true; welcomeHome(); };
-    $("syncLocal").onclick = async () => { $("syncChoice").hidden = true; S.uid = u.id; saveLocal(); await pushCloud(); acctMsg("Saved this device's progress to your account."); };
-  } catch { acctMsg("Signed in, but we couldn't reach your save right now. We'll keep trying."); cloudDirty = true; }
+  resolveSave(u);
 }
-function onSignedOut() { user = null; lastSyncAt = 0; S.uid = null; saveLocal(); renderAccount(); }
+async function resolveSave(u) {
+  if (!user || user.id !== u.id) return;
+  let data;
+  try {
+    const res = await sb.from("game_saves").select("save, updated_at").eq("user_id", u.id).maybeSingle();
+    if (res.error) throw res.error;
+    data = res.data;
+  } catch (e) {
+    // never overwrite the account while we can't see what's in it: try again shortly
+    const why = [e && e.code, e && (e.message || e.error_description || String(e))].filter(Boolean).join(": ").slice(0, 160);
+    acctMsg("Signed in, but we couldn't reach your save yet. Trying again… (" + (why || "no details") + ")");
+    setTimeout(() => resolveSave(u), 15000);
+    return;
+  }
+  const ready = () => { syncReady = true; lastSyncAt = Date.now(); renderAccount(); };
+  if (!data) { S.uid = u.id; saveLocal(); syncReady = true; await pushCloud(); acctMsg("Adopted. He now follows you to every device. Lucky you."); startTourIfNew(); return; }
+  const cloud = data.save || {};
+  const pc = progressOf(cloud), pl = progressOf(S);
+  const useCloud = (msg) => { returning = true; hideTour(); adopt(cloud); S.seenTour = true; S.seenWelcome = true; saveLocal(); closeSheets(); acctMsg(msg || "Welcome home. He missed you. (He'll deny it.)"); ready(); };
+  const useLocal = async (msg) => { returning = true; hideTour(); S.uid = u.id; S.seenTour = true; S.seenWelcome = true; save(); ready(); await pushCloud(); acctMsg(msg || "Saved this device's progress to your account."); };
+  const ask = () => {
+    returning = true; hideTour();
+    $("syncCloud").textContent = "Use my account's (" + describe(cloud) + ")";
+    $("syncLocal").textContent = "Keep this device's (" + describe(S) + ")";
+    $("syncChoice").hidden = false;
+    $("syncCloud").onclick = () => { $("syncChoice").hidden = true; useCloud(); };
+    $("syncLocal").onclick = () => { $("syncChoice").hidden = true; useLocal(); };
+  };
+  if (S.uid === u.id) {
+    // same account on this device: newest wins, unless the newer one has lost progress
+    const cloudNewer = (cloud.savedAt || 0) > (S.savedAt || 0);
+    if (pc === 0 && pl > 0) return useLocal("Welcome back. He missed you. (He'll deny it.)");
+    if (pl === 0 && pc > 0) return useCloud("Welcome back. He missed you. (He'll deny it.)");
+    if (cloudNewer && pc >= pl) return useCloud("Welcome back. He missed you. (He'll deny it.)");
+    if (!cloudNewer && pl >= pc) return useLocal("Welcome back. He missed you. (He'll deny it.)");
+    return ask();
+  }
+  // this device has never been linked to this account
+  if (pl === 0) return useCloud();
+  if (pc === 0) return useLocal();
+  ask();
+}
+function onSignedOut() { syncReady = false; user = null; lastSyncAt = 0; S.uid = null; saveLocal(); renderAccount(); }
 
 if (sb) {
   sb.auth.onAuthStateChange((event, session) => {
@@ -1799,11 +1837,11 @@ function setAcctMode(m) {
   acctMode = m; const back = m === "return";
   $("acctTitle").textContent = back ? "Welcome home" : "Adopt Watabish (optional)";
   $("acctIntro").textContent = back
-    ? "He's been waiting (he'll deny it). Enter your email and we'll send a sign-in link to bring him home, progress and all."
-    : "Right now you're fostering: he lives on this device only. Adopt him to keep him on every phone and computer. No password, just a link by email.";
+    ? "He's been waiting (he'll deny it). Enter your email and we'll send a code to bring him home, progress and all."
+    : "Right now you're fostering: he lives on this device only. Adopt him to keep him on every phone and computer. No password, just a code by email.";
   $("acctSwitchLead").textContent = back ? "New here?" : "His human?";
   $("acctSwitch").textContent = back ? "Adopt him" : "Sign in";
-  $("acctSend").textContent = back ? "Email me my sign-in link" : "Email me my adoption link";
+  $("acctSend").textContent = back ? "Email me my sign-in code" : "Email me my adoption papers";
   $("acctVerify").textContent = back ? "Sign in with code" : "Adopt with code";
   $("acctAgeRow").hidden = back;
   acctMsg("");
@@ -1818,9 +1856,9 @@ $("acctSend").onclick = async () => {
     const back = acctMode === "return";
     const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: !back } });
     if (error && back && /signup|not allowed|not found/i.test(error.message || "")) { acctMsg("No human with that email yet. Tap \u201cAdopt him\u201d above to start fresh."); $("acctSend").disabled = false; return; }
-    acctMsg(error ? "Couldn't send the link. Try again in a minute." : back ? "Sent! Check your email for your sign-in link." : "Sent! Check your email for his adoption papers.");
+    acctMsg(error ? "Couldn't send the email. Try again in a minute." : back ? "Sent! Check your email for your sign-in code." : "Sent! Check your email for his adoption papers. Your code is inside.");
     if (!error) { $("acctCodeBox").hidden = false; $("acctCode").focus(); }
-  } catch { acctMsg("Couldn't send the link. Check your connection."); }
+  } catch { acctMsg("Couldn't send the email. Check your connection."); }
   $("acctSend").disabled = false;
 };
 $("acctVerify").onclick = async () => {
@@ -1984,6 +2022,7 @@ function startTourIfNew() { setTimeout(() => { if (!S.seenTour && !returning) sh
 function showWelcome() {
   $("wInstall").hidden = !installEvt;
   $("wIOS").hidden = !(isIOS && !installEvt && !isStandalone());
+  $("wApp").hidden = !isStandalone();
   $("welcome").hidden = false; $("wFoster").focus();
 }
 function closeWelcome() { $("welcome").hidden = true; S.seenWelcome = true; save(); }
