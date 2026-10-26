@@ -611,10 +611,11 @@ const LEGENDS = [
       "Pal\u2019s stood where 700 Queen Street East is today, next to the Sault Ste. Marie Museum. Long-time locals still remember him.",
     ],
     photos: [
-      { src: "legends/ares-door.jpg", alt: "Newspaper photo of Ares, a shepherd-husky mix, sitting at an open door with a shopping bag, his owner holding the door", caption: "\u201cAres in dogged pursuit\u201d" },
+      { src: "legends/ares-door.jpg", alt: "Newspaper photo of Ares, a shepherd-husky mix, sitting at an open door with a shopping bag while his owner, Wolfgang Guier, holds the door", caption: "\u201cAres in dogged pursuit\u2026 of Wolfgang Guier\u2019s open door policy\u201d" },
       { src: "legends/ares-shopping.jpg", alt: "Newspaper photo of Ares walking along a sidewalk carrying a shopping bag in his mouth", caption: "Off to the shop" },
     ],
-    credit: 'Clippings from Ares\u2019s owner, Wolfgang Guier. Shared with the community by <a href="https://www.facebook.com/angrymike.gualtieri" target="_blank" rel="noopener">Mike Gualtieri</a> (<a href="https://www.facebook.com/groups/415520711981765/posts/2681561892044291/" target="_blank" rel="noopener">original post</a>).',
+    photoCredit: "Photos courtesy of Wolfgang Guier, Ares\u2019s owner",
+    credit: 'Shared with the community by <a href="https://www.facebook.com/angrymike.gualtieri" target="_blank" rel="noopener">Mike Gualtieri</a> (<a href="https://www.facebook.com/groups/415520711981765/posts/2681561892044291/" target="_blank" rel="noopener">original post</a>).',
   },
 ];
 const LEGEND_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l-2-10-4 4-3-7-3 7-4-4z"/></svg>';
@@ -623,6 +624,7 @@ function openLegend(lg) {
     '<div class="row"><h2 id="legendTitle" style="margin:0; font-size:26px; font-weight:800; letter-spacing:-0.02em; line-height:1.1">' + esc(lg.title) + "</h2></div>" +
     '<div class="row"><span class="goldpill">\u2605 local legend</span><span class="pill soft">' + esc(lg.era) + "</span><span class=\"note\">Queen St E, Sault Ste. Marie</span></div>" +
     '<div class="clips">' + lg.photos.map((ph) => '<figure><img src="' + esc(ph.src) + '" alt="' + esc(ph.alt) + '" loading="lazy"><figcaption>' + esc(ph.caption) + "</figcaption></figure>").join("") + "</div>" +
+    (lg.photoCredit ? '<p style="margin:0; font-weight:700">' + esc(lg.photoCredit) + "</p>" : "") +
     lg.story.map((t) => '<p style="margin:0">' + esc(t) + "</p>").join("") +
     '<p class="note" style="margin:0">' + lg.credit + "</p>" +
     '<p class="note" style="margin:0">Know another local legend? Tell us at <a href="mailto:aya@likhangmaya.com">aya@likhangmaya.com</a>.</p></div>';
