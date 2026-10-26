@@ -124,6 +124,16 @@ textarea.input { resize: vertical; min-height: 84px; }
 .pin.pick { background: var(--pick); border-color: var(--pick); }
 .pin.deceased { background: var(--gone); border-color: var(--gone); }
 .pin.hotspot { background: var(--hot); border-color: var(--hot); }
+.pin.lore { width: 50px; height: 50px; background: #C9973A; border-color: #FFE7A8; color: #2B1C15; box-shadow: 0 0 0 2px #2B1C15, 0 0 16px 4px rgb(255 214 120 / .75); animation: glint 2.8s ease-in-out infinite; }
+.pin.lore svg { width: 26px; height: 26px; }
+@keyframes glint { 50% { box-shadow: 0 0 0 2px #2B1C15, 0 0 24px 8px rgb(255 214 120 / .95); } }
+@media (prefers-reduced-motion: reduce) { .pin.lore { animation: none; } }
+.legendcard { display: grid; gap: 12px; }
+.legendcard .clips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.legendcard figure { margin: 0; display: grid; gap: 4px; }
+.legendcard img { width: 100%; height: 260px; object-fit: cover; object-position: top; border-radius: 12px; border: 2px solid var(--edge); filter: sepia(.15); background: #E9DCC0; }
+.legendcard figcaption { font-size: 12px; color: var(--muted); }
+.goldpill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 800; background: #C9973A; color: #2B1C15; }
 .place { border: 3px solid var(--edge); border-radius: 18px; box-shadow: 4px 4px 0 var(--shadow); padding: 14px; display: grid; gap: 10px; }
 .place .line { display: flex; gap: 10px; align-items: flex-start; }
 .place .line svg { flex: none; width: 22px; height: 22px; fill: none; stroke: var(--hot); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-top: 1px; }
@@ -464,6 +474,12 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
   </form>
 </dialog>
 
+<!-- local legends: easter eggs, not posts -->
+<dialog id="legendDlg" aria-labelledby="legendTitle">
+  <div class="dlghead"><span class="kicker">a local legend</span><button class="close" type="button" data-close aria-label="Close">×</button></div>
+  <div class="dlg" id="legendBody"></div>
+</dialog>
+
 <!-- about -->
 <dialog id="aboutDlg" aria-labelledby="aboutTitle">
   <div class="dlghead"><h2 id="aboutTitle">how it works</h2><button class="close" type="button" data-close aria-label="Close">×</button></div>
@@ -584,6 +600,37 @@ const orgName = (key) => (ORGS.find((o) => o.key === key) || { name: key }).name
 const telLink = (o) => o && o.phone ? ' <a href="tel:' + o.phone.replace(/[^0-9+]/g, "") + '">' + esc(o.phone) + "</a>" : "";
 
 // comments that talk about money get a warning under them
+// ---------- local legends (easter eggs) ----------
+// Golden pins for famous animals from local history. They aren't posts: no comments, no list, just a story.
+const LEGENDS = [
+  {
+    key: "ares", name: "Ares", era: "1970s", lat: 46.5080, lng: -84.3274,
+    title: "Ares, the dog who did the shopping",
+    story: [
+      "In the 1970s, a German Shepherd and Husky mix named Ares became famous around the Sault. With a pouch around his neck holding money and a grocery note, he would walk down Queen Street on his own to Pal\u2019s Confectionery to do his family\u2019s shopping, then carry it home.",
+      "Pal\u2019s stood where 700 Queen Street East is today, next to the Sault Ste. Marie Museum. Long-time locals still remember him.",
+    ],
+    photos: [
+      { src: "legends/ares-door.jpg", alt: "Newspaper photo of Ares, a shepherd-husky mix, sitting at an open door with a shopping bag while his owner, Wolfgang Guier, holds the door", caption: "\u201cAres in dogged pursuit\u2026 of Wolfgang Guier\u2019s open door policy\u201d" },
+      { src: "legends/ares-shopping.jpg", alt: "Newspaper photo of Ares walking along a sidewalk carrying a shopping bag in his mouth", caption: "Off to the shop" },
+    ],
+    photoCredit: "Photos courtesy of Wolfgang Guier, Ares\u2019s owner",
+    credit: 'Shared with the community by <a href="https://www.facebook.com/angrymike.gualtieri" target="_blank" rel="noopener">Mike Gualtieri</a> (<a href="https://www.facebook.com/groups/415520711981765/posts/2681561892044291/" target="_blank" rel="noopener">original post</a>).',
+  },
+];
+const LEGEND_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l-2-10-4 4-3-7-3 7-4-4z"/></svg>';
+function openLegend(lg) {
+  $("legendBody").innerHTML = '<div class="legendcard">' +
+    '<div class="row"><h2 id="legendTitle" style="margin:0; font-size:26px; font-weight:800; letter-spacing:-0.02em; line-height:1.1">' + esc(lg.title) + "</h2></div>" +
+    '<div class="row"><span class="goldpill">\u2605 local legend</span><span class="pill soft">' + esc(lg.era) + "</span><span class=\"note\">Queen St E, Sault Ste. Marie</span></div>" +
+    '<div class="clips">' + lg.photos.map((ph) => '<figure><img src="' + esc(ph.src) + '" alt="' + esc(ph.alt) + '" loading="lazy"><figcaption>' + esc(ph.caption) + "</figcaption></figure>").join("") + "</div>" +
+    (lg.photoCredit ? '<p style="margin:0; font-weight:700">' + esc(lg.photoCredit) + "</p>" : "") +
+    lg.story.map((t) => '<p style="margin:0">' + esc(t) + "</p>").join("") +
+    '<p class="note" style="margin:0">' + lg.credit + "</p>" +
+    '<p class="note" style="margin:0">Know another local legend? Tell us at <a href="mailto:aya@likhangmaya.com">aya@likhangmaya.com</a>.</p></div>';
+  $("legendDlg").showModal();
+}
+
 const MONEY_RE = /e-?transfer|interac|paypal|venmo|cash ?app|zelle|wise\.com|western union|moneygram|gift ?card|bitcoin|btc|crypto|usdt|gofundme|donat|send (me )?money|\$\s?\d|\d+\s?(dollars|bucks)|shipping fee|deposit|reward/i;
 const HEART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
 
@@ -654,6 +701,16 @@ const layer = (L.markerClusterGroup ? L.markerClusterGroup({
 }) : L.layerGroup()).addTo(map);
 const areas = L.layerGroup().addTo(map);
 map.on("zoomend", () => renderAreas());
+// legends sit on their own layer: never grouped into bubbles, never in the list
+const legendsLayer = L.layerGroup().addTo(map);
+LEGENDS.forEach((lg) => {
+  L.marker([lg.lat, lg.lng], {
+    icon: L.divIcon({ className: "", html: '<div class="pin lore">' + LEGEND_SVG + "</div>", iconSize: [50, 50], iconAnchor: [25, 25] }),
+    title: lg.name + ", a local legend", alt: lg.name + ", a local legend", keyboard: true, zIndexOffset: 1000,
+  }).on("click", () => openLegend(lg)).addTo(legendsLayer);
+});
+function showLegends() { const on = map.getZoom() >= 13; if (on && !map.hasLayer(legendsLayer)) legendsLayer.addTo(map); if (!on && map.hasLayer(legendsLayer)) map.removeLayer(legendsLayer); }
+map.on("zoomend", showLegends); showLegends();
 let me = null, meMarker = null;
 let cats = [];
 let filter = "all";
@@ -676,6 +733,8 @@ $("searchForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const q = $("searchInput").value.trim();
   if (!q) return;
+  const lg = LEGENDS.find((x) => x.key === q.toLowerCase() || q.toLowerCase() === "local legend");
+  if (lg) { $("startCard").hidden = true; map.setView([lg.lat, lg.lng], 17); $("searchInput").blur(); setTimeout(() => openLegend(lg), 450); return; }
   try {
     const hit = await geocode(q, $("startCard").hidden ? map.getCenter() : null);
     if (!hit) { toast("Couldn't find that place."); return; }

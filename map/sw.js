@@ -1,5 +1,5 @@
 // Cat map offline support (makes the map installable). Bump VERSION whenever you upload a new index.html.
-const VERSION = "catmap-v1";
+const VERSION = "catmap-v2";
 const SHELL = ["./", "index.html", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
