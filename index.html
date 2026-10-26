@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>watabish — iconic gifts inspired by one very rude cat</title>
-<meta name="description" content="Hand-painted 5×7 acrylic pet portraits on canvas from $29, signed editions from $55, and bespoke cat products inspired by Watabish, a lynx point cat with an attitude problem.">
+<meta name="description" content="Hand-painted 8×10 acrylic pet portraits on canvas from $29, signed editions from $55, and bespoke cat products inspired by Watabish, a lynx point cat with an attitude problem.">
 <meta property="og:title" content="watabish">
 <meta property="og:description" content="Hand-painted pet portraits for people who simply ate. Get a watabish.">
 <meta property="og:image" content="images/watabish-hero.jpg">
@@ -21,6 +21,26 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 @keyframes wb-wobble{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
 .wb-track{animation:wb-scroll 28s linear infinite}
 .wb-wobble{animation:wb-wobble 2.4s ease-in-out infinite}
+.bv-r{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.bv{display:grid;gap:24px}
+.bv-tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bv-tab{display:flex;flex-direction:column;gap:2px;padding:14px 16px;background:#FFFFFF;border:3px solid #2B1C15;border-radius:20px;cursor:pointer;box-shadow:4px 4px 0 #2B1C15;transition:transform .12s}
+.bv-tab:hover{transform:translate(-1px,-1px)}
+.bv-t{font-weight:800;font-size:19px;letter-spacing:-0.02em}
+.bv-s{font-weight:700;font-size:13px;color:#5A463A}
+.bv-p{display:none;min-width:0}
+#bv-apps:checked~.bv-apps,#bv-lore:checked~.bv-lore,#bv-fund:checked~.bv-fund,#bv-soon:checked~.bv-soon{display:flex}
+#bv-apps:checked~.bv-tabs label[for=bv-apps],#bv-lore:checked~.bv-tabs label[for=bv-lore],#bv-fund:checked~.bv-tabs label[for=bv-fund],#bv-soon:checked~.bv-tabs label[for=bv-soon]{background:#2B1C15;color:#F3EADB;box-shadow:4px 4px 0 #1F5FA8}
+#bv-apps:checked~.bv-tabs label[for=bv-apps] .bv-s,#bv-lore:checked~.bv-tabs label[for=bv-lore] .bv-s,#bv-fund:checked~.bv-tabs label[for=bv-fund] .bv-s,#bv-soon:checked~.bv-tabs label[for=bv-soon] .bv-s{color:#BFE3FF}
+#bv-apps:focus-visible~.bv-tabs label[for=bv-apps],#bv-lore:focus-visible~.bv-tabs label[for=bv-lore],#bv-fund:focus-visible~.bv-tabs label[for=bv-fund],#bv-soon:focus-visible~.bv-tabs label[for=bv-soon]{outline:3px solid #1F5FA8;outline-offset:3px}
+@media (min-width:880px){
+.bv{grid-template-columns:260px minmax(0,1fr);gap:36px;align-items:start}
+.bv-tabs{grid-template-columns:1fr;gap:12px;position:sticky;top:96px}
+.bv-tab{padding:18px 20px}
+.bv-t{font-size:22px}
+.bv-p{grid-column:2;grid-row:1}
+#bv-apps:checked~.bv-tabs label[for=bv-apps] .bv-t::after,#bv-lore:checked~.bv-tabs label[for=bv-lore] .bv-t::after,#bv-fund:checked~.bv-tabs label[for=bv-fund] .bv-t::after,#bv-soon:checked~.bv-tabs label[for=bv-soon] .bv-t::after{content:" →";color:#BFE3FF}
+}
 @media (prefers-reduced-motion: reduce){.wb-track,.wb-wobble{animation:none}}
 </style>
 </head>
@@ -41,7 +61,6 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <div style="display: flex; flex-wrap: wrap; gap: 8px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-size: 14px">
 <a href="#bish" style="padding: 12px 14px; text-decoration: none">meet watabish</a>
 <a href="#play" style="padding: 12px 14px; text-decoration: none">bish-verse</a>
-<a href="#lore" style="padding: 12px 14px; text-decoration: none">the lore</a>
 <a href="#faq" style="padding: 12px 14px; text-decoration: none">faq</a>
 <a href="#order" style="padding: 12px 18px; text-decoration: none; background: #2B1C15; color: #F3EADB; border-radius: 999px; font-weight: 700">commission ($29)</a>
 </div>
@@ -130,6 +149,7 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <p style="margin: 0; font-size: 17px; line-height: 1.5; color: #E9DCC8">same hand-painted portrait, plus an official watabish paw print signature from the chief executive bish himself.</p>
 <a href="https://cal.com/watabish-pet-portrait/bish-signed" style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 52px; padding: 0 24px; margin-top: 6px; background: #BFE3FF; color: #2B1C15; border: 3px solid #BFE3FF; border-radius: 999px; font-weight: 800; font-size: 18px; text-decoration: none">book the bish-signed — $55</a>
 </div>
+<p style="margin: 4px 0 0; font-size: 17px; line-height: 1.6"><b>not in the soo?</b> i ship anywhere in canada, tracked, for +$27.<br><a href="https://cal.com/watabish-pet-portrait/standard-shipped" style="color: #1F5FA8; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px">ship the classic — $56</a> · <a href="https://cal.com/watabish-pet-portrait/bish-signed-shipped" style="color: #1F5FA8; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px">ship the bish-signed — $82</a></p>
 </div>
 <ol style="flex: 999 1 480px; min-width: 0; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px">
 <li style="display: flex; gap: 20px; align-items: flex-start; background: #FFFFFF; border: 3px solid #2B1C15; border-radius: 20px; padding: 22px 24px">
@@ -138,7 +158,7 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 </li>
 <li style="display: flex; gap: 20px; align-items: flex-start; background: #FFFFFF; border: 3px solid #2B1C15; border-radius: 20px; padding: 22px 24px">
 <span style="flex: 0 0 auto; width: 48px; height: 48px; border-radius: 999px; background: #2B1C15; color: #BFE3FF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px">2</span>
-<div><h3 style="margin: 0 0 4px; font-size: 24px">pick your pick-up day &amp; pay ($29, or $55 if you're fancy)</h3><p style="margin: 0; font-size: 17px; line-height: 1.5">choose the day you want to collect your portrait, at least a week out, and pay in full at checkout. your slot is confirmed once payment goes through. limited slots because i am one (1) person. every dollar goes straight into the laser fund™.</p></div>
+<div><h3 style="margin: 0 0 4px; font-size: 24px">pick your pick-up day &amp; pay ($29, or $55 if you're fancy)</h3><p style="margin: 0; font-size: 17px; line-height: 1.5">choose the day you want to collect your portrait (or the day it ships), at least a week out, and pay in full at checkout. your slot is confirmed once payment goes through. limited slots because i am one (1) person. every dollar goes straight into the laser fund™.</p></div>
 </li>
 <li style="display: flex; gap: 20px; align-items: flex-start; background: #FFFFFF; border: 3px solid #2B1C15; border-radius: 20px; padding: 22px 24px">
 <span style="flex: 0 0 auto; width: 48px; height: 48px; border-radius: 999px; background: #2B1C15; color: #BFE3FF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px">3</span>
@@ -146,7 +166,7 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 </li>
 <li style="display: flex; gap: 20px; align-items: flex-start; background: #FFFFFF; border: 3px solid #2B1C15; border-radius: 20px; padding: 22px 24px">
 <span style="flex: 0 0 auto; width: 48px; height: 48px; border-radius: 999px; background: #1F5FA8; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px">4</span>
-<div><h3 style="margin: 0 0 4px; font-size: 24px">we meet up for the hand-off</h3><p style="margin: 0; font-size: 17px; line-height: 1.5">no shipping. we meet under a tree (a very nice one) and i hand your masterpiece over in person. then hang it, frame it, make it your lock screen. tag @watabish_.</p></div>
+<div><h3 style="margin: 0 0 4px; font-size: 24px">we meet up for the hand-off (or i ship it)</h3><p style="margin: 0; font-size: 17px; line-height: 1.5">in the soo, we meet under a tree (a very nice one) and i hand your masterpiece over in person. anywhere else in canada, it ships tracked and bubble-wrapped like the icon it is. then hang it, frame it, make it your lock screen. tag @watabish_.</p></div>
 </li>
 </ol>
 </div>
@@ -170,20 +190,29 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 </div>
 </section>
 
-<!-- play -->
-<section id="play" style="background: #BFE3FF; color: #2B1C15; border-top: 3px solid #2B1C15; padding: clamp(64px, 9vw, 112px) 24px">
-<div style="max-width: 1240px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 48px; align-items: center">
-<div style="flex: 999 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
-<p style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; color: #1F5FA8">the bish-verse · free and pointless</p>
-<h2 style="margin: 0; font-size: clamp(44px, 7vw, 96px); line-height: 0.9; letter-spacing: -0.05em; font-weight: 800">adopt <span style="color: #1F5FA8">the bish.</span></h2>
-<p style="margin: 0; font-size: 20px; line-height: 1.55; max-width: 580px; color: #2B1C15">foster him as a guest or adopt him for real. feed him, pet him, ask him for life advice. if you're lucky, he'll tolerate you.</p>
-<a href="play/" style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 56px; padding: 0 28px; background: #2B1C15; color: #BFE3FF; border: 3px solid #2B1C15; border-radius: 999px; font-weight: 800; font-size: 20px; text-decoration: none; box-shadow: 5px 5px 0 #1F5FA8">earn his tolerance →</a>
+<!-- the bish-verse: apps, laser fund, coming soon (tabs) -->
+<section id="play" style="scroll-margin-top: 80px; background: #BFE3FF; color: #2B1C15; border-top: 3px solid #2B1C15; padding: clamp(64px, 9vw, 112px) 24px">
+<div style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<p style="margin: 0; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; color: #1F5FA8">free, pointless, and for a good cause</p>
+<h2 style="margin: 0; font-size: clamp(44px, 7vw, 96px); line-height: 0.9; letter-spacing: -0.05em; font-weight: 800">the <span style="color: #1F5FA8">bish-verse.</span></h2>
 </div>
-<div style="flex: 1 1 300px; min-width: 0; display: flex; justify-content: center">
-<div style="width: 100%; max-width: 320px; background: #F3EADB; color: #2B1C15; border: 3px solid #2B1C15; border-radius: 40px; padding: 24px 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 14px; transform: rotate(2deg); box-shadow: 10px 10px 0 #1F5FA8">
-<div style="display: flex; width: 100%; justify-content: space-between; align-items: center; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-size: 13px; font-weight: 700"><span>watabish</span><span>tolerance 0/10</span></div>
-<p style="margin: 0; width: 100%; box-sizing: border-box; background: #FFFFFF; border: 2px solid #2B1C15; border-radius: 18px; padding: 10px 14px; text-align: center; font-weight: 700; font-size: 18px">oh. it's you.</p>
-<svg width="170" height="153" viewBox="0 0 200 180" role="img" aria-label="doodle of an unimpressed Watabish">
+<div class="bv">
+<input class="bv-r" type="radio" name="bv" id="bv-apps" checked="checked">
+<input class="bv-r" type="radio" name="bv" id="bv-lore">
+<input class="bv-r" type="radio" name="bv" id="bv-fund">
+<input class="bv-r" type="radio" name="bv" id="bv-soon">
+<div class="bv-tabs" role="presentation">
+<label for="bv-apps" class="bv-tab"><span class="bv-t">the apps</span><span class="bv-s">free game + cat map</span></label>
+<label for="bv-lore" class="bv-tab"><span class="bv-t">the lore</span><span class="bv-s">how we got here</span></label>
+<label for="bv-fund" class="bv-tab"><span class="bv-t">laser fund™</span><span class="bv-s">$0 of $3,920</span></label>
+<label for="bv-soon" class="bv-tab"><span class="bv-t">coming soon</span><span class="bv-s">cat furniture</span></label>
+</div>
+
+<div class="bv-p bv-apps" style="flex-direction: column; gap: 20px">
+<div style="display: flex; flex-wrap: wrap; gap: 24px">
+<article style="flex: 1 1 300px; min-width: 0; background: #F3EADB; border: 3px solid #2B1C15; border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 6px 6px 0 #2B1C15">
+<div aria-hidden="true" style="height: 170px; background: #FFFFFF; border-bottom: 3px solid #2B1C15; display: flex; align-items: center; justify-content: center"><svg width="120" height="108" viewBox="0 0 200 180" role="img" aria-label="doodle of an unimpressed Watabish">
 <path d="M30 82 L38 16 L80 52 Q100 46 120 52 L162 16 L170 82 Q178 152 100 162 Q22 152 30 82 Z" fill="#FFFFFF" stroke="#2B1C15" stroke-width="5" stroke-linejoin="round"></path>
 <path d="M45 34 L49 64 L72 54 Z" fill="#7A5644"></path>
 <path d="M155 34 L151 64 L128 54 Z" fill="#7A5644"></path>
@@ -198,92 +227,94 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <path d="M93 114 L107 114 L100 122 Z" fill="#E59A9A" stroke="#2B1C15" stroke-width="3" stroke-linejoin="round"></path>
 <path d="M100 122 Q94 132 87 127 M100 122 Q106 132 113 127" stroke="#2B1C15" stroke-width="3.5" fill="none" stroke-linecap="round"></path>
 <path d="M60 118 L14 110 M60 128 L16 136 M140 118 L186 110 M140 128 L184 136" stroke="#2B1C15" stroke-width="3" stroke-linecap="round"></path>
-</svg>
-<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: 100%; font-size: 13px; font-weight: 700; text-align: center">
-<span style="border: 2px solid #2B1C15; border-radius: 12px; padding: 8px 0">kibble</span>
-<span style="border: 2px solid #2B1C15; border-radius: 12px; padding: 8px 0">pet</span>
-<span style="border: 2px solid #2B1C15; border-radius: 12px; padding: 8px 0">brush</span>
-<span style="border: 2px solid #2B1C15; border-radius: 12px; padding: 8px 0">nap</span>
+</svg></div>
+<div style="padding: 24px; display: flex; flex-direction: column; gap: 12px; flex: 1">
+<h3 style="margin: 0; font-size: 34px; line-height: 0.95; letter-spacing: -0.04em; font-weight: 800">adopt <span style="color: #1F5FA8">the bish.</span></h3>
+<p style="margin: 0; font-size: 18px; line-height: 1.5">feed him, pet him, ask him for life advice. if you're lucky, he'll tolerate you.</p>
+<a href="play/" style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 52px; padding: 0 24px; border: 3px solid #2B1C15; border-radius: 999px; font-weight: 800; font-size: 18px; text-decoration: none; box-shadow: 4px 4px 0 #2B1C15; margin-top: auto; background: #2B1C15; color: #BFE3FF">earn his tolerance →</a>
 </div>
+</article>
+<article style="flex: 1 1 300px; min-width: 0; background: #F3EADB; border: 3px solid #2B1C15; border-radius: 28px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 6px 6px 0 #2B1C15">
+<div aria-hidden="true" style="height: 170px; position: relative; background: #DCE8D2; border-bottom: 3px solid #2B1C15">
+<span style="position: absolute; left: 0; top: 34%; width: 100%; height: 12px; background: #FFFFFF"></span>
+<span style="position: absolute; left: 0; top: 74%; width: 100%; height: 9px; background: #FFFFFF"></span>
+<span style="position: absolute; left: 30%; top: 0; width: 12px; height: 100%; background: #FFFFFF"></span>
+<span style="position: absolute; left: 74%; top: 0; width: 9px; height: 100%; background: #FFFFFF"></span>
+<span style="position: absolute; left: 52%; top: 50%; width: 74px; height: 74px; transform: translate(-50%, -50%); border-radius: 50%; border: 3px dashed #1F5FA8; background: rgba(31,95,168,0.12); box-sizing: border-box"></span>
+<span style="position: absolute; left: 18%; top: 20%; width: 24px; height: 24px; transform: translate(-50%, -50%); border-radius: 50%; background: #BFE3FF; border: 3px solid #2B1C15; box-sizing: border-box"></span>
+<span style="position: absolute; left: 52%; top: 50%; width: 24px; height: 24px; transform: translate(-50%, -50%); border-radius: 50%; background: #1F5FA8; border: 3px solid #2B1C15; box-sizing: border-box"></span>
+<span style="position: absolute; left: 86%; top: 22%; width: 24px; height: 24px; transform: translate(-50%, -50%); border-radius: 50%; background: #BFE3FF; border: 3px solid #2B1C15; box-sizing: border-box"></span>
+<span style="position: absolute; left: 40%; top: 86%; width: 24px; height: 24px; transform: translate(-50%, -50%); border-radius: 50%; background: #2B1C15; border: 3px solid #2B1C15; box-sizing: border-box"></span>
 </div>
+<div style="padding: 24px; display: flex; flex-direction: column; gap: 12px; flex: 1">
+<h3 style="margin: 0; font-size: 34px; line-height: 0.95; letter-spacing: -0.04em; font-weight: 800">the <span style="color: #1F5FA8">cat map.</span></h3>
+<p style="margin: 0; font-size: 18px; line-height: 1.5">pin the neighbourhood cats you meet, flag the ones who need help, and help the lost ones get home.</p>
+<a href="map/" style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 52px; padding: 0 24px; border: 3px solid #2B1C15; border-radius: 999px; font-weight: 800; font-size: 18px; text-decoration: none; box-shadow: 4px 4px 0 #2B1C15; margin-top: auto; background: #1F5FA8; color: #FFFFFF">open the cat map →</a>
 </div>
-<div style="flex: 1 1 100%; min-width: 0; display: flex; flex-wrap: wrap; align-items: stretch; background: #F3EADB; border: 3px solid #2B1C15; border-radius: 32px; overflow: hidden; box-shadow: 8px 8px 0 #2B1C15">
-<div aria-hidden="true" style="flex: 1 1 300px; min-height: 240px; position: relative; background: #DCE8D2; border-right: 3px solid #2B1C15">
-<span style="position: absolute; left: 0; top: 34%; width: 100%; height: 14px; background: #FFFFFF"></span>
-<span style="position: absolute; left: 0; top: 72%; width: 100%; height: 10px; background: #FFFFFF"></span>
-<span style="position: absolute; left: 30%; top: 0; width: 14px; height: 100%; background: #FFFFFF"></span>
-<span style="position: absolute; left: 74%; top: 0; width: 10px; height: 100%; background: #FFFFFF"></span>
-<span style="position: absolute; left: 52%; top: 46%; width: 90px; height: 90px; transform: translate(-50%, -50%); border-radius: 50%; border: 3px dashed #1F5FA8; background: rgba(31,95,168,0.12); box-sizing: border-box"></span>
-<span style="position: absolute; left: 18%; top: 20%; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%; background: #BFE3FF; border: 3px solid #2B1C15; box-sizing: border-box"></span>
-<span style="position: absolute; left: 52%; top: 46%; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%; background: #1F5FA8; border: 3px solid #2B1C15; box-sizing: border-box"></span>
-<span style="position: absolute; left: 84%; top: 24%; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%; background: #BFE3FF; border: 3px solid #2B1C15; box-sizing: border-box"></span>
-<span style="position: absolute; left: 40%; top: 84%; width: 30px; height: 30px; transform: translate(-50%, -50%); border-radius: 50%; background: #2B1C15; border: 3px solid #2B1C15; box-sizing: border-box"></span>
+</article>
 </div>
-<div style="flex: 999 1 380px; min-width: 0; padding: clamp(24px, 4vw, 40px); display: flex; flex-direction: column; gap: 14px; justify-content: center">
-<p style="margin: 0; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; color: #1F5FA8">new: the cat map</p>
-<h3 style="margin: 0; font-size: clamp(34px, 4.5vw, 56px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800">every street has <span style="color: #1F5FA8">a bish.</span></h3>
-<p style="margin: 0; font-size: 19px; line-height: 1.5; max-width: 560px">pin the neighbourhood cats you meet, flag the ones who need help, and help the lost ones get home. cats who need help only show a rough area, to keep them safe.</p>
-<a href="map/" style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 56px; padding: 0 28px; background: #1F5FA8; color: #FFFFFF; border: 3px solid #2B1C15; border-radius: 999px; font-weight: 800; font-size: 20px; text-decoration: none; box-shadow: 5px 5px 0 #2B1C15">open the cat map →</a>
+<p style="margin: 0; font-size: 17px; font-weight: 700">one adoption, both apps. sign in once and he follows you everywhere.</p>
 </div>
-</div>
-<p style="flex: 1 1 100%; margin: 0; font-size: 18px; font-weight: 700; text-align: center">one adoption, both worlds. sign in once and he follows you to the game and the map.</p>
-</div>
-</section>
 
-<!-- lore -->
-<section id="lore" style="max-width: 1240px; margin: 0 auto; padding: clamp(64px, 9vw, 112px) 24px; display: flex; flex-direction: column; gap: 40px">
-<div style="display: flex; flex-direction: column; gap: 12px">
-<p style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; color: #1F5FA8">storytime (do not scroll)</p>
-<h2 style="margin: 0; font-size: clamp(40px, 6vw, 80px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800">the lore, in four acts</h2>
-</div>
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px">
-<article style="background: #FFFFFF; border: 3px solid #2B1C15; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 12px; box-shadow: 6px 6px 0 #2B1C15">
+<div class="bv-p bv-lore" style="flex-direction: column; gap: 16px">
+<h3 style="margin: 0; font-size: clamp(32px, 4.5vw, 56px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800">the lore, <span style="color: #1F5FA8">in four acts.</span></h3>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px">
+<article style="background: #FFFFFF; border: 3px solid #2B1C15; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: 4px 4px 0 #2B1C15">
 <span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-weight: 700; font-size: 14px; color: #1F5FA8">act i</span>
-<h3 style="margin: 0; font-size: 28px; line-height: 1.05; letter-spacing: -0.02em">the layoff</h3>
+<h3 style="margin: 0; font-size: 24px; line-height: 1.05; letter-spacing: -0.02em">the layoff</h3>
 <p style="margin: 0; font-size: 17px; line-height: 1.5">got the 15-minute calendar invite. you know the one. walked out with a box and a dream.</p>
 </article>
-<article style="background: #FFFFFF; border: 3px solid #2B1C15; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 12px; box-shadow: 6px 6px 0 #2B1C15">
+<article style="background: #FFFFFF; border: 3px solid #2B1C15; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: 4px 4px 0 #2B1C15">
 <span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-weight: 700; font-size: 14px; color: #1F5FA8">act ii</span>
-<h3 style="margin: 0; font-size: 28px; line-height: 1.05; letter-spacing: -0.02em">the vision</h3>
+<h3 style="margin: 0; font-size: 24px; line-height: 1.05; letter-spacing: -0.02em">the vision</h3>
 <p style="margin: 0; font-size: 17px; line-height: 1.5">bespoke cat products. inspired by the bish. the market is cats and the cats are ready.</p>
 </article>
-<article style="background: #FFFFFF; border: 3px solid #2B1C15; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 12px; box-shadow: 6px 6px 0 #2B1C15">
+<article style="background: #FFFFFF; border: 3px solid #2B1C15; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: 4px 4px 0 #2B1C15">
 <span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-weight: 700; font-size: 14px; color: #1F5FA8">act iii</span>
-<h3 style="margin: 0; font-size: 28px; line-height: 1.05; letter-spacing: -0.02em">the plot twist</h3>
+<h3 style="margin: 0; font-size: 24px; line-height: 1.05; letter-spacing: -0.02em">the plot twist</h3>
 <p style="margin: 0; font-size: 17px; line-height: 1.5">bespoke requires a laser cutter. a laser cutter requires money. i have, as established, zero.</p>
 </article>
-<article style="background: #1F5FA8; color: #FFFFFF; border: 3px solid #2B1C15; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 12px; box-shadow: 6px 6px 0 #2B1C15">
+<article style="background: #1F5FA8; color: #FFFFFF; border: 3px solid #2B1C15; border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: 4px 4px 0 #2B1C15">
 <span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-weight: 700; font-size: 14px">act iv (you are here)</span>
-<h3 style="margin: 0; font-size: 28px; line-height: 1.05; letter-spacing: -0.02em">the comeback</h3>
+<h3 style="margin: 0; font-size: 24px; line-height: 1.05; letter-spacing: -0.02em">the comeback</h3>
 <p style="margin: 0; font-size: 17px; line-height: 1.5">i hand-paint your pet's headshot for $29. you get art. i get a laser. everyone heals.</p>
 </article>
 </div>
-</section>
+</div>
 
-<!-- laser fund -->
-<section style="background: #2B1C15; color: #F3EADB; padding: clamp(64px, 9vw, 112px) 24px">
-<div style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px">
-<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
-<h2 style="margin: 0; font-size: clamp(40px, 6vw, 80px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800">the laser fund<span style="color: #BFE3FF">™</span></h2>
-<p style="margin: 0; font-size: 26px; color: #BFE3FF">every $29 = one step closer to $3,920</p>
+<div class="bv-p bv-fund" style="flex-direction: column; gap: 24px; background: #2B1C15; color: #F3EADB; border: 3px solid #2B1C15; border-radius: 28px; padding: clamp(24px, 4vw, 44px); box-shadow: 6px 6px 0 #1F5FA8">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px">
+<h3 style="margin: 0; font-size: clamp(32px, 4.5vw, 56px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800">the laser fund<span style="color: #BFE3FF">™</span></h3>
+<p style="margin: 0; font-size: 22px; color: #BFE3FF">every $29 = one step closer to $3,920</p>
 </div>
-<div style="border: 3px solid #F3EADB; border-radius: 999px; height: 44px; padding: 5px; box-sizing: border-box">
-<div style="height: 100%; width: 4%; min-width: 34px; background: #BFE3FF; border-radius: 999px"></div>
+<div style="border: 3px solid #F3EADB; border-radius: 999px; height: 40px; padding: 5px; box-sizing: border-box">
+<div style="height: 100%; width: 4%; min-width: 30px; background: #BFE3FF; border-radius: 999px"></div>
 </div>
-<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-size: 16px">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-weight: 700; letter-spacing: 0.04em; font-size: 16px">
 <span>raised: $0</span>
 <span>headshots painted: 0</span>
 <span>goal: $3,920</span>
 </div>
-<p style="margin: 0; font-size: 20px; line-height: 1.5; max-width: 760px; color: #E9DCC8">the laser cutter is how the actual watabish products happen. bespoke cat stuff, made by me, cut by a beam of light. we are SO close (we are not close).</p>
+<p style="margin: 0; font-size: 19px; line-height: 1.5; max-width: 760px; color: #E9DCC8">the laser cutter is how the actual watabish products happen. bespoke cat stuff, made by me, cut by a beam of light. we are SO close (we are not close).</p>
 </div>
-</section>
 
-<!-- coming soon -->
-<section style="max-width: 1240px; margin: 0 auto; padding: clamp(64px, 9vw, 112px) 24px; display: flex; flex-direction: column; gap: 24px; align-items: center; text-align: center">
-<p style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; color: #1F5FA8">post-laser era (manifesting)</p>
-<h2 style="margin: 0; font-size: clamp(40px, 7vw, 96px); line-height: 0.92; letter-spacing: -0.05em; font-weight: 800; max-width: 1000px">bespoke cat products <span style="color: #1F5FA8">for cats who are, frankly, a lot</span></h2>
-<p style="margin: 0; font-size: 20px; line-height: 1.5; max-width: 640px">cat furniture, cat playgrounds, and whatever else the bish demands next. designed by me, approved (begrudgingly) by him.</p>
+<div class="bv-p bv-soon" style="flex-direction: column; gap: 16px; background: #F3EADB; border: 3px solid #2B1C15; border-radius: 28px; padding: clamp(24px, 4vw, 44px); box-shadow: 6px 6px 0 #2B1C15">
+<p style="margin: 0; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; color: #1F5FA8">post-laser era (manifesting)</p>
+<h3 style="margin: 0; font-size: clamp(32px, 4.5vw, 60px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; max-width: 900px">bespoke cat furniture <span style="color: #1F5FA8">for cats who are, frankly, a lot</span></h3>
+<p style="margin: 0; font-size: 19px; line-height: 1.5; max-width: 640px">cat furniture, cat playgrounds, and whatever else the bish demands next. designed by me, approved (begrudgingly) by him.</p>
+<form id="waitlist" class="wl" style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px; max-width: 560px">
+<label for="wl-email" style="font-weight: 800; font-size: 18px">be first to know when it drops</label>
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+<input id="wl-email" name="email" type="email" required="required" autocomplete="email" placeholder="you@email.com" style="flex: 1 1 220px; min-width: 0; min-height: 52px; border: 3px solid #2B1C15; border-radius: 999px; padding: 0 20px; font: inherit; font-size: 17px; background: #FFFFFF; color: #2B1C15; box-sizing: border-box">
+<button type="submit" style="min-height: 52px; padding: 0 24px; border: 3px solid #2B1C15; border-radius: 999px; background: #1F5FA8; color: #FFFFFF; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; box-shadow: 4px 4px 0 #2B1C15">notify me</button>
+</div>
+<div aria-hidden="true" style="position: absolute; left: -9999px"><label for="wl-website">leave this empty</label><input id="wl-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+<p style="margin: 0; font-size: 14px; color: #5A463A">we'll only email you about watabish launches. unsubscribe anytime. <a href="privacy.html">privacy</a></p>
+<p id="wl-msg" aria-live="polite" style="margin: 0; font-size: 16px; font-weight: 700"></p>
+</form>
+</div>
+</div>
+</div>
 </section>
 
 <!-- faq -->
@@ -296,7 +327,7 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <details style="background: #F3EADB; border: 3px solid #2B1C15; border-radius: 20px; padding: 20px 24px"><summary style="font-size: 22px; font-weight: 700; cursor: pointer; min-height: 32px">can i get my dog painted?</summary><p style="margin: 12px 0 0; font-size: 18px; line-height: 1.5">yes. the bish will be personally offended. that's between him and god.</p></details>
 <details style="background: #F3EADB; border: 3px solid #2B1C15; border-radius: 20px; padding: 20px 24px"><summary style="font-size: 22px; font-weight: 700; cursor: pointer; min-height: 32px">what's "bish" short for?</summary><p style="margin: 12px 0 0; font-size: 18px; line-height: 1.5">it's a term of endearment. he earned it. we keep it kid-friendly here.</p></details>
 <details style="background: #F3EADB; border: 3px solid #2B1C15; border-radius: 20px; padding: 20px 24px"><summary style="font-size: 22px; font-weight: 700; cursor: pointer; min-height: 32px">how long does it take?</summary><p style="margin: 12px 0 0; font-size: 18px; line-height: 1.5">about a week. i paint between serving the bish: 4am breakfast, surprise lap duty, and emotional support whenever a leaf moves.</p></details>
-<details style="background: #F3EADB; border: 3px solid #2B1C15; border-radius: 20px; padding: 20px 24px"><summary style="font-size: 22px; font-weight: 700; cursor: pointer; min-height: 32px">do you ship?</summary><p style="margin: 12px 0 0; font-size: 18px; line-height: 1.5">nope. we meet under a tree and i hand it over in person. exact tree details after you book. your portrait deserves a ceremony, not a cardboard tube.</p></details>
+<details style="background: #F3EADB; border: 3px solid #2B1C15; border-radius: 20px; padding: 20px 24px"><summary style="font-size: 22px; font-weight: 700; cursor: pointer; min-height: 32px">do you ship?</summary><p style="margin: 12px 0 0; font-size: 18px; line-height: 1.5">yes, anywhere in canada for $27, tracked. pick a shipped booking and add your address. it's packed in parchment, cardboard and bubble wrap, and you get the tracking number when it ships. in the soo? we still meet under a tree, free.</p></details>
 <details style="background: #F3EADB; border: 3px solid #2B1C15; border-radius: 20px; padding: 20px 24px"><summary style="font-size: 22px; font-weight: 700; cursor: pointer; min-height: 32px">i booked but my payment didn't go through?</summary><p style="margin: 12px 0 0; font-size: 18px; line-height: 1.5">no stress. your slot is only confirmed once payment goes through, and you'll get a confirmation email when it does. no email? we'll text or email you within a day to sort it out, or message @watabish_. unpaid bookings are released after 48 hours so someone else can grab the slot.</p></details>
 </div>
 </div>
@@ -307,7 +338,7 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <div style="max-width: 1240px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start">
 <div style="flex: 1 1 360px; min-width: 0; color: #FFFFFF; display: flex; flex-direction: column; gap: 16px">
 <h2 style="margin: 0; font-size: clamp(48px, 8vw, 112px); line-height: 0.88; letter-spacing: -0.05em; font-weight: 800">do it.<br><span style="font-weight: 400">for the bish.</span></h2>
-<p style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-size: 15px; line-height: 1.6; max-width: 440px">· pick-up days start a week out<br>· limited pick-up slots every week<br>· pay at checkout (card and more)<br>· hand-off under a tree</p>
+<p style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-size: 15px; line-height: 1.6; max-width: 440px">· pick-up days start a week out<br>· limited pick-up slots every week<br>· pay at checkout (card and more)<br>· hand-off under a tree, or shipped across canada (+$27)</p>
 </div>
 <div style="flex: 999 1 480px; min-width: 0; background: #F3EADB; border: 3px solid #2B1C15; border-radius: 28px; padding: 32px; box-shadow: 10px 10px 0 #2B1C15; display: flex; flex-direction: column; gap: 22px; box-sizing: border-box">
 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
@@ -327,6 +358,7 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <a href="https://cal.com/watabish-pet-portrait/standard" style="flex: 1 1 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 64px; border: 3px solid #2B1C15; border-radius: 22px; background: #FFFFFF; color: #2B1C15; font-weight: 800; font-size: 20px; text-decoration: none; text-align: center; padding: 10px 20px">classic headshot<span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-weight: 400; font-size: 13px">$29</span></a>
 <a href="https://cal.com/watabish-pet-portrait/bish-signed" style="flex: 1 1 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 64px; border: 3px solid #2B1C15; border-radius: 22px; background: #2B1C15; color: #BFE3FF; font-weight: 800; font-size: 20px; text-decoration: none; text-align: center; padding: 10px 20px">bish-signed edition<span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: 0.04em; font-weight: 400; font-size: 13px">$55 · paw print included</span></a>
 </div>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #2B1C15"><b>shipping instead?</b> anywhere in canada, +$27: <a href="https://cal.com/watabish-pet-portrait/standard-shipped" style="color: #1F5FA8; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px">classic — $56</a> · <a href="https://cal.com/watabish-pet-portrait/bish-signed-shipped" style="color: #1F5FA8; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px">bish-signed — $82</a></p>
 </div>
 </div>
 </section>
@@ -349,5 +381,6 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 </footer>
 
 </div>
+<script src="waitlist.js" defer></script>
 </body>
 </html>
