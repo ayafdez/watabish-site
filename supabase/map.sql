@@ -98,6 +98,9 @@ create table if not exists public.map_reports (
   unique (target_type, target_id, user_id)
 );
 
+-- "photo by": credit for a photo shared with someone's permission
+alter table public.map_sightings add column if not exists photo_credit text check (char_length(photo_credit) <= 60);
+
 -- added after the first version: species (dogs only as lost) and "back home"
 alter table public.map_cats add column if not exists species text not null default 'cat';
 alter table public.map_cats add column if not exists home_at timestamptz;
@@ -263,7 +266,7 @@ returns jsonb language sql stable security definer set search_path = '' as $$
       'can_edit', (auth.uid() is not null and auth.uid() in (c.created_by, c.caretaker_id))),
     'sightings', coalesce((
       select jsonb_agg(jsonb_build_object('id', s.id, 'photo', s.photo_path, 'note', s.note,
-               'name', s.display_name, 'at', s.created_at) order by s.created_at desc)
+               'name', s.display_name, 'at', s.created_at, 'credit', s.photo_credit) order by s.created_at desc)
       from (select * from public.map_sightings
             where cat_id = c.id and not hidden order by created_at desc limit 60) s), '[]'::jsonb),
     'comments', coalesce((
@@ -292,10 +295,11 @@ drop function if exists public.map_post(uuid, uuid, text, text, text[], text, te
 drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text);
 drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, boolean);
 drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[]);
+drop function if exists public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[], jsonb);
 create or replace function public.map_post(
   p_cat uuid, p_new_id uuid, p_name text, p_status text, p_needs text[], p_description text,
   p_photo text, p_note text, p_lat double precision, p_lng double precision, p_display text,
-  p_species text default 'cat', p_calls text[] default '{}', p_place jsonb default null)
+  p_species text default 'cat', p_calls text[] default '{}', p_place jsonb default null, p_credit text default null)
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare v_cat uuid; v_status text; v_species text := coalesce(p_species, 'cat');
 begin
@@ -366,9 +370,10 @@ begin
     returning id into v_cat;
   end if;
 
-  insert into public.map_sightings (cat_id, user_id, photo_path, note, lat, lng, display_name)
+  insert into public.map_sightings (cat_id, user_id, photo_path, note, lat, lng, display_name, photo_credit)
   values (v_cat, auth.uid(), p_photo, left(coalesce(p_note, ''), 500), p_lat, p_lng,
-          nullif(left(btrim(coalesce(p_display, '')), 40), ''));
+          nullif(left(btrim(coalesce(p_display, '')), 40), ''),
+          case when p_photo is not null then nullif(left(btrim(coalesce(p_credit, '')), 60), '') end);
 
   update public.map_cats
      set sighting_count = sighting_count + 1, last_seen_at = now(),
@@ -568,7 +573,7 @@ revoke execute on function public.map_calls_forget() from public, anon, authenti
 grant execute on function public.map_cats_in(double precision, double precision, double precision, double precision) to anon, authenticated;
 grant execute on function public.map_cat_detail(uuid) to anon, authenticated;
 
-revoke execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[], jsonb) from public, anon;
+revoke execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[], jsonb, text) from public, anon;
 revoke execute on function public.map_mark_call(uuid, text, boolean, text) from public, anon;
 revoke execute on function public.map_mark_home(uuid, boolean) from public, anon;
 revoke execute on function public.map_comment(uuid, text, text) from public, anon;
@@ -578,7 +583,7 @@ revoke execute on function public.map_update_cat(uuid, text, text, text, text[],
 revoke execute on function public.map_claim(uuid, text) from public, anon;
 revoke execute on function public.map_release(uuid) from public, anon;
 revoke execute on function public.map_report(text, uuid, text) from public, anon;
-grant execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[], jsonb) to authenticated;
+grant execute on function public.map_post(uuid, uuid, text, text, text[], text, text, text, double precision, double precision, text, text, text[], jsonb, text) to authenticated;
 grant execute on function public.map_mark_call(uuid, text, boolean, text) to authenticated;
 grant execute on function public.map_mark_home(uuid, boolean) to authenticated;
 grant execute on function public.map_comment(uuid, text, text) to authenticated;

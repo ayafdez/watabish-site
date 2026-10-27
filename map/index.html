@@ -167,6 +167,10 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
 .section { display: grid; gap: 10px; }
 .section h3 { margin: 0; font-size: 18px; font-weight: 800; }
 .gallery { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -18px; padding: 0 18px; }
+.gallery figure { position: relative; margin: 0; flex: none; scroll-snap-align: start; max-width: 86%; }
+.gallery figure img { max-width: 100%; }
+.gallery figcaption, .credit { position: absolute; left: 8px; bottom: 8px; background: rgb(43 28 21 / .78); color: #fff; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; }
+.credit { position: static; display: inline-block; margin-top: 4px; }
 .gallery img { height: 220px; max-width: 86%; border-radius: 16px; border: 2px solid var(--edge); object-fit: cover; scroll-snap-align: start; flex: none; background: var(--line); }
 .nophoto { height: 160px; border-radius: 16px; border: 2px dashed var(--line); display: grid; place-items: center; color: var(--muted); }
 .catname { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -328,6 +332,10 @@ dialog::backdrop { background: rgb(43 28 21 / .55); }
       </span>
       <input type="file" id="photoInput" accept="image/*" aria-label="Photo of the animal">
     </label>
+
+    <label class="field" id="photoByRow" hidden><span>photo by <span class="muted" style="font-weight:400">(only if it isn't your photo)</span></span>
+      <input class="input" id="photoBy" maxlength="60" placeholder="e.g. Jenna R.">
+      <span class="note">Only share someone else's photo with their permission. Their name shows on the photo.</span></label>
 
     <div class="section">
       <div class="row" style="justify-content: space-between"><span class="label">where</span><button class="linkbtn" type="button" id="postLocate">use my location</button></div>
@@ -1021,8 +1029,9 @@ function renderCat(editing) {
   let h = "";
   h += photos.length
     ? '<div class="gallery">' + photos.map((s, i) => {
-        const img = '<img src="' + esc(photoUrl(s.photo)) + '" alt="' + esc(cat.name) + " photo " + (i + 1) + '" loading="lazy">';
-        return gone ? '<span class="veil">' + img + '<button class="btn small ghost" type="button" data-unveil>show photo (may be upsetting)</button></span>' : img;
+        const img = '<img src="' + esc(photoUrl(s.photo)) + '" alt="' + esc(cat.name) + " photo " + (i + 1) + (s.credit ? ", by " + esc(s.credit) : "") + '" loading="lazy">';
+        const pic = gone ? '<span class="veil">' + img + '<button class="btn small ghost" type="button" data-unveil>show photo (may be upsetting)</button></span>' : img;
+        return s.credit ? "<figure>" + pic + "<figcaption>photo: " + esc(s.credit) + "</figcaption></figure>" : pic;
       }).join("") + "</div>"
     : (gone ? "" : '<div class="nophoto">no photo yet</div>');
 
@@ -1136,7 +1145,7 @@ function renderCat(editing) {
       return '<div class="ev"><div class="who"><b>' + esc(s.name || "a neighbour") + '</b><span class="muted">' + (gone ? "reported it" : hot ? "visited" : "saw it") + " · " + ago(s.at) + "</span>" +
         '<button class="linkbtn muted" type="button" data-report="sighting" data-id="' + esc(s.id) + '">report</button></div>' +
         (s.note ? "<p>" + esc(s.note) + "</p>" + (MONEY_RE.test(s.note) ? '<p class="scam">This note mentions money. Be careful: don\u2019t send money to people you don\u2019t know.</p>' : "") : "") + (s.photo ? (gone ? '<span class="veil" style="width:max-content"><img src="' + esc(photoUrl(s.photo)) + '" alt="report photo" loading="lazy"><button class="btn small ghost" type="button" data-unveil style="font-size:12px; min-height:32px; height:32px">show</button></span>'
-          : '<img src="' + esc(photoUrl(s.photo)) + '" alt="sighting photo" loading="lazy">') : "") + "</div>";
+          : '<img src="' + esc(photoUrl(s.photo)) + '" alt="sighting photo" loading="lazy">') + (s.credit ? '<br><span class="credit">photo: ' + esc(s.credit) + "</span>" : "") : "") + "</div>";
     }
     const c = e.c;
     return '<div class="ev"><div class="who"><b>' + esc(c.name || "anonymous") + "</b>" + (c.caretaker ? '<span class="tag">guardian</span>' : "") +
@@ -1275,6 +1284,7 @@ function openPost(matchCat, preset) {
   post = { blob: null, gps: null, loc: null, match: matchCat ? matchCat.id : null, matchCat: matchCat || null };
   $("postForm").reset();
   $("photoPreview").hidden = true; $("photoPh").hidden = false; $("photoPreview").removeAttribute("src");
+  $("photoByRow").hidden = true; $("photoBy").value = "";
   $("postMsg").textContent = ""; $("postMsg").classList.remove("err");
   if (matchCat) {
     $("postForm").querySelector('input[name="okq"][value="' + (matchCat.status === "spotted" || matchCat.status === "hotspot" ? "yes" : "no") + '"]').checked = true;
@@ -1358,6 +1368,7 @@ $("photoInput").addEventListener("change", async (e) => {
     try { gps = await exifr.gps(file); } catch {}
     const blob = await shrink(file);
     post.blob = blob;
+    $("photoByRow").hidden = false;
     $("photoPreview").src = URL.createObjectURL(blob); $("photoPreview").hidden = false; $("photoPh").hidden = true;
     syncStatus();
     $("postMsg").textContent = "";
@@ -1438,7 +1449,7 @@ function renderCallChoices(status, species) {
     '<span class="t"><b>' + esc(o.name) + "</b>" + (o.note || o.phone ? "<span>" + esc(o.note || "") + (o.note && o.phone ? " \u00b7 " : "") + esc(o.phone || "") + "</span>" : "") + "</span></label>").join("");
 }
 $("dropPhoto").onclick = () => {
-  post.blob = null; $("photoInput").value = "";
+  post.blob = null; $("photoInput").value = ""; $("photoByRow").hidden = true; $("photoBy").value = "";
   $("photoPreview").hidden = true; $("photoPreview").removeAttribute("src"); $("photoPh").hidden = false;
   syncStatus();
 };
@@ -1499,6 +1510,7 @@ $("postForm").addEventListener("submit", async (e) => {
     p_photo: photo, p_note: $("postNote").value, p_lat: post.loc.lat, p_lng: post.loc.lng, p_display: myName(), p_species: speciesNow(),
     p_calls: $("callsBox").hidden ? [] : [...$("callChoices").querySelectorAll("input:checked")].map((i) => i.value),
     p_place: isHot ? { name: $("placeName").value, hours: $("placeHours").value, rules: $("placeRules").value, ok: $("placeOk").checked } : null,
+    p_credit: photo ? $("photoBy").value.trim() || null : null,
   });
   if (error) {
     if (photo) sb.storage.from("cat-photos").remove([photo]).catch(() => {});
