@@ -263,7 +263,9 @@ returns jsonb language sql stable security definer set search_path = '' as $$
       'sighting_count', c.sighting_count, 'last_seen_at', c.last_seen_at,
       'created_at', c.created_at,
       'i_care', (c.caretaker_id is not null and c.caretaker_id = auth.uid()),
-      'can_edit', (auth.uid() is not null and auth.uid() in (c.created_by, c.caretaker_id))),
+      'can_edit', (auth.uid() is not null and auth.uid() in (c.created_by, c.caretaker_id)),
+      'exact', case when auth.uid() is not null and auth.uid() = c.created_by
+                    then jsonb_build_object('lat', c.lat, 'lng', c.lng) end),
     'sightings', coalesce((
       select jsonb_agg(jsonb_build_object('id', s.id, 'photo', s.photo_path, 'note', s.note,
                'name', s.display_name, 'at', s.created_at, 'credit', s.photo_credit) order by s.created_at desc)
@@ -438,8 +440,11 @@ begin
 end $$;
 
 drop function if exists public.map_update_cat(uuid, text, text, text, text[]);
+drop function if exists public.map_update_cat(uuid, text, text, text, text[], jsonb);
+-- p_lat/p_lng move the pin; only the person who posted the animal can do that
 create or replace function public.map_update_cat(p_cat uuid, p_name text, p_status text,
-                                                 p_description text, p_needs text[], p_place jsonb default null)
+                                                 p_description text, p_needs text[], p_place jsonb default null,
+                                                 p_lat double precision default null, p_lng double precision default null)
 returns void language plpgsql security definer set search_path = '' as $$
 declare r public.map_cats%rowtype;
 begin
@@ -449,6 +454,14 @@ begin
   end if;
   if p_status is not null and p_status not in ('lost', 'deceased', 'hotspot') and r.species = 'dog' then
     raise exception 'Dogs can be listed as maybe lost, found deceased or a hotspot.' using errcode = '22023';
+  end if;
+  if (p_lat is not null or p_lng is not null) then
+    if auth.uid() is distinct from r.created_by then
+      raise exception 'Only the person who posted this can move its pin.' using errcode = '42501';
+    end if;
+    if p_lat is null or p_lng is null or p_lat not between -90 and 90 or p_lng not between -180 and 180 then
+      raise exception 'That location doesn''t look right.' using errcode = '22023';
+    end if;
   end if;
   if coalesce(p_status, r.status) = 'hotspot' then
     if nullif(btrim(coalesce(p_place ->> 'name', r.place_name, '')), '') is null then
@@ -466,7 +479,9 @@ begin
          place_name = case when p_place ? 'name' then nullif(left(btrim(p_place ->> 'name'), 80), '') else place_name end,
          place_hours = case when p_place ? 'hours' then nullif(left(btrim(p_place ->> 'hours'), 120), '') else place_hours end,
          place_rules = case when p_place ? 'rules' then nullif(left(btrim(p_place ->> 'rules'), 300), '') else place_rules end,
-         place_ok_at = case when coalesce(p_status, status) = 'hotspot' then coalesce(place_ok_at, now()) else place_ok_at end
+         place_ok_at = case when coalesce(p_status, status) = 'hotspot' then coalesce(place_ok_at, now()) else place_ok_at end,
+         lat = coalesce(p_lat, lat),
+         lng = coalesce(p_lng, lng)
    where id = p_cat;
 end $$;
 
@@ -579,7 +594,7 @@ revoke execute on function public.map_mark_home(uuid, boolean) from public, anon
 revoke execute on function public.map_comment(uuid, text, text) from public, anon;
 revoke execute on function public.map_delete_comment(uuid) from public, anon;
 revoke execute on function public.map_help_toggle(uuid, text, text) from public, anon;
-revoke execute on function public.map_update_cat(uuid, text, text, text, text[], jsonb) from public, anon;
+revoke execute on function public.map_update_cat(uuid, text, text, text, text[], jsonb, double precision, double precision) from public, anon;
 revoke execute on function public.map_claim(uuid, text) from public, anon;
 revoke execute on function public.map_release(uuid) from public, anon;
 revoke execute on function public.map_report(text, uuid, text) from public, anon;
@@ -589,7 +604,7 @@ grant execute on function public.map_mark_home(uuid, boolean) to authenticated;
 grant execute on function public.map_comment(uuid, text, text) to authenticated;
 grant execute on function public.map_delete_comment(uuid) to authenticated;
 grant execute on function public.map_help_toggle(uuid, text, text) to authenticated;
-grant execute on function public.map_update_cat(uuid, text, text, text, text[], jsonb) to authenticated;
+grant execute on function public.map_update_cat(uuid, text, text, text, text[], jsonb, double precision, double precision) to authenticated;
 grant execute on function public.map_claim(uuid, text) to authenticated;
 grant execute on function public.map_release(uuid) to authenticated;
 grant execute on function public.map_report(text, uuid, text) to authenticated;
