@@ -1017,7 +1017,9 @@ function journal(cat, sightings) {
     '<span class="note">Last seen ' + ago(cat.last_seen_at) + ". " + (n >= 5 ? "A true local regular." : "Seen it too? Add your sighting.") + "</span></div>";
 }
 
+let edMap = null;
 function renderCat(editing) {
+  if (edMap) { edMap.remove(); edMap = null; }
   const { cat, sightings, comments, offers } = current;
   const photos = sightings.filter((s) => s.photo);
   const gone = cat.status === "deceased", hot = cat.status === "hotspot";
@@ -1046,6 +1048,14 @@ function renderCat(editing) {
         '<label class="field"><span>when can people visit?</span><input class="input" id="edPlaceHours" maxlength="120" value="' + esc(cat.place_hours || "") + '"></label>' +
         '<label class="field"><span>house rules</span><textarea class="input" id="edPlaceRules" maxlength="300">' + esc(cat.place_rules || "") + "</textarea></label>" +
         (cat.place_ok ? "" : '<label class="check"><input type="checkbox" id="edPlaceOk"> This is a business or public place, and the owner is okay with it being listed.</label>') +
+      "</div>" +
+      '<div class="section" id="edWhere"' + (cat.exact ? "" : " hidden") + '>' +
+        '<span class="label">where</span>' +
+        '<div class="minimap" id="edMap"></div>' +
+        '<div class="row" style="flex-wrap: nowrap"><label class="sr" for="edAddr">Type an address or intersection</label>' +
+        '<input class="input" id="edAddr" autocomplete="off" placeholder="or type an address or intersection" style="min-height: 44px">' +
+        '<button class="btn small ghost" type="button" id="edAddrGo">find</button></div>' +
+        '<p class="note" id="edWhereNote" style="margin:0">drag the pin to move it. ' + (cat.status === "hotspot" ? "hotspots show the exact spot." : "the exact spot stays private.") + "</p>" +
       "</div>" +
       '<p class="msg" id="edMsg" role="status"></p><div class="row"><button class="btn small" type="submit">save</button><button class="btn small ghost" type="button" id="edCancel">cancel</button></div></form>';
   } else {
@@ -1169,13 +1179,36 @@ function wireCat() {
   const ef = $("editForm");
   if (ef) {
     $("edCancel").onclick = () => renderCat();
+    // "move the pin": only the person who posted it gets the exact spot, so only they see this
+    let moved = null;
+    if (cat.exact) {
+      if (edMap) { edMap.remove(); edMap = null; }
+      setTimeout(() => {
+        edMap = L.map("edMap", { zoomControl: true });
+        L.tileLayer(TILES, { maxZoom: 19, attribution: TILES_ATTR }).addTo(edMap);
+        const pin = L.marker([cat.exact.lat, cat.exact.lng], { draggable: true, keyboard: true, title: "Where it is", alt: "Where it is",
+          icon: L.divIcon({ className: "", html: '<div class="pin pick">' + (cat.species === "dog" ? DOG_SVG : CAT_SVG) + "</div>", iconSize: [44, 44], iconAnchor: [22, 22] }) }).addTo(edMap);
+        edMap.setView([cat.exact.lat, cat.exact.lng], 17);
+        const place = (ll, why) => { moved = { lat: ll.lat, lng: ll.lng }; pin.setLatLng(ll); $("edWhereNote").textContent = why + " tap save to keep it."; };
+        pin.on("dragend", () => place(pin.getLatLng(), "pin moved."));
+        edMap.on("click", (e) => place(e.latlng, "pin moved."));
+        const find = async () => {
+          const q = $("edAddr").value.trim(); if (!q) return;
+          try { const hit = await geocode(q, cat.exact); if (hit) { place(hit, "found it. drag the pin if it's a little off,"); edMap.setView(hit, 17); } else toast("Couldn't find that. Try a nearby intersection."); }
+          catch { toast("Address search isn't working right now. Drag the pin instead."); }
+        };
+        $("edAddrGo").onclick = find;
+        $("edAddr").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); find(); } });
+      }, 30);
+    }
     ef.querySelectorAll('input[name="edStatus"]').forEach((r) => r.addEventListener("change", () => { $("edPlace").hidden = r.value !== "hotspot" || !r.checked; }));
     ef.onsubmit = async (e) => {
       e.preventDefault();
       const st = ef.querySelector('input[name="edStatus"]:checked').value;
       const needs = cat.species === "dog" ? [] : [...$("edNeeds").querySelectorAll("input:checked")].map((i) => i.value);
       const place = st === "hotspot" ? { name: $("edPlaceName").value, hours: $("edPlaceHours").value, rules: $("edPlaceRules").value, ok: cat.place_ok || ($("edPlaceOk") && $("edPlaceOk").checked) } : null;
-      const { error } = await sb.rpc("map_update_cat", { p_cat: cat.id, p_name: $("edName").value, p_status: st, p_description: $("edDesc").value, p_needs: needs, p_place: place });
+      const { error } = await sb.rpc("map_update_cat", { p_cat: cat.id, p_name: $("edName").value, p_status: st, p_description: $("edDesc").value, p_needs: needs, p_place: place,
+        p_lat: moved ? moved.lat : null, p_lng: moved ? moved.lng : null });
       if (error) { $("edMsg").textContent = errText(error, "Couldn't save. Try again."); $("edMsg").classList.add("err"); return; }
       toast("Saved."); await openCat(cat.id, true); loadCats();
     };
