@@ -645,6 +645,12 @@ footer.site-foot a{color:var(--ice)}
 
   // Returning from Stripe
   const q = new URLSearchParams(location.search);
+  // Arriving from a "book the ..." button: start with that portrait picked
+  const pre = q.get("portrait");
+  if (pre && sizeById(pre) && state.portraits.length <= 1) {
+    state.portraits = [{ size: pre, pets: state.portraits[0] ? state.portraits[0].pets : 1 }];
+    try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
+  }
   if (q.get("paid") === "1") {
     state.portraits = []; state.gifts = []; state.week = null; save();
     $("thanks").hidden = false;
