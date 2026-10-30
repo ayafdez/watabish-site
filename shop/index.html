@@ -130,6 +130,7 @@ header.intro p{margin:0;max-width:60ch;font-size:19px}
 .weeks .chip{text-align:left}
 .full{color:var(--warn)!important}
 .left{color:var(--ok)!important}
+.chip small.roll{display:block;margin-top:2px;font-weight:600}
 .price{font-weight:800;white-space:nowrap}
 .field{display:flex;flex-direction:column;gap:4px;margin-bottom:14px;flex:1;min-width:180px}
 .field input,.field textarea,.field select{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:11px 14px;width:100%}
@@ -362,6 +363,20 @@ footer.site-foot a{color:var(--ice)}
     return out;
   }
 
+  // Big orders: fill the chosen week, then roll the rest into the next weeks
+  // that still have room (skipping full or closed ones). null = doesn't fit.
+  function planWeeks(startKey, n) {
+    const weeks = weekList(), i = weeks.findIndex(w => w.key === startKey);
+    if (!n || i < 0 || weeks[i].left === 0) return null;
+    const plan = []; let rest = n;
+    for (let j = i; j < weeks.length && rest > 0; j++) {
+      const take = Math.min(weeks[j].left, rest);
+      if (take > 0) { plan.push({ key: weeks[j].key, date: weeks[j].date, count: take }); rest -= take; }
+    }
+    return rest > 0 ? null : plan;
+  }
+  const weekName = d => `week of ${fmtShort(d).toLowerCase()}`;
+
   /* ---------- render ---------- */
   function renderPortraits() {
     const box = $("portraits"); box.innerHTML = "";
@@ -389,15 +404,17 @@ footer.site-foot a{color:var(--ice)}
     const n = state.portraits.length, box = $("weeks");
     const sec = $("sec-week"); sec.style.opacity = n ? 1 : .5;
     $("weekHint").textContent = n
-      ? `${SHOP.slots.portraitsPerWeek} portraits a week, because the bish has one (1) staff member. yours ships about ${SHOP.slots.turnaroundWeeks === 1 ? "a week" : SHOP.slots.turnaroundWeeks + " weeks"} after your painting week starts.`
+      ? `${SHOP.slots.portraitsPerWeek} portraits a week, because the bish has one (1) staff member. big orders roll into the next week. yours ships about ${SHOP.slots.turnaroundWeeks === 1 ? "a week" : SHOP.slots.turnaroundWeeks + " weeks"} after your last painting week.`
       : "add a portrait to claim a week.";
     const weeks = weekList();
-    if (state.week && !weeks.some(w => w.key === state.week && w.left >= n)) state.week = null;
+    if (state.week && !planWeeks(state.week, n)) state.week = null;
     box.innerHTML = weeks.map(w => {
-      const fits = n > 0 && w.left >= n;
+      const plan = planWeeks(w.key, n), fits = !!plan;
       const status = w.closed ? "closed (the bish is on break)" : w.left === 0 ? "full" : `${w.left} spot${w.left > 1 ? "s" : ""} left`;
+      const roll = plan && plan.length > 1 ? `<small class="roll">rest rolls ${plan.length > 2 ? "through" : "to"} ${fmtShort(plan[plan.length - 1].date).toLowerCase()}</small>`
+        : !fits && n && w.left > 0 ? `<small class="roll">not enough room after this</small>` : "";
       return `<button class="chip" type="button" data-week="${w.key}" aria-pressed="${state.week === w.key}" ${fits ? "" : "disabled"}>
-        <b>week of ${fmtShort(w.date).toLowerCase()}</b><small class="${w.left === 0 ? "full" : "left"}">${status}</small></button>`;
+        <b>${weekName(w.date)}</b><small class="${w.left === 0 ? "full" : "left"}">${status}</small>${roll}</button>`;
     }).join("");
     box.querySelectorAll("[data-week]").forEach(b => b.onclick = () => { state.week = b.dataset.week; update(); });
   }
@@ -541,10 +558,12 @@ footer.site-foot a{color:var(--ice)}
       lines.push(`<div class="line"><span>portrait ${i + 1} · ${s.label}<span class="sub">${s.dims} · ${p.pets} pet${p.pets > 1 ? "s" : ""}</span></span><span>${money(portraitPrice(p))}</span></div>`);
     });
     state.gifts.forEach(g => lines.push(`<div class="line"><span>gift card<span class="sub">for ${esc(g.name)}</span></span><span>${money(g.amount)}</span></div>`));
-    if (state.week) {
-      const d = new Date(state.week + "T00:00:00");
-      const ship = new Date(d); ship.setDate(d.getDate() + SHOP.slots.turnaroundWeeks * 7);
-      lines.push(`<div class="line"><span>painting week<span class="sub">ships around ${fmtShort(ship).toLowerCase()}</span></span><span>${fmtShort(d).toLowerCase()}</span></div>`);
+    const plan = state.week ? planWeeks(state.week, state.portraits.length) : null;
+    if (plan) {
+      const last = plan[plan.length - 1].date;
+      const ship = new Date(last); ship.setDate(last.getDate() + SHOP.slots.turnaroundWeeks * 7);
+      const split = plan.length > 1 ? plan.map(p => `${p.count} the ${weekName(p.date)}`).join(", ") + " · " : "";
+      lines.push(`<div class="line"><span>${plan.length > 1 ? "painting weeks" : "painting week"}<span class="sub">${split}ships around ${fmtShort(ship).toLowerCase()}</span></span><span>${fmtShort(plan[0].date).toLowerCase()}</span></div>`);
     }
     $("cartLines").innerHTML = lines.join("") || '<p class="empty">nothing here yet. the bish is unimpressed.</p>';
     const q = quoteShipping();
@@ -599,6 +618,8 @@ footer.site-foot a{color:var(--ice)}
     return {
       portraits: state.portraits.map(p => ({ size: p.size, pets: p.pets })),
       week: state.portraits.length ? state.week : null,
+      // How the portraits are spread over painting weeks, for your records
+      weekPlan: state.portraits.length && state.week ? (planWeeks(state.week, state.portraits.length) || []).map(p => ({ week: p.key, count: p.count })) : [],
       shipping: state.portraits.length ? state.ship : null,
       gifts: state.gifts,
       customer: state.cust,
@@ -612,7 +633,10 @@ footer.site-foot a{color:var(--ice)}
     L.push("");
     state.portraits.forEach((p, i) => L.push(`Portrait ${i + 1}: ${sizeById(p.size).label} ${sizeById(p.size).dims}, ${p.pets} pet(s) — ${money(portraitPrice(p))}`));
     state.gifts.forEach(g => L.push(`Gift card ${money(g.amount)} for ${g.name} <${g.email}>${g.message ? ` — "${g.message}"` : ""}`));
-    if (state.week) L.push(`Start week: ${state.week}`);
+    if (state.week) {
+      const plan = planWeeks(state.week, state.portraits.length) || [];
+      L.push(plan.length > 1 ? `Painting weeks: ${plan.map(p => `${p.key} ×${p.count}`).join(", ")}` : `Start week: ${state.week}`);
+    }
     if (state.portraits.length) {
       const a = state.ship, q = quoteShipping();
       L.push(`Delivery: ${q.label} — ${money(t.ship)}`);
