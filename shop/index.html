@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Commission a Portrait — Watabish</title>
+<meta name="description" content="Order hand-painted pet portraits, reserve your commission week, and buy gift cards.">
+<script>
+/* =====================================================================
+   SHOP SETTINGS — edit these, then re-upload the file.
+   Prices are in dollars. Keep prices in sync with checkout-worker.js.
+   ===================================================================== */
+const SHOP = {
+  currency: "CAD",
+
+  // URL of your deployed checkout-worker.js. Leave "" to fall back to
+  // emailing the order to you instead of taking payment online.
+  checkoutUrl: "https://watabish-checkout.ayafernandez16.workers.dev",
+  orderEmail: "aya@likhangmaya.com",          // where fallback orders are emailed
+
+  sizes: [
+    { id: "std",    label: "Pet portrait", dims: "Hand-painted",          price: 49 },
+    { id: "signed", label: "Bish-signed",  dims: "Hand-painted & signed", price: 99 },
+  ],
+  extraPetPrice: 30,      // second pet in the same portrait
+  maxPetsPerPortrait: 2,
+
+  // Shipping is priced from the customer's address:
+  //   cost = base + additional × (number of portraits − 1)
+  // Canada is priced by the first letter of the postal code.
+  // Based on Canada Post retail quotes from Sault Ste. Marie, Oct 2026.
+  // Keep in sync with SHIPPING in checkout-worker.js.
+  shipping: {
+    pickup: true,   // offer free local pickup
+    canada: [
+      { name: "Ontario",          letters: "KLMNP", base: 28, additional: 2 },
+      { name: "Quebec",           letters: "GHJ",   base: 30, additional: 3 },
+      { name: "Manitoba",         letters: "R",     base: 30, additional: 3 },
+      { name: "Saskatchewan",     letters: "S",     base: 32, additional: 4 },
+      { name: "Alberta",          letters: "T",     base: 32, additional: 4 },
+      { name: "British Columbia", letters: "V",     base: 34, additional: 5 },
+      { name: "Atlantic Canada",  letters: "ABCE",  base: 32, additional: 4 },
+      { name: "the Territories",  letters: "XY",    base: 45, additional: 8 },
+    ],
+    us: { base: 39, additional: 8 },
+    international: {
+      base: 85, additional: 38,
+      countries: { AU: "Australia", AT: "Austria", BE: "Belgium", DK: "Denmark", FI: "Finland", FR: "France",
+        DE: "Germany", IE: "Ireland", IT: "Italy", JP: "Japan", NL: "Netherlands", NZ: "New Zealand",
+        NO: "Norway", PT: "Portugal", ES: "Spain", SE: "Sweden", CH: "Switzerland", GB: "United Kingdom" },
+    },
+    freeOver: null,          // e.g. 300 → free shipping in Canada/US when portraits total $300+
+    freeIn: ["CA", "US"],
+  },
+
+  // Commission slots: one slot = one start week (weeks start on Monday).
+  slots: {
+    weeksAhead: 12,           // how many weeks to show
+    leadWeeks: 1,             // earliest start is this many weeks out
+    portraitsPerWeek: 4,      // capacity per week
+    turnaroundWeeks: 1,       // painting + drying before it ships
+    // After each order, add the portraits booked for that week (YYYY-MM-DD of the Monday):
+    booked: {
+      // "2026-11-09": 2,
+    },
+    closed: [
+      // "2026-12-21", "2026-12-28",
+    ],
+  },
+
+  giftCards: { presets: [50, 100, 150, 250], min: 25, max: 1000 },
+};
+</script>
+<style>
+:root{
+  --bg:#f7f1e8; --paper:#fffaf2; --ink:#2b2320; --muted:#76685f; --line:#e5d9c9;
+  --accent:#c4572b; --accent-ink:#fff; --accent-soft:#f6e1d4; --ok:#3d7a52; --warn:#a2401c;
+  --shadow:0 1px 2px rgba(60,40,20,.06),0 8px 24px rgba(60,40,20,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c1816; --paper:#26201d; --ink:#f2e9df; --muted:#b3a497; --line:#3a312c;
+    --accent:#e2784a; --accent-ink:#1c1816; --accent-soft:#3b2a22; --ok:#7cc495; --warn:#f0936a;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1c1816; --paper:#26201d; --ink:#f2e9df; --muted:#b3a497; --line:#3a312c;
+  --accent:#e2784a; --accent-ink:#1c1816; --accent-soft:#3b2a22; --ok:#7cc495; --warn:#f0936a;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:700;line-height:1.15;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+header{padding:40px 0 24px}
+.brand{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:500;letter-spacing:.04em;color:var(--accent);font-size:15px;text-transform:lowercase}
+header h1{font-size:clamp(30px,5vw,44px);margin:6px 0 8px}
+header p{color:var(--muted);margin:0;max-width:56ch}
+.layout{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start;padding-bottom:120px}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow);margin-bottom:18px}
+.step{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.step .n{font:600 12px system-ui,sans-serif;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:2px 9px}
+.step h2{font-size:22px}
+.hint{color:var(--muted);font-size:14px;margin:2px 0 16px}
+.portrait{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.portrait-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.portrait-head h3{font-size:17px}
+.link{background:none;border:0;color:var(--muted);cursor:pointer;font-size:14px;text-decoration:underline;padding:4px}
+.link:hover{color:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:transparent;border-radius:12px;padding:9px 13px;cursor:pointer;text-align:left;transition:border-color .15s,background .15s;min-width:0}
+.chip:hover:not(:disabled){border-color:var(--accent)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.chip:disabled{opacity:.45;cursor:not-allowed}
+.chip b{display:block;font-weight:600}
+.chip small{color:var(--muted);font-size:12.5px}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+.label{font-size:14px;color:var(--muted)}
+.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.stepper button{background:none;border:0;width:36px;height:34px;cursor:pointer;font-size:18px}
+.stepper button:disabled{opacity:.3;cursor:default}
+.stepper span{min-width:28px;text-align:center;font-weight:600}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:600;cursor:pointer}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:transparent;border:1.5px dashed var(--line);width:100%;color:var(--muted)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.weeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+.weeks .chip{text-align:left}
+.full{color:var(--warn)!important}
+.left{color:var(--ok)!important}
+.price{font-weight:600;white-space:nowrap}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;flex:1;min-width:180px}
+.field input,.field textarea{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+.field select{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;appearance:auto}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent)}
+.quote{margin-top:6px;padding:12px 14px;border-radius:10px;background:var(--accent-soft);display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.quote:empty{display:none}
+.quote.pending{background:transparent;border:1.5px dashed var(--line);color:var(--muted)}
+.quote.bad{background:transparent;border:1.5px solid var(--warn);color:var(--warn)}
+.fields{display:flex;gap:12px;flex-wrap:wrap}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);font-size:14px;padding:6px 0}
+aside{position:sticky;top:20px}
+@media (max-width:860px){aside{position:static}}
+.cart h2{font-size:22px;margin-bottom:12px}
+.line{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.line .sub{display:block;font-size:13px;color:var(--muted)}
+.totals .line{border:0;padding:4px 0}
+.total{font-size:20px;font-weight:700;font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;padding-top:10px!important;border-top:1px solid var(--line)!important;margin-top:6px}
+.promo{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:13.5px;margin:14px 0}
+.errors{color:var(--warn);font-size:14px;margin:10px 0 0;padding-left:18px}
+.btn-block{width:100%;margin-top:10px;padding:14px}
+.mobile-bar{display:none}
+main section.card{display:none}
+main section.card.active{display:block;animation:fadein .2s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.progress{display:flex;gap:6px;margin-bottom:18px}
+.progress button{flex:1;min-width:0;border:0;background:none;padding:0;text-align:left;cursor:pointer;color:var(--muted);font-size:13px}
+.progress button:disabled{cursor:default}
+.progress .bar{display:block;height:4px;border-radius:4px;background:var(--line);margin-bottom:7px;transition:background .2s}
+.progress .done .bar,.progress .current .bar{background:var(--accent)}
+.progress .current{color:var(--ink);font-weight:600}
+.progress .lbl{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wizard-nav{display:flex;justify-content:space-between;gap:12px;margin-top:4px}
+.wizard-nav .btn-primary{min-width:180px}
+.btn-back{background:transparent;border:1.5px solid var(--line)}
+.btn-back:hover{border-color:var(--accent)}
+.btn-back[hidden]{display:block;visibility:hidden}
+#stepErrors:empty{display:none}
+#stepErrors{margin:0 0 14px}
+@media (max-width:860px){
+  .progress .lbl{display:none}
+  .progress .current .lbl{display:block;position:absolute;left:0;right:0}
+  .progress{position:relative;padding-bottom:20px}
+  .wizard-nav .btn-primary{flex:1;min-width:0}
+}
+@media (max-width:860px){
+  .mobile-bar{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding:12px 16px;justify-content:space-between;align-items:center;gap:12px;z-index:10;box-shadow:0 -6px 20px rgba(0,0,0,.08)}
+  .mobile-bar b{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:20px}
+}
+.toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+.gift-list .line{align-items:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">watabish</div>
+    <h1>Commission a hand-painted portrait</h1>
+    <p>Choose your portraits, reserve the week we start painting, and pick how you'd like it delivered. You'll send us photos of your pet after checkout.</p>
+  </header>
+
+  <div class="layout">
+    <main>
+      <nav class="progress" id="progress" aria-label="Order steps"></nav>
+      <!-- 1. Portraits -->
+      <section class="card" id="sec-portraits">
+        <div class="step"><span class="n"></span><h2>Your portraits</h2></div>
+        <p class="hint">Add one portrait per painting. Two pets can share one portrait.</p>
+        <div id="portraits"></div>
+        <button class="btn btn-ghost" id="addPortrait" type="button">+ Add another portrait</button>
+      </section>
+
+      <!-- 2. Start week -->
+      <section class="card" id="sec-week">
+        <div class="step"><span class="n"></span><h2>Reserve your start week</h2></div>
+        <p class="hint" id="weekHint"></p>
+        <div class="weeks" id="weeks"></div>
+      </section>
+
+      <!-- 3. Delivery -->
+      <section class="card" id="sec-ship">
+        <div class="step"><span class="n"></span><h2>Delivery</h2></div>
+        <p class="hint" id="shipHint">Shipping is calculated from your address and includes packing and tracking.</p>
+        <div class="chips" id="shipMethod"></div>
+        <div id="addrForm" style="margin-top:16px">
+          <div class="fields">
+            <label class="field"><span class="label">Country</span><select id="shipCountry"></select></label>
+            <label class="field"><span class="label" id="postalLabel">Postal code</span><input id="shipPostal" autocomplete="postal-code" autocapitalize="characters"></label>
+          </div>
+          <label class="field"><span class="label">Street address</span><input id="shipLine1" autocomplete="address-line1"></label>
+          <label class="field"><span class="label">Apartment, unit, etc. (optional)</span><input id="shipLine2" autocomplete="address-line2"></label>
+          <div class="fields">
+            <label class="field"><span class="label">City</span><input id="shipCity" autocomplete="address-level2"></label>
+            <label class="field"><span class="label" id="regionLabel">Province</span><input id="shipRegion" autocomplete="address-level1"></label>
+          </div>
+        </div>
+        <div class="quote" id="shipQuote"></div>
+      </section>
+
+      <!-- 4. Gift cards -->
+      <section class="card" id="sec-gift">
+        <div class="step"><span class="n"></span><h2>Gift cards <span class="muted" style="font:400 15px system-ui,sans-serif">(optional)</span></h2></div>
+        <p class="hint">Emailed to the recipient — no shipping needed. Good toward any portrait.</p>
+        <div class="chips" id="giftPresets"></div>
+        <div class="fields" style="margin-top:14px">
+          <label class="field" style="max-width:150px"><span class="label">Amount ($)</span><input id="giftAmount" type="number" inputmode="numeric"></label>
+          <label class="field"><span class="label">Recipient name</span><input id="giftName" autocomplete="off"></label>
+          <label class="field"><span class="label">Recipient email</span><input id="giftEmail" type="email" autocomplete="off"></label>
+        </div>
+        <label class="field"><span class="label">Message (optional)</span><input id="giftMsg" maxlength="200"></label>
+        <button class="btn btn-primary" id="addGift" type="button">Add gift card</button>
+        <div class="gift-list" id="giftList" style="margin-top:12px"></div>
+      </section>
+
+      <!-- 5. Details -->
+      <section class="card" id="sec-details">
+        <div class="step"><span class="n"></span><h2>Your details</h2></div>
+        <div class="fields">
+          <label class="field"><span class="label">Name</span><input id="custName" autocomplete="name"></label>
+          <label class="field"><span class="label">Email</span><input id="custEmail" type="email" autocomplete="email"></label>
+        </div>
+        <label class="field"><span class="label">Instagram (optional)</span><input id="custIg" placeholder="@yourhandle" autocomplete="off"></label>
+        <label class="field"><span class="label">About your pet(s) — names, style ideas (optional)</span><textarea id="custNotes" rows="3"></textarea></label>
+      </section>
+      <ul class="errors" id="stepErrors" role="alert"></ul>
+      <div class="wizard-nav">
+        <button class="btn btn-back" id="backBtn" type="button">Back</button>
+        <button class="btn btn-primary" id="nextBtn" type="button">Next</button>
+      </div>
+    </main>
+
+    <aside>
+      <div class="card cart" id="cart">
+        <h2>Your order</h2>
+        <div id="cartLines"></div>
+        <div class="totals" id="cartTotals"></div>
+        <div class="promo" id="promoNote">Found a Chikadee Hunt card or have a promo code? Enter it on the payment page.</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="mobile-bar"><div><span class="label">Total</span><br><b id="mobileTotal">$0</b></div><button class="btn btn-primary" id="mobileNext" type="button">Next</button></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const money = n => new Intl.NumberFormat("en-CA", { style: "currency", currency: SHOP.currency, maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
+  const sizeById = id => SHOP.sizes.find(s => s.id === id);
+  const STORE = "watabish-cart-v3";
+
+  let state = {
+    portraits: [{ size: SHOP.sizes[0].id, pets: 1 }],
+    week: null, gifts: [],
+    ship: { method: "ship", country: "CA", line1: "", line2: "", city: "", region: "", postal: "" },
+    cust: { name: "", email: "", ig: "", notes: "" },
+  };
+  try { const s = JSON.parse(localStorage.getItem(STORE)); if (s && Array.isArray(s.portraits)) { s.portraits = s.portraits.filter(p => sizeById(p.size)).map(p => ({ size: p.size, pets: Math.min(SHOP.maxPetsPerPortrait, Math.max(1, p.pets | 0)) })); state = Object.assign(state, s); } } catch (e) {}
+  const save = () => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} };
+
+  /* ---------- pricing ---------- */
+  const portraitPrice = p => sizeById(p.size).price + Math.max(0, p.pets - 1) * SHOP.extraPetPrice;
+  const portraitsTotal = () => state.portraits.reduce((a, p) => a + portraitPrice(p), 0);
+  const giftsTotal = () => state.gifts.reduce((a, g) => a + g.amount, 0);
+  // Same rules as quoteShipping() in checkout-worker.js
+  const CA_PROVINCE = { A: "NL", B: "NS", C: "PE", E: "NB", G: "QC", H: "QC", J: "QC", K: "ON", L: "ON", M: "ON", N: "ON", P: "ON", R: "MB", S: "SK", T: "AB", V: "BC", X: "NT", Y: "YT" };
+  function quoteShipping() {
+    const n = state.portraits.length, a = state.ship, cfg = SHOP.shipping;
+    if (!n) return { cost: 0, label: null };
+    if (a.method === "pickup") return { cost: 0, label: "Local pickup" };
+    let rate, name;
+    if (a.country === "CA") {
+      const pc = (a.postal || "").toUpperCase().replace(/\s+/g, "");
+      if (!pc) return { pending: "Enter your postal code to see shipping." };
+      if (!/^[ABCEGHJ-NPRSTVXY]\d[A-Z]\d[A-Z]\d$/.test(pc)) return { error: "That doesn't look like a Canadian postal code." };
+      rate = cfg.canada.find(r => r.letters.includes(pc[0])); name = rate.name;
+    } else if (a.country === "US") {
+      const zip = (a.postal || "").trim();
+      if (!zip) return { pending: "Enter your ZIP code to see shipping." };
+      if (!/^\d{5}(-\d{4})?$/.test(zip)) return { error: "That doesn't look like a US ZIP code." };
+      rate = cfg.us; name = "the United States";
+    } else if (cfg.international.countries[a.country]) {
+      rate = cfg.international; name = cfg.international.countries[a.country];
+    } else return { error: "Sorry, we don't ship there yet." };
+    let cost = rate.base + rate.additional * (n - 1);
+    if (cfg.freeOver != null && portraitsTotal() >= cfg.freeOver && cfg.freeIn.includes(a.country)) cost = 0;
+    return { cost, label: `Shipping to ${name}` };
+  }
+
+  /* ---------- weeks ---------- */
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const fmtShort = d => d.toLocaleDateString("en-CA", { month: "short", day: "numeric" });
+  function weekList() {
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    const monday = new Date(t); monday.setDate(t.getDate() + ((8 - t.getDay()) % 7 || 7)); // next Monday
+    monday.setDate(monday.getDate() + (SHOP.slots.leadWeeks - 1) * 7);
+    const out = [];
+    for (let i = 0; i < SHOP.slots.weeksAhead; i++) {
+      const d = new Date(monday); d.setDate(monday.getDate() + i * 7);
+      const key = iso(d);
+      const left = SHOP.slots.closed.includes(key) ? 0 : Math.max(0, SHOP.slots.portraitsPerWeek - (SHOP.slots.booked[key] || 0));
+      out.push({ key, date: d, left, closed: SHOP.slots.closed.includes(key) });
+    }
+    return out;
+  }
+
+  /* ---------- render ---------- */
+  function renderPortraits() {
+    const box = $("portraits"); box.innerHTML = "";
+    if (!state.portraits.length) box.innerHTML = '<p class="empty">No portraits — that\'s fine if you\'re only buying gift cards.</p>';
+    state.portraits.forEach((p, i) => {
+      const el = document.createElement("div"); el.className = "portrait";
+      el.innerHTML = `
+        <div class="portrait-head"><h3>Portrait ${i + 1} <span class="muted" style="font:400 14px system-ui,sans-serif">· ${money(portraitPrice(p))}</span></h3>
+          <button class="link" type="button" data-remove>Remove</button></div>
+        <div class="chips">${SHOP.sizes.map(s => `
+          <button class="chip" type="button" data-size="${s.id}" aria-pressed="${p.size === s.id}">
+            <b>${s.label}</b><small>${s.dims} · ${money(s.price)}</small></button>`).join("")}</div>
+        <div class="row"><span class="label">Pets in this portrait</span>
+          <span class="stepper"><button type="button" data-pets="-1" ${p.pets <= 1 ? "disabled" : ""} aria-label="Fewer pets">−</button>
+          <span>${p.pets}</span><button type="button" data-pets="1" ${p.pets >= SHOP.maxPetsPerPortrait ? "disabled" : ""} aria-label="More pets">+</button></span>
+          <span class="label">${SHOP.extraPetPrice ? `+${money(SHOP.extraPetPrice)} for a second pet` : ""}</span></div>`;
+      el.querySelector("[data-remove]").onclick = () => { state.portraits.splice(i, 1); update(); };
+      el.querySelectorAll("[data-size]").forEach(b => b.onclick = () => { p.size = b.dataset.size; update(); });
+      el.querySelectorAll("[data-pets]").forEach(b => b.onclick = () => { p.pets = Math.min(SHOP.maxPetsPerPortrait, Math.max(1, p.pets + +b.dataset.pets)); update(); });
+      box.appendChild(el);
+    });
+  }
+
+  function renderWeeks() {
+    const n = state.portraits.length, box = $("weeks");
+    const sec = $("sec-week"); sec.style.opacity = n ? 1 : .5;
+    $("weekHint").textContent = n
+      ? `We paint ${SHOP.slots.portraitsPerWeek} portraits a week. Yours is ready about ${SHOP.slots.turnaroundWeeks === 1 ? "a week" : SHOP.slots.turnaroundWeeks + " weeks"} after your start week.`
+      : "Add a portrait to reserve a week.";
+    const weeks = weekList();
+    if (state.week && !weeks.some(w => w.key === state.week && w.left >= n)) state.week = null;
+    box.innerHTML = weeks.map(w => {
+      const fits = n > 0 && w.left >= n;
+      const status = w.closed ? "Closed" : w.left === 0 ? "Full" : `${w.left} spot${w.left > 1 ? "s" : ""} left`;
+      return `<button class="chip" type="button" data-week="${w.key}" aria-pressed="${state.week === w.key}" ${fits ? "" : "disabled"}>
+        <b>Week of ${fmtShort(w.date)}</b><small class="${w.left === 0 ? "full" : "left"}">${status}</small></button>`;
+    }).join("");
+    box.querySelectorAll("[data-week]").forEach(b => b.onclick = () => { state.week = b.dataset.week; update(); });
+  }
+
+  const POSTAL_LABEL = { CA: "Postal code", US: "ZIP code" };
+  const REGION_LABEL = { CA: "Province", US: "State" };
+  function renderShip() {
+    const n = state.portraits.length, a = state.ship, cfg = SHOP.shipping;
+    $("sec-ship").style.opacity = n ? 1 : .5;
+    if (!cfg.pickup) a.method = "ship";
+    const methods = [{ id: "ship", label: "Ship to me", note: "Canada Post, tracked" }];
+    if (cfg.pickup) methods.push({ id: "pickup", label: "Local pickup", note: "Free · we'll message you when it's ready" });
+    $("shipMethod").innerHTML = methods.map(m => `
+      <button class="chip" type="button" data-method="${m.id}" aria-pressed="${a.method === m.id}" ${n ? "" : "disabled"}>
+        <b>${m.label}</b><small>${m.note}</small></button>`).join("");
+    $("shipMethod").querySelectorAll("[data-method]").forEach(b => b.onclick = () => { a.method = b.dataset.method; update(); });
+    $("addrForm").style.display = n && a.method === "ship" ? "" : "none";
+    $("postalLabel").textContent = POSTAL_LABEL[a.country] || "Postcode";
+    $("regionLabel").textContent = REGION_LABEL[a.country] || "Region (optional)";
+    renderQuote();
+  }
+  function renderQuote() {
+    const box = $("shipQuote"), q = quoteShipping();
+    box.className = "quote";
+    if (!state.portraits.length) { box.innerHTML = ""; return; }
+    if (q.pending) { box.classList.add("pending"); box.textContent = q.pending; return; }
+    if (q.error) { box.classList.add("bad"); box.textContent = q.error; return; }
+    box.innerHTML = `<span>${q.label}</span><b>${q.cost ? money(q.cost) : "Free"}</b>`;
+  }
+
+  function renderGifts() {
+    $("giftPresets").innerHTML = SHOP.giftCards.presets.map(a =>
+      `<button class="chip" type="button" data-amt="${a}" aria-pressed="${+$("giftAmount").value === a}"><b>${money(a)}</b></button>`).join("");
+    $("giftPresets").querySelectorAll("[data-amt]").forEach(b => b.onclick = () => { $("giftAmount").value = b.dataset.amt; renderGifts(); });
+    $("giftList").innerHTML = state.gifts.map((g, i) => `
+      <div class="line"><span>${money(g.amount)} gift card<span class="sub">For ${esc(g.name)} · ${esc(g.email)}</span></span>
+      <button class="link" type="button" data-rmgift="${i}">Remove</button></div>`).join("");
+    $("giftList").querySelectorAll("[data-rmgift]").forEach(b => b.onclick = () => { state.gifts.splice(+b.dataset.rmgift, 1); update(); });
+  }
+
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  function totals() {
+    const q = quoteShipping(), ship = q.cost || 0;
+    return { portraits: portraitsTotal(), gifts: giftsTotal(), ship, total: portraitsTotal() + giftsTotal() + ship };
+  }
+
+  /* ---------- steps ---------- */
+  const STEPS = [
+    { id: "sec-portraits", title: "Portraits" },
+    { id: "sec-week",      title: "Start week", needsPortraits: true },
+    { id: "sec-ship",      title: "Delivery",   needsPortraits: true },
+    { id: "sec-gift",      title: "Gift cards" },
+    { id: "sec-details",   title: "Your details" },
+  ];
+  const activeSteps = () => STEPS.filter(st => !st.needsPortraits || state.portraits.length);
+  let current = "sec-portraits";
+
+  function stepErrors(id) {
+    const e = [], n = state.portraits.length;
+    if (id === "sec-week" && n && !state.week) e.push("Choose your start week.");
+    if (id === "sec-ship" && n) {
+      const a = state.ship, q = quoteShipping();
+      if (a.method === "ship") {
+        if (q.pending || q.error) e.push(q.pending || q.error);
+        if (!a.line1.trim()) e.push("Enter your street address.");
+        if (!a.city.trim()) e.push("Enter your city.");
+        if ((a.country === "CA" || a.country === "US") && !a.region.trim()) e.push(`Enter your ${REGION_LABEL[a.country].toLowerCase()}.`);
+      }
+    }
+    if (id === "sec-gift" && !n && !state.gifts.length) e.push("Add a portrait or a gift card to continue.");
+    if (id === "sec-details") {
+      if (!state.cust.name.trim()) e.push("Enter your name.");
+      if (!/^\S+@\S+\.\S+$/.test(state.cust.email)) e.push("Enter a valid email.");
+    }
+    return e;
+  }
+  const errors = () => activeSteps().flatMap(st => stepErrors(st.id));
+
+  function renderSteps() {
+    const steps = activeSteps();
+    if (!steps.some(st => st.id === current)) current = steps[0].id;
+    const idx = steps.findIndex(st => st.id === current);
+    STEPS.forEach(st => $(st.id).classList.toggle("active", st.id === current));
+    steps.forEach((st, i) => { const n = $(st.id).querySelector(".n"); if (n) n.textContent = `${i + 1} of ${steps.length}`; });
+    // A step can be opened if every step before it is complete
+    let open = true;
+    $("progress").innerHTML = steps.map((st, i) => {
+      const cls = i < idx ? "done" : i === idx ? "current" : "";
+      const html = `<button type="button" class="${cls}" data-goto="${st.id}" ${open || i <= idx ? "" : "disabled"} aria-current="${i === idx ? "step" : "false"}">
+        <span class="bar"></span><span class="lbl">${i + 1}. ${st.title}</span></button>`;
+      if (stepErrors(st.id).length) open = false;
+      return html;
+    }).join("");
+    $("progress").querySelectorAll("[data-goto]").forEach(b => b.onclick = () => go(b.dataset.goto));
+    $("backBtn").hidden = idx === 0;
+    const last = idx === steps.length - 1;
+    const next = last ? (SHOP.checkoutUrl ? "Continue to payment" : "Send order request")
+      : current === "sec-gift" && !state.gifts.length ? "Skip" : `Next: ${steps[idx + 1].title}`;
+    $("nextBtn").textContent = next;
+    $("mobileNext").textContent = last ? "Pay" : "Next";
+    // If problems are showing, keep the list in step with what's still missing
+    const box = $("stepErrors");
+    if (box.dataset.live) {
+      const e = stepErrors(current);
+      box.innerHTML = e.map(x => `<li>${x}</li>`).join("");
+      if (!e.length) delete box.dataset.live;
+    }
+  }
+
+  function go(id, scroll = true) {
+    current = id; $("stepErrors").innerHTML = ""; delete $("stepErrors").dataset.live;
+    renderSteps();
+    try { history.replaceState(null, "", "#" + id.replace("sec-", "")); } catch (e) {}
+    if (scroll) window.scrollTo({ top: $("progress").getBoundingClientRect().top + window.scrollY - 16, behavior: "smooth" });
+  }
+
+  function next() {
+    const e = stepErrors(current);
+    if (e.length) { $("stepErrors").innerHTML = e.map(x => `<li>${x}</li>`).join(""); $("stepErrors").dataset.live = "1"; return; }
+    const steps = activeSteps(), idx = steps.findIndex(st => st.id === current);
+    if (idx === steps.length - 1) return checkout();
+    go(steps[idx + 1].id);
+  }
+  function back() {
+    const steps = activeSteps(), idx = steps.findIndex(st => st.id === current);
+    if (idx > 0) go(steps[idx - 1].id);
+  }
+  $("nextBtn").onclick = next;
+  $("backBtn").onclick = back;
+  $("mobileNext").onclick = next;
+
+  function renderCart() {
+    const t = totals(), lines = [];
+    state.portraits.forEach((p, i) => {
+      const s = sizeById(p.size);
+      lines.push(`<div class="line"><span>Portrait ${i + 1} — ${s.label}<span class="sub">${s.dims} · ${p.pets} pet${p.pets > 1 ? "s" : ""}</span></span><span>${money(portraitPrice(p))}</span></div>`);
+    });
+    state.gifts.forEach(g => lines.push(`<div class="line"><span>Gift card<span class="sub">for ${esc(g.name)}</span></span><span>${money(g.amount)}</span></div>`));
+    if (state.week) {
+      const d = new Date(state.week + "T00:00:00");
+      const ship = new Date(d); ship.setDate(d.getDate() + SHOP.slots.turnaroundWeeks * 7);
+      lines.push(`<div class="line"><span>Start week<span class="sub">Ready around ${fmtShort(ship)}</span></span><span>${fmtShort(d)}</span></div>`);
+    }
+    $("cartLines").innerHTML = lines.join("") || '<p class="empty">Your order is empty.</p>';
+    const q = quoteShipping();
+    $("cartTotals").innerHTML = `
+      <div class="line"><span>Subtotal</span><span>${money(t.portraits + t.gifts)}</span></div>
+      ${state.portraits.length ? `<div class="line"><span>${q.label || "Shipping"}</span><span>${q.label ? (q.cost ? money(q.cost) : "Free") : "—"}</span></div>` : ""}
+      <div class="line total"><span>Total</span><span>${money(t.total)}</span></div>`;
+    $("mobileTotal").textContent = money(t.total);
+  }
+
+  function update() { renderPortraits(); renderWeeks(); renderShip(); renderGifts(); renderCart(); renderSteps(); save(); }
+
+  /* ---------- inputs ---------- */
+  $("addPortrait").onclick = () => { state.portraits.push({ size: SHOP.sizes[0].id, pets: 1 }); update(); };
+  $("giftAmount").min = SHOP.giftCards.min; $("giftAmount").max = SHOP.giftCards.max;
+  $("giftAmount").oninput = renderGifts;
+  $("addGift").onclick = () => {
+    const amount = Math.round(+$("giftAmount").value), name = $("giftName").value.trim(), email = $("giftEmail").value.trim();
+    if (!(amount >= SHOP.giftCards.min && amount <= SHOP.giftCards.max)) return toast(`Gift cards are ${money(SHOP.giftCards.min)}–${money(SHOP.giftCards.max)}.`);
+    if (!name || !/^\S+@\S+\.\S+$/.test(email)) return toast("Add the recipient's name and email.");
+    state.gifts.push({ amount, name, email, message: $("giftMsg").value.trim() });
+    ["giftAmount", "giftName", "giftEmail", "giftMsg"].forEach(id => $(id).value = "");
+    update(); toast("Gift card added");
+  };
+  [["custName", "name"], ["custEmail", "email"], ["custIg", "ig"], ["custNotes", "notes"]].forEach(([id, k]) => {
+    $(id).value = state.cust[k] || "";
+    $(id).oninput = () => { state.cust[k] = $(id).value; renderSteps(); save(); };
+  });
+
+  // Address fields: only the quote and cart refresh while typing, so focus is kept
+  const countries = [["CA", "Canada"], ["US", "United States"], ...Object.entries(SHOP.shipping.international.countries).sort((x, y) => x[1].localeCompare(y[1]))];
+  $("shipCountry").innerHTML = countries.map(([c, n]) => `<option value="${c}">${n}</option>`).join("");
+  [["shipCountry", "country"], ["shipLine1", "line1"], ["shipLine2", "line2"], ["shipCity", "city"], ["shipRegion", "region"], ["shipPostal", "postal"]].forEach(([id, k]) => {
+    $(id).value = state.ship[k] || "";
+    $(id).oninput = $(id).onchange = () => {
+      state.ship[k] = $(id).value;
+      if (k === "country") renderShip();
+      // Fill in the province from a Canadian postal code
+      if (k === "postal" && state.ship.country === "CA") {
+        const prov = CA_PROVINCE[$(id).value.trim().toUpperCase()[0]];
+        if (prov && !state.ship.region.trim()) { state.ship.region = prov; $("shipRegion").value = prov; }
+      }
+      renderQuote(); renderCart(); renderSteps(); save();
+    };
+  });
+
+  let toastTimer;
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200); }
+
+  /* ---------- checkout ---------- */
+  function orderPayload() {
+    return {
+      portraits: state.portraits.map(p => ({ size: p.size, pets: p.pets })),
+      week: state.portraits.length ? state.week : null,
+      shipping: state.portraits.length ? state.ship : null,
+      gifts: state.gifts,
+      customer: state.cust,
+    };
+  }
+
+  function orderText() {
+    const t = totals(), L = [];
+    L.push(`Name: ${state.cust.name}`, `Email: ${state.cust.email}`);
+    if (state.cust.ig) L.push(`Instagram: ${state.cust.ig}`);
+    L.push("");
+    state.portraits.forEach((p, i) => L.push(`Portrait ${i + 1}: ${sizeById(p.size).label} ${sizeById(p.size).dims}, ${p.pets} pet(s) — ${money(portraitPrice(p))}`));
+    state.gifts.forEach(g => L.push(`Gift card ${money(g.amount)} for ${g.name} <${g.email}>${g.message ? ` — "${g.message}"` : ""}`));
+    if (state.week) L.push(`Start week: ${state.week}`);
+    if (state.portraits.length) {
+      const a = state.ship, q = quoteShipping();
+      L.push(`Delivery: ${q.label} — ${money(t.ship)}`);
+      if (a.method === "ship") L.push(`Ship to: ${a.line1}${a.line2 ? ", " + a.line2 : ""}, ${a.city}${a.region ? ", " + a.region : ""} ${a.postal}, ${a.country}`);
+    }
+    L.push(`TOTAL: ${money(t.total)}`);
+    if (state.cust.notes) L.push("", `Notes: ${state.cust.notes}`);
+    return L.join("\n");
+  }
+
+  async function checkout() {
+    const bad = activeSteps().find(st => stepErrors(st.id).length);
+    if (bad) { go(bad.id); $("stepErrors").innerHTML = stepErrors(bad.id).map(x => `<li>${x}</li>`).join(""); return; }
+    const btn = $("nextBtn");
+    if (!SHOP.checkoutUrl) {
+      location.href = `mailto:${SHOP.orderEmail}?subject=${encodeURIComponent("Portrait order — " + state.cust.name)}&body=${encodeURIComponent(orderText())}`;
+      return;
+    }
+    btn.disabled = true; btn.textContent = "Opening secure checkout…";
+    try {
+      const r = await fetch(SHOP.checkoutUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(orderPayload()) });
+      const data = await r.json();
+      if (!r.ok || !data.url) throw new Error(data.error || "Checkout failed");
+      location.href = data.url;
+    } catch (err) {
+      $("stepErrors").innerHTML = `<li>${esc(err.message)}. Please try again, or email ${esc(SHOP.orderEmail)}.</li>`;
+      btn.disabled = false; renderSteps();
+    }
+  }
+
+  // Returning from Stripe
+  const q = new URLSearchParams(location.search);
+  if (q.get("paid") === "1") {
+    state.portraits = []; state.gifts = []; state.week = null; save();
+    setTimeout(() => toast("Thank you! Check your email for your receipt."), 300);
+  }
+
+  update();
+  const fromHash = "sec-" + location.hash.slice(1);
+  const reach = activeSteps(); let ok = true;
+  for (const st of reach) { if (st.id === fromHash && ok) { go(st.id, false); break; } if (stepErrors(st.id).length) ok = false; }
+})();
+</script>
+</body>
+</html>
