@@ -3,8 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Commission a Portrait — Watabish</title>
-<meta name="description" content="Order hand-painted pet portraits, reserve your commission week, and buy gift cards.">
+<title>commission a watabish — watabish</title>
+<meta name="description" content="Order a hand-painted pet portrait, claim your painting week, and buy gift cards. Shipped across Canada and the US.">
+<meta name="theme-color" content="#2B1C15">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&amp;display=swap">
 <script>
 /* =====================================================================
    SHOP SETTINGS — edit these, then re-upload the file.
@@ -19,8 +22,8 @@ const SHOP = {
   orderEmail: "aya@likhangmaya.com",          // where fallback orders are emailed
 
   sizes: [
-    { id: "std",    label: "Pet portrait", dims: "Hand-painted",          price: 49 },
-    { id: "signed", label: "Bish-signed",  dims: "Hand-painted & signed", price: 99 },
+    { id: "std",    label: "classic portrait", dims: "hand-painted 8×10",              price: 49 },
+    { id: "signed", label: "bish-signed",      dims: "hand-painted 8×10 + paw print", price: 99 },
   ],
   extraPetPrice: 30,      // second pet in the same portrait
   maxPetsPerPortrait: 2,
@@ -31,7 +34,8 @@ const SHOP = {
   // Based on Canada Post retail quotes from Sault Ste. Marie, Oct 2026.
   // Keep in sync with SHIPPING in checkout-worker.js.
   shipping: {
-    pickup: true,   // offer free local pickup
+    pickup: true,   // offer free local pickup (Sault Ste. Marie addresses only)
+    pickupPostal: ["P6A", "P6B", "P6C"],   // Sault Ste. Marie postal code areas
     canada: [
       { name: "Ontario",          letters: "KLMNP", base: 28, additional: 2 },
       { name: "Quebec",           letters: "GHJ",   base: 30, additional: 3 },
@@ -56,7 +60,7 @@ const SHOP = {
   // Commission slots: one slot = one start week (weeks start on Monday).
   slots: {
     weeksAhead: 12,           // how many weeks to show
-    leadWeeks: 1,             // earliest start is this many weeks out
+    leadWeeks: 2,             // earliest start: the Monday at least a week away
     portraitsPerWeek: 4,      // capacity per week
     turnaroundWeeks: 1,       // painting + drying before it ships
     // After each order, add the portraits booked for that week (YYYY-MM-DD of the Monday):
@@ -73,162 +77,172 @@ const SHOP = {
 </script>
 <style>
 :root{
-  --bg:#f7f1e8; --paper:#fffaf2; --ink:#2b2320; --muted:#76685f; --line:#e5d9c9;
-  --accent:#c4572b; --accent-ink:#fff; --accent-soft:#f6e1d4; --ok:#3d7a52; --warn:#a2401c;
-  --shadow:0 1px 2px rgba(60,40,20,.06),0 8px 24px rgba(60,40,20,.07);
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#1c1816; --paper:#26201d; --ink:#f2e9df; --muted:#b3a497; --line:#3a312c;
-    --accent:#e2784a; --accent-ink:#1c1816; --accent-soft:#3b2a22; --ok:#7cc495; --warn:#f0936a;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#1c1816; --paper:#26201d; --ink:#f2e9df; --muted:#b3a497; --line:#3a312c;
-  --accent:#e2784a; --accent-ink:#1c1816; --accent-soft:#3b2a22; --ok:#7cc495; --warn:#f0936a;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  --bg:#F3EADB; --paper:#FFFFFF; --ink:#2B1C15; --muted:#5A463A; --line:#2B1C15; --soft:#E4D6C0;
+  --accent:#1F5FA8; --accent-ink:#FFFFFF; --ice:#BFE3FF; --ok:#1F6B3A; --warn:#A2401C;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-h1,h2,h3{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:700;line-height:1.15;margin:0}
+body{background:var(--bg);color:var(--ink);font:17px/1.5 'Bricolage Grotesque','Trebuchet MS',sans-serif}
+h1,h2,h3{font-family:inherit;font-weight:800;line-height:1.05;letter-spacing:-0.03em;margin:0}
 button,input,select,textarea{font:inherit;color:inherit}
-.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
-header{padding:40px 0 24px}
-.brand{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:500;letter-spacing:.04em;color:var(--accent);font-size:15px;text-transform:lowercase}
-header h1{font-size:clamp(30px,5vw,44px);margin:6px 0 8px}
-header p{color:var(--muted);margin:0;max-width:56ch}
-.layout{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start;padding-bottom:120px}
+a{color:var(--accent)}a:hover{color:var(--ink)}
+.site-head{background:var(--ink);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.site-head a{color:#F3EADB;text-decoration:none;font-weight:700;font-size:15px}
+.site-head .logo{font-weight:800;font-size:26px;letter-spacing:-0.04em}
+.site-head .logo span{color:var(--ice)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+header.intro{padding:44px 0 28px}
+.brand{font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+header.intro h1{font-size:clamp(44px,8vw,84px);line-height:.92;letter-spacing:-0.05em;margin:8px 0 14px}
+header.intro h1 span{color:var(--accent)}
+header.intro p{margin:0;max-width:60ch;font-size:19px}
+.layout{display:grid;grid-template-columns:1fr 340px;gap:32px;align-items:start;padding-bottom:120px}
 @media (max-width:860px){.layout{grid-template-columns:1fr}}
-.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow);margin-bottom:18px}
-.step{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
-.step .n{font:600 12px system-ui,sans-serif;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:2px 9px}
-.step h2{font-size:22px}
-.hint{color:var(--muted);font-size:14px;margin:2px 0 16px}
-.portrait{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
-.portrait-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.portrait-head h3{font-size:17px}
-.link{background:none;border:0;color:var(--muted);cursor:pointer;font-size:14px;text-decoration:underline;padding:4px}
+.card{background:var(--paper);border:3px solid var(--line);border-radius:24px;padding:24px;box-shadow:6px 6px 0 var(--ink);margin-bottom:22px}
+.step{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.step .n{font-weight:800;font-size:12px;background:var(--ink);color:var(--ice);border-radius:99px;padding:3px 10px}
+.step h2{font-size:28px}
+.hint{color:var(--muted);font-size:15px;margin:4px 0 18px}
+.portrait{border:2px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;background:var(--bg)}
+.portrait-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
+.portrait-head h3{font-size:20px}
+.link{background:none;border:0;color:var(--muted);cursor:pointer;font-size:14px;font-weight:700;text-decoration:underline;padding:6px}
 .link:hover{color:var(--warn)}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{border:1.5px solid var(--line);background:transparent;border-radius:12px;padding:9px 13px;cursor:pointer;text-align:left;transition:border-color .15s,background .15s;min-width:0}
-.chip:hover:not(:disabled){border-color:var(--accent)}
-.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
-.chip:disabled{opacity:.45;cursor:not-allowed}
-.chip b{display:block;font-weight:600}
-.chip small{color:var(--muted);font-size:12.5px}
-.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
-.label{font-size:14px;color:var(--muted)}
-.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
-.stepper button{background:none;border:0;width:36px;height:34px;cursor:pointer;font-size:18px}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{border:2px solid var(--line);background:var(--paper);border-radius:16px;padding:10px 14px;cursor:pointer;text-align:left;min-width:0;min-height:48px;transition:transform .1s}
+.chip:hover:not(:disabled){transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ice);box-shadow:3px 3px 0 var(--ink)}
+.chip:disabled{opacity:.4;cursor:not-allowed;border-style:dashed}
+.chip b{display:block;font-weight:800}
+.chip small{color:var(--muted);font-size:13px;font-weight:700}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.label{font-size:14px;color:var(--muted);font-weight:700}
+.stepper{display:inline-flex;align-items:center;border:2px solid var(--line);border-radius:999px;overflow:hidden;background:var(--paper)}
+.stepper button{background:none;border:0;width:40px;height:38px;cursor:pointer;font-size:20px;font-weight:800}
 .stepper button:disabled{opacity:.3;cursor:default}
-.stepper span{min-width:28px;text-align:center;font-weight:600}
-.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:600;cursor:pointer}
-.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.stepper span{min-width:28px;text-align:center;font-weight:800}
+.btn{border:3px solid var(--line);border-radius:999px;padding:12px 22px;font-weight:800;cursor:pointer;min-height:52px}
+.btn-primary{background:var(--accent);color:var(--accent-ink);box-shadow:4px 4px 0 var(--ink)}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed}
-.btn-ghost{background:transparent;border:1.5px dashed var(--line);width:100%;color:var(--muted)}
-.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
-.weeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+.btn-ghost{background:transparent;border:2px dashed var(--line);width:100%;color:var(--ink);box-shadow:none}
+.btn-ghost:hover{background:var(--paper)}
+.weeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
 .weeks .chip{text-align:left}
 .full{color:var(--warn)!important}
 .left{color:var(--ok)!important}
-.price{font-weight:600;white-space:nowrap}
-.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;flex:1;min-width:180px}
-.field input,.field textarea{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
-.field select{background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;appearance:auto}
-.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent)}
-.quote{margin-top:6px;padding:12px 14px;border-radius:10px;background:var(--accent-soft);display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.price{font-weight:800;white-space:nowrap}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:14px;flex:1;min-width:180px}
+.field input,.field textarea,.field select{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:11px 14px;width:100%}
+.field select{appearance:auto}
+.field input:focus,.field textarea:focus,.field select:focus{outline:3px solid var(--accent);outline-offset:1px}
+.quote{margin-top:6px;padding:12px 16px;border-radius:14px;background:var(--ice);border:2px solid var(--line);display:flex;justify-content:space-between;gap:12px;font-size:16px;font-weight:700}
 .quote:empty{display:none}
-.quote.pending{background:transparent;border:1.5px dashed var(--line);color:var(--muted)}
-.quote.bad{background:transparent;border:1.5px solid var(--warn);color:var(--warn)}
+.quote.pending{background:transparent;border:2px dashed var(--line);color:var(--muted)}
+.quote.bad{background:transparent;border:2px solid var(--warn);color:var(--warn)}
 .fields{display:flex;gap:12px;flex-wrap:wrap}
 .muted{color:var(--muted)}
-.empty{color:var(--muted);font-size:14px;padding:6px 0}
+.empty{color:var(--muted);font-size:15px;padding:6px 0}
 aside{position:sticky;top:20px}
 @media (max-width:860px){aside{position:static}}
-.cart h2{font-size:22px;margin-bottom:12px}
-.line{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
-.line .sub{display:block;font-size:13px;color:var(--muted)}
+.cart{background:var(--bg)}
+.cart h2{font-size:28px;margin-bottom:12px}
+.line{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:2px dashed var(--soft);font-size:16px}
+.line .sub{display:block;font-size:13px;color:var(--muted);font-weight:700}
 .totals .line{border:0;padding:4px 0}
-.total{font-size:20px;font-weight:700;font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;padding-top:10px!important;border-top:1px solid var(--line)!important;margin-top:6px}
-.promo{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:13.5px;margin:14px 0}
-.errors{color:var(--warn);font-size:14px;margin:10px 0 0;padding-left:18px}
+.total{font-size:24px;font-weight:800;padding-top:10px!important;border-top:3px solid var(--line)!important;margin-top:6px}
+.promo{background:var(--ice);border:2px solid var(--line);border-radius:14px;padding:10px 14px;font-size:14px;font-weight:700;margin:16px 0 0}
+.errors{color:var(--warn);font-size:15px;font-weight:700;margin:10px 0 0;padding-left:18px}
 .btn-block{width:100%;margin-top:10px;padding:14px}
 .mobile-bar{display:none}
 main section.card{display:none}
 main section.card.active{display:block;animation:fadein .2s ease}
 @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.progress{display:flex;gap:6px;margin-bottom:18px}
-.progress button{flex:1;min-width:0;border:0;background:none;padding:0;text-align:left;cursor:pointer;color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion: reduce){main section.card.active{animation:none}.chip{transition:none}}
+.progress{display:flex;gap:8px;margin-bottom:20px}
+.progress button{flex:1;min-width:0;border:0;background:none;padding:0;text-align:left;cursor:pointer;color:var(--muted);font-size:14px;font-weight:700}
 .progress button:disabled{cursor:default}
-.progress .bar{display:block;height:4px;border-radius:4px;background:var(--line);margin-bottom:7px;transition:background .2s}
+.progress .bar{display:block;height:8px;border-radius:99px;background:var(--soft);border:2px solid var(--line);margin-bottom:8px}
 .progress .done .bar,.progress .current .bar{background:var(--accent)}
-.progress .current{color:var(--ink);font-weight:600}
+.progress .current{color:var(--ink);font-weight:800}
 .progress .lbl{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wizard-nav{display:flex;justify-content:space-between;gap:12px;margin-top:4px}
-.wizard-nav .btn-primary{min-width:180px}
-.btn-back{background:transparent;border:1.5px solid var(--line)}
-.btn-back:hover{border-color:var(--accent)}
+.wizard-nav .btn-primary{min-width:200px}
+.btn-back{background:var(--paper)}
 .btn-back[hidden]{display:block;visibility:hidden}
 #stepErrors:empty{display:none}
 #stepErrors{margin:0 0 14px}
 @media (max-width:860px){
   .progress .lbl{display:none}
   .progress .current .lbl{display:block;position:absolute;left:0;right:0}
-  .progress{position:relative;padding-bottom:20px}
+  .progress{position:relative;padding-bottom:22px}
   .wizard-nav .btn-primary{flex:1;min-width:0}
 }
 @media (max-width:860px){
-  .mobile-bar{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);padding:12px 16px;justify-content:space-between;align-items:center;gap:12px;z-index:10;box-shadow:0 -6px 20px rgba(0,0,0,.08)}
-  .mobile-bar b{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:20px}
+  .mobile-bar{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:3px solid var(--line);padding:12px 16px;justify-content:space-between;align-items:center;gap:12px;z-index:10}
+  .mobile-bar b{font-size:24px;font-weight:800}
 }
-.toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--ink);color:#F3EADB;padding:10px 18px;border-radius:999px;font-size:15px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
 .toast.show{opacity:1}
 .gift-list .line{align-items:center}
+.thanks{background:var(--ink);color:#F3EADB;border:3px solid var(--line);border-radius:24px;padding:28px;box-shadow:6px 6px 0 var(--accent);margin-bottom:28px}
+.thanks h2{font-size:clamp(34px,5vw,52px);color:var(--ice);margin-bottom:10px}
+.thanks p{margin:0 0 10px;font-size:18px}
+.thanks a{color:var(--ice)}
+.thanks[hidden]{display:none}
+footer.site-foot{background:var(--ink);color:#E9DCC8;padding:32px 24px;font-size:15px}
+footer.site-foot div{max-width:1120px;margin:0 auto;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between}
+footer.site-foot a{color:var(--ice)}
+@media (max-width:860px){footer.site-foot{padding-bottom:110px}}
 </style>
 </head>
 <body>
+<div class="site-head"><a class="logo" href="../index.html">watabish<span>.</span></a><a href="../index.html#faq">questions?</a></div>
 <div class="wrap">
-  <header>
-    <div class="brand">watabish</div>
-    <h1>Commission a hand-painted portrait</h1>
-    <p>Choose your portraits, reserve the week we start painting, and pick how you'd like it delivered. You'll send us photos of your pet after checkout.</p>
+  <header class="intro">
+    <div class="brand">hand-painted pet portraits · from $49</div>
+    <h1>commission <span>a watabish.</span></h1>
+    <p>pick your portraits, claim a painting week, and tell us where it's going. you'll send pet photos after checkout. the bish reviews them (harshly).</p>
   </header>
+  <section class="thanks" id="thanks" hidden aria-live="polite">
+    <h2>you're in.</h2>
+    <p>your receipt is on its way to your inbox.</p>
+    <p><b>next:</b> send a clear, well-lit photo of your pet's face within 48 hours. reply to your receipt or dm <a href="https://www.instagram.com/watabish_/">@watabish_</a>. the bish will begin judging immediately.</p>
+    <p style="margin:18px 0 0"><a class="btn btn-primary" style="display:inline-flex;align-items:center;text-decoration:none;color:#FFFFFF" href="index.html">order another →</a> <a href="../index.html" style="margin-left:14px;font-weight:700">back to watabish.com</a></p>
+  </section>
 
   <div class="layout">
     <main>
       <nav class="progress" id="progress" aria-label="Order steps"></nav>
       <!-- 1. Portraits -->
       <section class="card" id="sec-portraits">
-        <div class="step"><span class="n"></span><h2>Your portraits</h2></div>
-        <p class="hint">Add one portrait per painting. Two pets can share one portrait.</p>
+        <div class="step"><span class="n"></span><h2>your portraits</h2></div>
+        <p class="hint">one portrait per canvas. two pets can share one (+$30, they'll have to get along).</p>
         <div id="portraits"></div>
-        <button class="btn btn-ghost" id="addPortrait" type="button">+ Add another portrait</button>
+        <button class="btn btn-ghost" id="addPortrait" type="button">+ add another portrait</button>
       </section>
 
       <!-- 2. Start week -->
       <section class="card" id="sec-week">
-        <div class="step"><span class="n"></span><h2>Reserve your start week</h2></div>
+        <div class="step"><span class="n"></span><h2>claim your painting week</h2></div>
         <p class="hint" id="weekHint"></p>
         <div class="weeks" id="weeks"></div>
       </section>
 
       <!-- 3. Delivery -->
       <section class="card" id="sec-ship">
-        <div class="step"><span class="n"></span><h2>Delivery</h2></div>
-        <p class="hint" id="shipHint">Shipping is calculated from your address and includes packing and tracking.</p>
+        <div class="step"><span class="n"></span><h2>where's it going?</h2></div>
+        <p class="hint" id="shipHint">shipping comes from your address. tracked, insured, packed like it contains the bish's dignity.</p>
         <div class="chips" id="shipMethod"></div>
         <div id="addrForm" style="margin-top:16px">
           <div class="fields">
-            <label class="field"><span class="label">Country</span><select id="shipCountry"></select></label>
-            <label class="field"><span class="label" id="postalLabel">Postal code</span><input id="shipPostal" autocomplete="postal-code" autocapitalize="characters"></label>
+            <label class="field"><span class="label">country</span><select id="shipCountry"></select></label>
+            <label class="field"><span class="label" id="postalLabel">postal code</span><input id="shipPostal" autocomplete="postal-code" autocapitalize="characters"></label>
           </div>
-          <label class="field"><span class="label">Street address</span><input id="shipLine1" autocomplete="address-line1"></label>
-          <label class="field"><span class="label">Apartment, unit, etc. (optional)</span><input id="shipLine2" autocomplete="address-line2"></label>
+          <label class="field"><span class="label">street address</span><input id="shipLine1" autocomplete="address-line1"></label>
+          <label class="field"><span class="label">apartment, unit, etc. (optional)</span><input id="shipLine2" autocomplete="address-line2"></label>
           <div class="fields">
-            <label class="field"><span class="label">City</span><input id="shipCity" autocomplete="address-level2"></label>
-            <label class="field"><span class="label" id="regionLabel">Province</span><input id="shipRegion" autocomplete="address-level1"></label>
+            <label class="field"><span class="label">city</span><input id="shipCity" autocomplete="address-level2"></label>
+            <label class="field"><span class="label" id="regionLabel">province</span><input id="shipRegion" autocomplete="address-level1"></label>
           </div>
         </div>
         <div class="quote" id="shipQuote"></div>
@@ -236,48 +250,49 @@ main section.card.active{display:block;animation:fadein .2s ease}
 
       <!-- 4. Gift cards -->
       <section class="card" id="sec-gift">
-        <div class="step"><span class="n"></span><h2>Gift cards <span class="muted" style="font:400 15px system-ui,sans-serif">(optional)</span></h2></div>
-        <p class="hint">Emailed to the recipient — no shipping needed. Good toward any portrait.</p>
+        <div class="step"><span class="n"></span><h2>gift cards <span class="muted" style="font-weight:700;font-size:15px;letter-spacing:0">(optional)</span></h2></div>
+        <p class="hint">emailed straight to them. good toward any portrait. no wrapping, no effort, full credit.</p>
         <div class="chips" id="giftPresets"></div>
         <div class="fields" style="margin-top:14px">
-          <label class="field" style="max-width:150px"><span class="label">Amount ($)</span><input id="giftAmount" type="number" inputmode="numeric"></label>
-          <label class="field"><span class="label">Recipient name</span><input id="giftName" autocomplete="off"></label>
-          <label class="field"><span class="label">Recipient email</span><input id="giftEmail" type="email" autocomplete="off"></label>
+          <label class="field" style="max-width:150px"><span class="label">amount ($)</span><input id="giftAmount" type="number" inputmode="numeric"></label>
+          <label class="field"><span class="label">their name</span><input id="giftName" autocomplete="off"></label>
+          <label class="field"><span class="label">their email</span><input id="giftEmail" type="email" autocomplete="off"></label>
         </div>
-        <label class="field"><span class="label">Message (optional)</span><input id="giftMsg" maxlength="200"></label>
-        <button class="btn btn-primary" id="addGift" type="button">Add gift card</button>
+        <label class="field"><span class="label">a little note (optional)</span><input id="giftMsg" maxlength="200"></label>
+        <button class="btn btn-primary" id="addGift" type="button">add gift card</button>
         <div class="gift-list" id="giftList" style="margin-top:12px"></div>
       </section>
 
       <!-- 5. Details -->
       <section class="card" id="sec-details">
-        <div class="step"><span class="n"></span><h2>Your details</h2></div>
+        <div class="step"><span class="n"></span><h2>about you</h2></div>
         <div class="fields">
-          <label class="field"><span class="label">Name</span><input id="custName" autocomplete="name"></label>
-          <label class="field"><span class="label">Email</span><input id="custEmail" type="email" autocomplete="email"></label>
+          <label class="field"><span class="label">your name</span><input id="custName" autocomplete="name"></label>
+          <label class="field"><span class="label">your email</span><input id="custEmail" type="email" autocomplete="email"></label>
         </div>
-        <label class="field"><span class="label">Instagram (optional)</span><input id="custIg" placeholder="@yourhandle" autocomplete="off"></label>
-        <label class="field"><span class="label">About your pet(s) — names, style ideas (optional)</span><textarea id="custNotes" rows="3"></textarea></label>
+        <label class="field"><span class="label">instagram (optional, for tagging)</span><input id="custIg" placeholder="@yourhandle" autocomplete="off"></label>
+        <label class="field"><span class="label">tell us about your pet(s): names, quirks, crimes (optional)</span><textarea id="custNotes" rows="3"></textarea></label>
       </section>
       <ul class="errors" id="stepErrors" role="alert"></ul>
       <div class="wizard-nav">
-        <button class="btn btn-back" id="backBtn" type="button">Back</button>
-        <button class="btn btn-primary" id="nextBtn" type="button">Next</button>
+        <button class="btn btn-back" id="backBtn" type="button">back</button>
+        <button class="btn btn-primary" id="nextBtn" type="button">next</button>
       </div>
     </main>
 
     <aside>
       <div class="card cart" id="cart">
-        <h2>Your order</h2>
+        <h2>your order</h2>
         <div id="cartLines"></div>
         <div class="totals" id="cartTotals"></div>
-        <div class="promo" id="promoNote">Found a Chikadee Hunt card or have a promo code? Enter it on the payment page.</div>
+        <div class="promo" id="promoNote">found a chikadee hunt card or a promo code? enter it on the payment page.</div>
       </div>
     </aside>
   </div>
 </div>
 
-<div class="mobile-bar"><div><span class="label">Total</span><br><b id="mobileTotal">$0</b></div><button class="btn btn-primary" id="mobileNext" type="button">Next</button></div>
+<footer class="site-foot"><div><span>© 2026 watabish · painted in Sault Ste. Marie, Ontario</span><span><a href="../index.html">home</a> · <a href="../us.html">shipping to the US</a> · <a href="../terms.html">terms</a> · <a href="../privacy.html">privacy</a></span></div></footer>
+<div class="mobile-bar"><div><span class="label">total</span><br><b id="mobileTotal">$0</b></div><button class="btn btn-primary" id="mobileNext" type="button">next</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -305,24 +320,29 @@ main section.card.active{display:block;animation:fadein .2s ease}
   function quoteShipping() {
     const n = state.portraits.length, a = state.ship, cfg = SHOP.shipping;
     if (!n) return { cost: 0, label: null };
-    if (a.method === "pickup") return { cost: 0, label: "Local pickup" };
+    if (a.method === "pickup") {
+      const pc = (a.postal || "").toUpperCase().replace(/\s+/g, "");
+      if (!pc) return { pending: "enter your postal code to confirm you're in the soo." };
+      if (!(cfg.pickupPostal || []).some(x => pc.startsWith(x))) return { error: "pick-up is only for sault ste. marie addresses (postal codes starting P6A, P6B or P6C). choose \"ship it\" instead." };
+      return { cost: 0, label: "pick-up in the soo" };
+    }
     let rate, name;
     if (a.country === "CA") {
       const pc = (a.postal || "").toUpperCase().replace(/\s+/g, "");
-      if (!pc) return { pending: "Enter your postal code to see shipping." };
-      if (!/^[ABCEGHJ-NPRSTVXY]\d[A-Z]\d[A-Z]\d$/.test(pc)) return { error: "That doesn't look like a Canadian postal code." };
+      if (!pc) return { pending: "enter your postal code and we'll do the math." };
+      if (!/^[ABCEGHJ-NPRSTVXY]\d[A-Z]\d[A-Z]\d$/.test(pc)) return { error: "that doesn't look like a canadian postal code." };
       rate = cfg.canada.find(r => r.letters.includes(pc[0])); name = rate.name;
     } else if (a.country === "US") {
       const zip = (a.postal || "").trim();
-      if (!zip) return { pending: "Enter your ZIP code to see shipping." };
-      if (!/^\d{5}(-\d{4})?$/.test(zip)) return { error: "That doesn't look like a US ZIP code." };
+      if (!zip) return { pending: "enter your ZIP code and we'll do the math." };
+      if (!/^\d{5}(-\d{4})?$/.test(zip)) return { error: "that doesn't look like a US ZIP code." };
       rate = cfg.us; name = "the United States";
     } else if (cfg.international.countries[a.country]) {
       rate = cfg.international; name = cfg.international.countries[a.country];
-    } else return { error: "Sorry, we don't ship there yet." };
+    } else return { error: "sorry, we don't ship there yet. the bish is working on it (he isn't)." };
     let cost = rate.base + rate.additional * (n - 1);
     if (cfg.freeOver != null && portraitsTotal() >= cfg.freeOver && cfg.freeIn.includes(a.country)) cost = 0;
-    return { cost, label: `Shipping to ${name}` };
+    return { cost, label: `shipping to ${name}` };
   }
 
   /* ---------- weeks ---------- */
@@ -345,16 +365,16 @@ main section.card.active{display:block;animation:fadein .2s ease}
   /* ---------- render ---------- */
   function renderPortraits() {
     const box = $("portraits"); box.innerHTML = "";
-    if (!state.portraits.length) box.innerHTML = '<p class="empty">No portraits — that\'s fine if you\'re only buying gift cards.</p>';
+    if (!state.portraits.length) box.innerHTML = '<p class="empty">no portraits? just gift cards? very generous of you.</p>';
     state.portraits.forEach((p, i) => {
       const el = document.createElement("div"); el.className = "portrait";
       el.innerHTML = `
-        <div class="portrait-head"><h3>Portrait ${i + 1} <span class="muted" style="font:400 14px system-ui,sans-serif">· ${money(portraitPrice(p))}</span></h3>
-          <button class="link" type="button" data-remove>Remove</button></div>
+        <div class="portrait-head"><h3>portrait ${i + 1} <span class="muted" style="font-weight:700;font-size:15px;letter-spacing:0">· ${money(portraitPrice(p))}</span></h3>
+          <button class="link" type="button" data-remove>remove</button></div>
         <div class="chips">${SHOP.sizes.map(s => `
           <button class="chip" type="button" data-size="${s.id}" aria-pressed="${p.size === s.id}">
             <b>${s.label}</b><small>${s.dims} · ${money(s.price)}</small></button>`).join("")}</div>
-        <div class="row"><span class="label">Pets in this portrait</span>
+        <div class="row"><span class="label">pets in this portrait</span>
           <span class="stepper"><button type="button" data-pets="-1" ${p.pets <= 1 ? "disabled" : ""} aria-label="Fewer pets">−</button>
           <span>${p.pets}</span><button type="button" data-pets="1" ${p.pets >= SHOP.maxPetsPerPortrait ? "disabled" : ""} aria-label="More pets">+</button></span>
           <span class="label">${SHOP.extraPetPrice ? `+${money(SHOP.extraPetPrice)} for a second pet` : ""}</span></div>`;
@@ -369,34 +389,38 @@ main section.card.active{display:block;animation:fadein .2s ease}
     const n = state.portraits.length, box = $("weeks");
     const sec = $("sec-week"); sec.style.opacity = n ? 1 : .5;
     $("weekHint").textContent = n
-      ? `We paint ${SHOP.slots.portraitsPerWeek} portraits a week. Yours is ready about ${SHOP.slots.turnaroundWeeks === 1 ? "a week" : SHOP.slots.turnaroundWeeks + " weeks"} after your start week.`
-      : "Add a portrait to reserve a week.";
+      ? `${SHOP.slots.portraitsPerWeek} portraits a week, because the bish has one (1) staff member. yours ships about ${SHOP.slots.turnaroundWeeks === 1 ? "a week" : SHOP.slots.turnaroundWeeks + " weeks"} after your painting week starts.`
+      : "add a portrait to claim a week.";
     const weeks = weekList();
     if (state.week && !weeks.some(w => w.key === state.week && w.left >= n)) state.week = null;
     box.innerHTML = weeks.map(w => {
       const fits = n > 0 && w.left >= n;
-      const status = w.closed ? "Closed" : w.left === 0 ? "Full" : `${w.left} spot${w.left > 1 ? "s" : ""} left`;
+      const status = w.closed ? "closed (the bish is on break)" : w.left === 0 ? "full" : `${w.left} spot${w.left > 1 ? "s" : ""} left`;
       return `<button class="chip" type="button" data-week="${w.key}" aria-pressed="${state.week === w.key}" ${fits ? "" : "disabled"}>
-        <b>Week of ${fmtShort(w.date)}</b><small class="${w.left === 0 ? "full" : "left"}">${status}</small></button>`;
+        <b>week of ${fmtShort(w.date).toLowerCase()}</b><small class="${w.left === 0 ? "full" : "left"}">${status}</small></button>`;
     }).join("");
     box.querySelectorAll("[data-week]").forEach(b => b.onclick = () => { state.week = b.dataset.week; update(); });
   }
 
-  const POSTAL_LABEL = { CA: "Postal code", US: "ZIP code" };
-  const REGION_LABEL = { CA: "Province", US: "State" };
+  const POSTAL_LABEL = { CA: "postal code", US: "ZIP code" };
+  const REGION_LABEL = { CA: "province", US: "state" };
   function renderShip() {
     const n = state.portraits.length, a = state.ship, cfg = SHOP.shipping;
     $("sec-ship").style.opacity = n ? 1 : .5;
     if (!cfg.pickup) a.method = "ship";
-    const methods = [{ id: "ship", label: "Ship to me", note: "Canada Post, tracked" }];
-    if (cfg.pickup) methods.push({ id: "pickup", label: "Local pickup", note: "Free · we'll message you when it's ready" });
+    const methods = [{ id: "ship", label: "ship it", note: "tracked & insured" }];
+    if (cfg.pickup) methods.push({ id: "pickup", label: "pick up in the soo", note: "free · sault ste. marie addresses only" });
     $("shipMethod").innerHTML = methods.map(m => `
       <button class="chip" type="button" data-method="${m.id}" aria-pressed="${a.method === m.id}" ${n ? "" : "disabled"}>
         <b>${m.label}</b><small>${m.note}</small></button>`).join("");
     $("shipMethod").querySelectorAll("[data-method]").forEach(b => b.onclick = () => { a.method = b.dataset.method; update(); });
-    $("addrForm").style.display = n && a.method === "ship" ? "" : "none";
-    $("postalLabel").textContent = POSTAL_LABEL[a.country] || "Postcode";
-    $("regionLabel").textContent = REGION_LABEL[a.country] || "Region (optional)";
+    $("addrForm").style.display = n ? "" : "none";
+    // pick-up only needs the postal code (to confirm it's in Sault Ste. Marie)
+    const pick = a.method === "pickup";
+    if (pick) { a.country = "CA"; $("shipCountry").value = "CA"; }
+    ["shipCountry", "shipLine1", "shipLine2", "shipCity", "shipRegion"].forEach(id => { const f = $(id).closest(".field"); if (f) f.style.display = pick ? "none" : ""; });
+    $("postalLabel").textContent = a.method === "pickup" ? "your postal code (sault ste. marie only)" : (POSTAL_LABEL[a.country] || "postcode");
+    $("regionLabel").textContent = REGION_LABEL[a.country] || "region (optional)";
     renderQuote();
   }
   function renderQuote() {
@@ -405,7 +429,7 @@ main section.card.active{display:block;animation:fadein .2s ease}
     if (!state.portraits.length) { box.innerHTML = ""; return; }
     if (q.pending) { box.classList.add("pending"); box.textContent = q.pending; return; }
     if (q.error) { box.classList.add("bad"); box.textContent = q.error; return; }
-    box.innerHTML = `<span>${q.label}</span><b>${q.cost ? money(q.cost) : "Free"}</b>`;
+    box.innerHTML = `<span>${q.label}</span><b>${q.cost ? money(q.cost) : "free"}</b>`;
   }
 
   function renderGifts() {
@@ -413,8 +437,8 @@ main section.card.active{display:block;animation:fadein .2s ease}
       `<button class="chip" type="button" data-amt="${a}" aria-pressed="${+$("giftAmount").value === a}"><b>${money(a)}</b></button>`).join("");
     $("giftPresets").querySelectorAll("[data-amt]").forEach(b => b.onclick = () => { $("giftAmount").value = b.dataset.amt; renderGifts(); });
     $("giftList").innerHTML = state.gifts.map((g, i) => `
-      <div class="line"><span>${money(g.amount)} gift card<span class="sub">For ${esc(g.name)} · ${esc(g.email)}</span></span>
-      <button class="link" type="button" data-rmgift="${i}">Remove</button></div>`).join("");
+      <div class="line"><span>${money(g.amount)} gift card<span class="sub">for ${esc(g.name)} · ${esc(g.email)}</span></span>
+      <button class="link" type="button" data-rmgift="${i}">remove</button></div>`).join("");
     $("giftList").querySelectorAll("[data-rmgift]").forEach(b => b.onclick = () => { state.gifts.splice(+b.dataset.rmgift, 1); update(); });
   }
 
@@ -427,31 +451,31 @@ main section.card.active{display:block;animation:fadein .2s ease}
 
   /* ---------- steps ---------- */
   const STEPS = [
-    { id: "sec-portraits", title: "Portraits" },
-    { id: "sec-week",      title: "Start week", needsPortraits: true },
-    { id: "sec-ship",      title: "Delivery",   needsPortraits: true },
-    { id: "sec-gift",      title: "Gift cards" },
-    { id: "sec-details",   title: "Your details" },
+    { id: "sec-portraits", title: "portraits" },
+    { id: "sec-week",      title: "painting week", needsPortraits: true },
+    { id: "sec-ship",      title: "delivery",   needsPortraits: true },
+    { id: "sec-gift",      title: "gift cards" },
+    { id: "sec-details",   title: "about you" },
   ];
   const activeSteps = () => STEPS.filter(st => !st.needsPortraits || state.portraits.length);
   let current = "sec-portraits";
 
   function stepErrors(id) {
     const e = [], n = state.portraits.length;
-    if (id === "sec-week" && n && !state.week) e.push("Choose your start week.");
+    if (id === "sec-week" && n && !state.week) e.push("pick your painting week.");
     if (id === "sec-ship" && n) {
       const a = state.ship, q = quoteShipping();
+      if (q.pending || q.error) e.push(q.pending || q.error);
       if (a.method === "ship") {
-        if (q.pending || q.error) e.push(q.pending || q.error);
-        if (!a.line1.trim()) e.push("Enter your street address.");
-        if (!a.city.trim()) e.push("Enter your city.");
-        if ((a.country === "CA" || a.country === "US") && !a.region.trim()) e.push(`Enter your ${REGION_LABEL[a.country].toLowerCase()}.`);
+        if (!a.line1.trim()) e.push("we need your street address.");
+        if (!a.city.trim()) e.push("we need your city.");
+        if ((a.country === "CA" || a.country === "US") && !a.region.trim()) e.push(`we need your ${REGION_LABEL[a.country]}.`);
       }
     }
-    if (id === "sec-gift" && !n && !state.gifts.length) e.push("Add a portrait or a gift card to continue.");
+    if (id === "sec-gift" && !n && !state.gifts.length) e.push("add a portrait or a gift card to keep going.");
     if (id === "sec-details") {
-      if (!state.cust.name.trim()) e.push("Enter your name.");
-      if (!/^\S+@\S+\.\S+$/.test(state.cust.email)) e.push("Enter a valid email.");
+      if (!state.cust.name.trim()) e.push("we need your name.");
+      if (!/^\S+@\S+\.\S+$/.test(state.cust.email)) e.push("that email doesn't look right.");
     }
     return e;
   }
@@ -475,10 +499,10 @@ main section.card.active{display:block;animation:fadein .2s ease}
     $("progress").querySelectorAll("[data-goto]").forEach(b => b.onclick = () => go(b.dataset.goto));
     $("backBtn").hidden = idx === 0;
     const last = idx === steps.length - 1;
-    const next = last ? (SHOP.checkoutUrl ? "Continue to payment" : "Send order request")
-      : current === "sec-gift" && !state.gifts.length ? "Skip" : `Next: ${steps[idx + 1].title}`;
+    const next = last ? (SHOP.checkoutUrl ? "continue to payment" : "send order request")
+      : current === "sec-gift" && !state.gifts.length ? "skip" : `next: ${steps[idx + 1].title}`;
     $("nextBtn").textContent = next;
-    $("mobileNext").textContent = last ? "Pay" : "Next";
+    $("mobileNext").textContent = last ? "pay" : "next";
     // If problems are showing, keep the list in step with what's still missing
     const box = $("stepErrors");
     if (box.dataset.live) {
@@ -514,20 +538,20 @@ main section.card.active{display:block;animation:fadein .2s ease}
     const t = totals(), lines = [];
     state.portraits.forEach((p, i) => {
       const s = sizeById(p.size);
-      lines.push(`<div class="line"><span>Portrait ${i + 1} — ${s.label}<span class="sub">${s.dims} · ${p.pets} pet${p.pets > 1 ? "s" : ""}</span></span><span>${money(portraitPrice(p))}</span></div>`);
+      lines.push(`<div class="line"><span>portrait ${i + 1} · ${s.label}<span class="sub">${s.dims} · ${p.pets} pet${p.pets > 1 ? "s" : ""}</span></span><span>${money(portraitPrice(p))}</span></div>`);
     });
-    state.gifts.forEach(g => lines.push(`<div class="line"><span>Gift card<span class="sub">for ${esc(g.name)}</span></span><span>${money(g.amount)}</span></div>`));
+    state.gifts.forEach(g => lines.push(`<div class="line"><span>gift card<span class="sub">for ${esc(g.name)}</span></span><span>${money(g.amount)}</span></div>`));
     if (state.week) {
       const d = new Date(state.week + "T00:00:00");
       const ship = new Date(d); ship.setDate(d.getDate() + SHOP.slots.turnaroundWeeks * 7);
-      lines.push(`<div class="line"><span>Start week<span class="sub">Ready around ${fmtShort(ship)}</span></span><span>${fmtShort(d)}</span></div>`);
+      lines.push(`<div class="line"><span>painting week<span class="sub">ships around ${fmtShort(ship).toLowerCase()}</span></span><span>${fmtShort(d).toLowerCase()}</span></div>`);
     }
-    $("cartLines").innerHTML = lines.join("") || '<p class="empty">Your order is empty.</p>';
+    $("cartLines").innerHTML = lines.join("") || '<p class="empty">nothing here yet. the bish is unimpressed.</p>';
     const q = quoteShipping();
     $("cartTotals").innerHTML = `
-      <div class="line"><span>Subtotal</span><span>${money(t.portraits + t.gifts)}</span></div>
-      ${state.portraits.length ? `<div class="line"><span>${q.label || "Shipping"}</span><span>${q.label ? (q.cost ? money(q.cost) : "Free") : "—"}</span></div>` : ""}
-      <div class="line total"><span>Total</span><span>${money(t.total)}</span></div>`;
+      <div class="line"><span>subtotal</span><span>${money(t.portraits + t.gifts)}</span></div>
+      ${state.portraits.length ? `<div class="line"><span>${q.label || "shipping"}</span><span>${q.label ? (q.cost ? money(q.cost) : "free") : "—"}</span></div>` : ""}
+      <div class="line total"><span>total</span><span>${money(t.total)}</span></div>`;
     $("mobileTotal").textContent = money(t.total);
   }
 
@@ -539,11 +563,11 @@ main section.card.active{display:block;animation:fadein .2s ease}
   $("giftAmount").oninput = renderGifts;
   $("addGift").onclick = () => {
     const amount = Math.round(+$("giftAmount").value), name = $("giftName").value.trim(), email = $("giftEmail").value.trim();
-    if (!(amount >= SHOP.giftCards.min && amount <= SHOP.giftCards.max)) return toast(`Gift cards are ${money(SHOP.giftCards.min)}–${money(SHOP.giftCards.max)}.`);
-    if (!name || !/^\S+@\S+\.\S+$/.test(email)) return toast("Add the recipient's name and email.");
+    if (!(amount >= SHOP.giftCards.min && amount <= SHOP.giftCards.max)) return toast(`gift cards are ${money(SHOP.giftCards.min)}–${money(SHOP.giftCards.max)}.`);
+    if (!name || !/^\S+@\S+\.\S+$/.test(email)) return toast("add their name and email.");
     state.gifts.push({ amount, name, email, message: $("giftMsg").value.trim() });
     ["giftAmount", "giftName", "giftEmail", "giftMsg"].forEach(id => $(id).value = "");
-    update(); toast("Gift card added");
+    update(); toast("gift card added");
   };
   [["custName", "name"], ["custEmail", "email"], ["custIg", "ig"], ["custNotes", "notes"]].forEach(([id, k]) => {
     $(id).value = state.cust[k] || "";
@@ -607,14 +631,14 @@ main section.card.active{display:block;animation:fadein .2s ease}
       location.href = `mailto:${SHOP.orderEmail}?subject=${encodeURIComponent("Portrait order — " + state.cust.name)}&body=${encodeURIComponent(orderText())}`;
       return;
     }
-    btn.disabled = true; btn.textContent = "Opening secure checkout…";
+    btn.disabled = true; btn.textContent = "opening secure checkout…";
     try {
       const r = await fetch(SHOP.checkoutUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(orderPayload()) });
       const data = await r.json();
       if (!r.ok || !data.url) throw new Error(data.error || "Checkout failed");
       location.href = data.url;
     } catch (err) {
-      $("stepErrors").innerHTML = `<li>${esc(err.message)}. Please try again, or email ${esc(SHOP.orderEmail)}.</li>`;
+      $("stepErrors").innerHTML = `<li>${esc(err.message)}. try again, or email ${esc(SHOP.orderEmail)} and we'll sort it out.</li>`;
       btn.disabled = false; renderSteps();
     }
   }
@@ -623,7 +647,11 @@ main section.card.active{display:block;animation:fadein .2s ease}
   const q = new URLSearchParams(location.search);
   if (q.get("paid") === "1") {
     state.portraits = []; state.gifts = []; state.week = null; save();
-    setTimeout(() => toast("Thank you! Check your email for your receipt."), 300);
+    $("thanks").hidden = false;
+    document.querySelector(".layout").style.display = "none";
+    document.querySelector(".mobile-bar").style.visibility = "hidden";
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+    setTimeout(() => window.scrollTo(0, 0), 0);
   }
 
   update();
