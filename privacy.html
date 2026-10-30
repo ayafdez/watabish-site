@@ -38,7 +38,7 @@ footer a{color:#BFE3FF}
 <main>
 <p class="kicker">the boring (important) part</p>
 <h1>privacy policy</h1>
-<p class="muted">Effective October 25, 2026</p>
+<p class="muted">Effective October 30, 2026</p>
 
 <div class="tldr">
 <h2>the short version</h2>
@@ -55,13 +55,15 @@ footer a{color:#BFE3FF}
 <p>watabish is a small, mostly-for-fun project run by Aya and Grace in Ontario, Canada, inspired by a cat named Chikadee Watabish. We paint pet portraits, and we run a free game (watabish.com/play) and a free neighbourhood cat map (watabish.com/map). "We," "us" and "our" mean watabish. Questions about privacy go to <a href="mailto:aya@likhangmaya.com">aya@likhangmaya.com</a>. Aya and Grace are responsible for privacy at watabish.</p>
 
 <h2>2. what we collect</h2>
-<p><strong>When you book a portrait</strong> (through our booking page, powered by Cal.com):</p>
+<p><strong>When you order a portrait</strong> (through our checkout at watabish.com/shop):</p>
 <ul>
-<li>your name, email address and phone number</li>
+<li>your name and email address, your Instagram handle if you share it, and your phone number if you give it at payment</li>
 <li>your pet's name and species, a photo of your pet, and anything you tell us about them</li>
-<li>your booking date and where works for the hand-off, or your shipping address if you choose shipping</li>
+<li>the painting week you choose, and your shipping address (or, for local pick-up, your postal code)</li>
 </ul>
-<p><strong>When you pay</strong>, your payment is processed by Stripe through our Cal.com booking page. We see that you paid and how much. We never see or store your full card or bank details.</p>
+<p><strong>When you buy a gift card</strong>, we also receive the recipient's name and email address and your message, so we can send it to them.</p>
+<p><strong>Your cart</strong> is saved in your own browser until you finish or clear it, so you don't lose it if you leave the page.</p>
+<p><strong>When you pay</strong>, your payment is processed by Stripe on its secure checkout page. We see that you paid and how much. We never see or store your full card or bank details.</p>
 <p><strong>When you play the game without an account</strong>, your progress is saved only in your own browser on your own device. We don't receive it.</p>
 <p><strong>When you sign in to the game</strong> (optional):</p>
 <ul>
@@ -103,8 +105,8 @@ footer a{color:#BFE3FF}
 <div class="table-wrap">
 <table>
 <tr><th>Service</th><th>What it does</th><th>Where data may be stored</th></tr>
-<tr><td>Cal.com</td><td>portrait bookings</td><td>United States</td></tr>
-<tr><td>Stripe</td><td>portrait payments</td><td>United States and Canada</td></tr>
+<tr><td>Cloudflare</td><td>runs our checkout, which prices your order and passes it to Stripe</td><td>worldwide</td></tr>
+<tr><td>Stripe</td><td>payments for portraits and gift cards, and your order details</td><td>United States and Canada</td></tr>
 <tr><td>Easyship</td><td>buying shipping labels for shipped portraits (gets your name, address and phone number)</td><td>United States and elsewhere</td></tr>
 <tr><td>Canada Post</td><td>delivering shipped portraits</td><td>Canada</td></tr>
 <tr><td>Supabase</td><td>accounts, saved game progress, cat map posts, photos and comments, and the coming-soon email list</td><td>Canada (Central)</td></tr>
