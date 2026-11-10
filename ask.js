@@ -24,7 +24,9 @@
     ".wb-ask-pill[hidden],.wb-ask[hidden]{display:none}",
     ".wb-ask{position:fixed;right:16px;bottom:16px;z-index:61;width:min(380px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;background:#F3EADB;color:#2B1C15;border:3px solid #2B1C15;border-radius:24px;box-shadow:6px 6px 0 #2B1C15;padding:20px;font:400 16px/1.45 'Bricolage Grotesque','Trebuchet MS',sans-serif;animation:wbAskIn .25s ease}",
     "@keyframes wbAskIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}",
-    "@media (prefers-reduced-motion: reduce){.wb-ask{animation:none}.wb-ask-pill{transition:none}}",
+    ".wb-ask.wb-pop{animation:wbAskPop .5s cubic-bezier(.3,1.6,.5,1)}",
+    "@keyframes wbAskPop{0%{opacity:0;transform:translateY(24px) scale(.9) rotate(-2deg)}60%{opacity:1;transform:translateY(-4px) scale(1.02) rotate(1deg)}100%{transform:none}}",
+    "@media (prefers-reduced-motion: reduce){.wb-ask,.wb-ask.wb-pop{animation:none}.wb-ask-pill{transition:none}}",
     ".wb-ask h2{margin:0 0 4px;font-size:24px;font-weight:800;letter-spacing:-0.03em;line-height:1.05;padding-right:36px}",
     ".wb-ask .sub{margin:0 0 14px;font-size:14px;color:#5A463A}",
     ".wb-ask .x{position:absolute;top:10px;right:10px;width:40px;height:40px;border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:#2B1C15}",
@@ -107,13 +109,45 @@
 
   if (seen === "sent") return;               // already answered: stay quiet
   if (seen === "closed") { pill.hidden = false; return; } // closed before: just the small button
-  // first visit: pop up once they've scrolled about halfway, or after 45 seconds of browsing
-  var shown = false, start = Date.now();
-  function maybe() {
-    if (shown) return;
-    var h = document.documentElement, depth = (h.scrollTop + innerHeight) / h.scrollHeight;
-    if (depth > 0.5 && Date.now() - start > 8000) { shown = true; open(); removeEventListener("scroll", maybe); }
+
+  // First visit: pop up only when someone looks hesitant around the prices.
+  var start = Date.now(), shown = false, seenPrices = false, booked = false;
+  var pricing = Array.prototype.slice.call(document.querySelectorAll("#offer, #order, .cards"));
+  function ready() { return !shown && !booked && Date.now() - start > 10000; }
+  function trigger(why) {
+    if (!ready()) return;
+    shown = true; open();
+    box.classList.add("wb-pop");
   }
-  addEventListener("scroll", maybe, { passive: true });
-  setTimeout(function () { if (!shown) { shown = true; open(); removeEventListener("scroll", maybe); } }, 45000);
+  // anyone clicking a book / shop link is already ordering: leave them alone
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("a[href*='shop/index.html'], a[href*='cal.com']");
+    if (a) booked = true;
+  });
+  // 1. lingering on the prices for 6 seconds
+  var lingerTimer = null;
+  if ("IntersectionObserver" in window && pricing.length) {
+    var visible = new Set();
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        // counts as "looking at it" when it fills at least 40% of the screen (sections can be taller than the screen)
+        var share = en.intersectionRect.height / Math.min(innerHeight, en.boundingClientRect.height || innerHeight);
+        if (en.isIntersecting && share >= 0.4) { visible.add(en.target); seenPrices = true; } else visible.delete(en.target);
+      });
+      if (visible.size && !lingerTimer) lingerTimer = setTimeout(function () { lingerTimer = null; if (visible.size) trigger("linger"); }, 6000);
+      if (!visible.size && lingerTimer) { clearTimeout(lingerTimer); lingerTimer = null; }
+    }, { threshold: [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] });
+    pricing.forEach(function (el) { io.observe(el); });
+  }
+  // 2. scrolling back up after seeing the prices
+  var lastY = scrollY, upRun = 0;
+  addEventListener("scroll", function () {
+    var y = scrollY, d = y - lastY; lastY = y;
+    if (d < 0) upRun += -d; else if (d > 0) upRun = 0;
+    if (seenPrices && upRun > Math.max(500, innerHeight * 0.8)) trigger("scroll-up");
+  }, { passive: true });
+  // 3. heading for the close / back button (computers)
+  document.addEventListener("mouseout", function (e) {
+    if (!e.relatedTarget && e.clientY <= 0 && seenPrices) trigger("exit");
+  });
 })();
