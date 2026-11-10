@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>leave a review — watabish</title>
+<meta name="description" content="Got a watabish portrait? Tell us how it went.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2B1C15">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&amp;display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:#F3EADB;color:#2B1C15;font-family:'Bricolage Grotesque','Trebuchet MS',sans-serif;font-size:18px;line-height:1.55}
+a{color:#1F5FA8}a:hover{color:#2B1C15}
+header{background:#2B1C15;padding:20px 24px}
+header a{color:#F3EADB;font-weight:800;font-size:26px;letter-spacing:-0.04em;text-decoration:none}
+header a span{color:#BFE3FF}
+main{max-width:680px;margin:0 auto;padding:clamp(44px,7vw,80px) 24px}
+.kicker{margin:0;font-weight:700;font-size:14px;letter-spacing:0.1em;text-transform:uppercase;color:#1F5FA8}
+h1{margin:8px 0 14px;font-size:clamp(44px,8vw,80px);line-height:0.92;letter-spacing:-0.05em;font-weight:800}
+h1 span{color:#1F5FA8}
+.lede{font-size:20px;margin:0 0 32px}
+form{background:#FFFFFF;border:3px solid #2B1C15;border-radius:24px;padding:clamp(20px,4vw,32px);box-shadow:6px 6px 0 #2B1C15;display:flex;flex-direction:column;gap:22px}
+fieldset{border:0;margin:0;padding:0}
+legend,.lbl{font-weight:800;font-size:19px;margin-bottom:10px;padding:0;display:block}
+.paws{display:flex;gap:6px;flex-wrap:wrap}
+.paws input{position:absolute;opacity:0;width:1px;height:1px}
+.paws label{display:flex;align-items:center;justify-content:center;min-width:48px;min-height:48px;padding:0 10px;border:2px solid #2B1C15;border-radius:999px;background:#F3EADB;font-weight:800;cursor:pointer}
+.paws input:checked+label{background:#2B1C15;color:#BFE3FF}
+.paws input:focus-visible+label{outline:3px solid #1F5FA8;outline-offset:2px}
+.hint{font-size:15px;color:#5A463A;margin:6px 0 0}
+input[type=text],input[type=email],textarea{width:100%;background:#F3EADB;border:2px solid #2B1C15;border-radius:14px;padding:12px 14px;font:inherit;color:#2B1C15}
+textarea{min-height:140px;resize:vertical}
+input:focus,textarea:focus{outline:3px solid #1F5FA8;outline-offset:1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.row{grid-template-columns:1fr}}
+.check{display:flex;gap:12px;align-items:flex-start;font-size:16px}
+.check input{width:22px;height:22px;margin-top:3px;accent-color:#1F5FA8;flex:0 0 auto}
+button{min-height:56px;border:3px solid #2B1C15;border-radius:999px;background:#1F5FA8;color:#FFFFFF;font:inherit;font-size:19px;font-weight:800;cursor:pointer;box-shadow:4px 4px 0 #2B1C15}
+button:disabled{opacity:.6;cursor:wait}
+#msg{margin:0;font-weight:700}
+#msg:empty{display:none}
+.trap{position:absolute;left:-9999px}
+.done{background:#2B1C15;color:#F3EADB;border:3px solid #2B1C15;border-radius:24px;padding:28px;box-shadow:6px 6px 0 #1F5FA8}
+.done h2{margin:0 0 10px;font-size:40px;letter-spacing:-0.04em;color:#BFE3FF}
+.done a{color:#BFE3FF}
+footer{background:#2B1C15;color:#E9DCC8;padding:32px 24px;font-size:15px;margin-top:40px}
+footer div{max-width:680px;margin:0 auto;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between}
+footer a{color:#BFE3FF}
+</style>
+</head>
+<body>
+<header><a href="index.html">watabish<span>.</span></a></header>
+<main>
+<p class="kicker">the bish wants your opinion (he will ignore it)</p>
+<h1>how did <span>we do?</span></h1>
+<p class="lede">got a watabish portrait? tell us how it went. the good, the bad, the "why does my dog look like that."</p>
+
+<form id="fb" novalidate>
+  <fieldset>
+    <legend>how many paws?</legend>
+    <div class="paws">
+      <input type="radio" name="rating" id="r1" value="1"><label for="r1">1</label>
+      <input type="radio" name="rating" id="r2" value="2"><label for="r2">2</label>
+      <input type="radio" name="rating" id="r3" value="3"><label for="r3">3</label>
+      <input type="radio" name="rating" id="r4" value="4"><label for="r4">4</label>
+      <input type="radio" name="rating" id="r5" value="5"><label for="r5">5</label>
+    </div>
+  </fieldset>
+
+  <div>
+    <label class="lbl" for="message">tell us everything</label>
+    <textarea id="message" name="message" maxlength="2000" required placeholder="how did the portrait turn out? how was ordering, shipping, the whole thing?"></textarea>
+  </div>
+
+  <div class="row">
+    <div><label class="lbl" for="name">your name</label><input type="text" id="name" name="name" maxlength="80" autocomplete="name" placeholder="first name is fine"></div>
+    <div><label class="lbl" for="pet">your pet's name</label><input type="text" id="pet" name="pet" maxlength="80" placeholder="the star of the show"></div>
+  </div>
+
+  <div>
+    <label class="lbl" for="email">your email (optional)</label>
+    <input type="email" id="email" name="email" maxlength="254" autocomplete="email" placeholder="only if you'd like a reply">
+  </div>
+
+  <label class="check"><input type="checkbox" id="share" name="share"> <span>you can share my review on watabish.com and @watabish_ (first name and pet's name only)</span></label>
+
+  <div class="trap" aria-hidden="true"><label for="website">leave this empty</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></div>
+
+  <button type="submit">send it to the bish</button>
+  <p id="msg" aria-live="polite"></p>
+  <p class="hint" style="margin:0">we only use this to improve and, if you said yes, to share your review. <a href="privacy.html">privacy</a></p>
+</form>
+
+<section class="done" id="done" hidden>
+  <h2>received.</h2>
+  <p>thank you. the bish has read it and is pretending not to care. if you left your email and asked something, we'll reply soon.</p>
+  <p style="margin:0"><a href="index.html">back to watabish.com</a> · <a href="https://www.instagram.com/watabish_/">@watabish_</a></p>
+</section>
+</main>
+<footer><div><span>© 2026 watabish · painted in Sault Ste. Marie, Ontario</span><span><a href="index.html">home</a> · <a href="terms.html">terms</a> · <a href="privacy.html">privacy</a></span></div></footer>
+<script>
+(function () {
+  var URL = "https://drreubfqwmivmpwpynnt.supabase.co/rest/v1/feedback";
+  var KEY = "sb_publishable_ZIFNEg8XxN_JW6li0MKReA_yjgPEfyj";
+  var f = document.getElementById("fb"), msg = document.getElementById("msg"), btn = f.querySelector("button");
+  f.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (f.website.value) return; // bots fill the hidden field
+    var r = f.querySelector("input[name=rating]:checked");
+    var text = f.message.value.trim(), email = f.email.value.trim();
+    if (!r) { msg.textContent = "pick how many paws first."; return; }
+    if (!text) { msg.textContent = "tell us a little something. even one sentence."; return; }
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = "that email doesn't look right."; return; }
+    btn.disabled = true; msg.textContent = "sending…";
+    fetch(URL, {
+      method: "POST",
+      headers: { apikey: KEY, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ rating: +r.value, message: text, name: f.name.value.trim() || null, pet_name: f.pet.value.trim() || null, email: email || null, can_share: f.share.checked })
+    }).then(function (res) {
+      if (!res.ok) throw new Error(res.status);
+      f.hidden = true; document.getElementById("done").hidden = false; window.scrollTo(0, 0);
+    }).catch(function () {
+      msg.textContent = "that didn't send. try again, or email aya@likhangmaya.com.";
+      btn.disabled = false;
+    });
+  });
+})();
+</script>
+</body>
+</html>
