@@ -38,6 +38,8 @@ ol.steps{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;g
 ol.steps li{counter-increment:s;display:flex;gap:16px;align-items:flex-start;background:#FFFFFF;border:3px solid #2B1C15;border-radius:20px;padding:18px 20px}
 ol.steps li::before{content:counter(s);flex:0 0 auto;width:40px;height:40px;border-radius:999px;background:#2B1C15;color:#BFE3FF;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px}
 ol.steps b{display:block;font-size:20px;margin-bottom:2px}
+.box a{font-weight:800;white-space:nowrap}
+html[data-holiday=off] [data-holiday-bar]{display:none}
 .box{background:#BFE3FF;border:3px solid #2B1C15;border-radius:20px;padding:20px 22px}
 ul{padding-left:22px;margin:0 0 12px}
 li{margin:0 0 8px}
@@ -52,7 +54,7 @@ footer a{color:#BFE3FF}
 <p class="kicker">the bish ships to the US now</p>
 <h1>shipping to <span>the US.</span></h1>
 <p class="lede">you're getting a hand-painted 8×10 acrylic portrait of your pet, shipped from Sault Ste. Marie, Ontario, straight to your door. here's exactly how it works.</p>
-<p class="box" style="margin:-12px 0 36px;padding:14px 18px;font-weight:700">want it by christmas? claim a painting week no later than the week of november 23.</p>
+<p class="box" data-holiday-bar="us" style="margin:-12px 0 36px;padding:14px 18px;font-weight:700">want it by christmas? claim a painting week no later than the week of november 23.</p>
 
 <h2>the price (everything included)</h2>
 <div class="cards">
@@ -103,6 +105,7 @@ footer a{color:#BFE3FF}
 <p>the full details are in our <a href="terms.html">terms</a> and <a href="privacy.html">privacy policy</a>. questions? email <a href="mailto:aya@likhangmaya.com">aya@likhangmaya.com</a> or dm <a href="https://www.instagram.com/watabish_/">@watabish_</a>.</p>
 </main>
 <footer><div><span>© 2026 watabish · painted in Sault Ste. Marie, Ontario</span><span><a href="index.html">home</a> · <a href="shop/index.html">shop</a> · <a href="terms.html">terms</a> · <a href="privacy.html">privacy</a></span></div></footer>
+<script src="holiday.js" defer></script>
 <script src="ask.js" defer></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e59c6eb38a8e4eec98ada1d31cd5fb8e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
