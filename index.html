@@ -41,6 +41,9 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 .bv-p{grid-column:2;grid-row:1}
 #bv-apps:checked~.bv-tabs label[for=bv-apps] .bv-t::after,#bv-lore:checked~.bv-tabs label[for=bv-lore] .bv-t::after,#bv-fund:checked~.bv-tabs label[for=bv-fund] .bv-t::after,#bv-soon:checked~.bv-tabs label[for=bv-soon] .bv-t::after{content:" →";color:#BFE3FF}
 }
+.hol-bar{background:#1F5FA8;color:#FFFFFF;border-bottom:3px solid #2B1C15;padding:12px 24px;text-align:center;font-size:16px;font-weight:700;line-height:1.4}
+.hol-bar a{color:#BFE3FF;font-weight:800;white-space:nowrap}.hol-bar a:hover{color:#FFFFFF}
+.hol-bar[hidden]{display:none}
 @media (prefers-reduced-motion: reduce){.wb-track,.wb-wobble{animation:none}}
 </style>
 </head>
@@ -54,6 +57,9 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <span>not a scam (affectionate)</span><span>✦</span><span>$49 hand-painted pet portraits</span><span>✦</span><span>fund the laser</span><span>✦</span><span>he knows what he did</span><span>✦</span><span>iconic gift energy</span><span>✦</span>
 </div>
 </div>
+
+<!-- holiday cut-offs (filled in by holiday.js) -->
+<div class="hol-bar" data-holiday-bar="home" hidden role="status"></div>
 
 <!-- nav -->
 <nav style="max-width: 1240px; margin: 0 auto; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
@@ -92,7 +98,7 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <div style="display: flex; flex-direction: column; gap: 12px">
 <p style="margin: 0; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em">gift guide for icons (and their pets)</p>
 <h2 style="margin: 0; font-size: clamp(44px, 7vw, 96px); line-height: 0.9; letter-spacing: -0.05em; font-weight: 800">it's giving <span style="color: #1F5FA8">iconic.</span></h2>
-<a href="#offer" style="align-self: flex-start; margin-top: 12px; display: inline-flex; align-items: center; min-height: 56px; padding: 0 28px; background: #2B1C15; color: #BFE3FF; border: 3px solid #2B1C15; border-radius: 999px; font-weight: 800; font-size: 20px; text-decoration: none">gift a watabish — from $49</a>
+<a href="#offer" data-holiday-gift="send a gift card — from $25" style="align-self: flex-start; margin-top: 12px; display: inline-flex; align-items: center; min-height: 56px; padding: 0 28px; background: #2B1C15; color: #BFE3FF; border: 3px solid #2B1C15; border-radius: 999px; font-weight: 800; font-size: 20px; text-decoration: none">gift a watabish — from $49</a>
 </div>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 56px 32px">
 <article style="display: flex; flex-direction: column; align-items: stretch">
@@ -103,7 +109,7 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <div style="position: relative; margin: -56px 18px 0; background: #F3EADB; color: #2B1C15; border: 3px solid #2B1C15; border-radius: 24px; padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 6px 6px 0 #2B1C15; transform: rotate(-2deg)">
 <h3 style="margin: 0; font-size: clamp(30px, 2.6vw, 36px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; color: #1F5FA8">for your pet</h3>
 <p style="margin: 0; font-size: 18px; line-height: 1.35; font-weight: 700">they've been serving looks for free. make it official.</p>
-<a href="#offer" style="align-self: flex-start; display: inline-block; padding: 6px 0; font-size: 17px; font-weight: 800; color: #1F5FA8; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px">give them a watabish →</a>
+<a href="#offer" data-holiday-gift="send them a gift card →" style="align-self: flex-start; display: inline-block; padding: 6px 0; font-size: 17px; font-weight: 800; color: #1F5FA8; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px">give them a watabish →</a>
 </div>
 </article>
 <article style="display: flex; flex-direction: column; align-items: stretch">
@@ -114,7 +120,7 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <div style="position: relative; margin: -56px 18px 0; background: #2B1C15; color: #F3EADB; border: 3px solid #2B1C15; border-radius: 24px; padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 6px 6px 0 #1F5FA8; transform: rotate(1.5deg)">
 <h3 style="margin: 0; font-size: clamp(30px, 2.6vw, 36px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; color: #BFE3FF">for your fam</h3>
 <p style="margin: 0; font-size: 18px; line-height: 1.35; font-weight: 700">they raised an icon (you). return the favour.</p>
-<a href="#offer" style="align-self: flex-start; display: inline-block; padding: 6px 0; font-size: 17px; font-weight: 800; color: #BFE3FF; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px">give them a watabish →</a>
+<a href="#offer" data-holiday-gift="send them a gift card →" style="align-self: flex-start; display: inline-block; padding: 6px 0; font-size: 17px; font-weight: 800; color: #BFE3FF; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px">give them a watabish →</a>
 </div>
 </article>
 <article style="display: flex; flex-direction: column; align-items: stretch">
@@ -125,7 +131,7 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <div style="position: relative; margin: -56px 18px 0; background: #F3EADB; color: #2B1C15; border: 3px solid #2B1C15; border-radius: 24px; padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 6px 6px 0 #2B1C15; transform: rotate(-1deg)">
 <h3 style="margin: 0; font-size: clamp(30px, 2.6vw, 36px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; color: #1F5FA8">for your bestie</h3>
 <p style="margin: 0; font-size: 18px; line-height: 1.35; font-weight: 700">iconic people give iconic gifts. it's literally the rules.</p>
-<a href="#offer" style="align-self: flex-start; display: inline-block; padding: 6px 0; font-size: 17px; font-weight: 800; color: #1F5FA8; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px">get a watabish →</a>
+<a href="#offer" data-holiday-gift="send them a gift card →" style="align-self: flex-start; display: inline-block; padding: 6px 0; font-size: 17px; font-weight: 800; color: #1F5FA8; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px">get a watabish →</a>
 </div>
 </article>
 </div>
@@ -387,6 +393,7 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 </div>
 <script src="waitlist.js" defer></script>
 <script src="ask.js" defer></script>
+<script src="holiday.js" defer></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e59c6eb38a8e4eec98ada1d31cd5fb8e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

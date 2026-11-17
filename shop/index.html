@@ -185,6 +185,9 @@ main section.card.active{display:block;animation:fadein .2s ease}
 .toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--ink);color:#F3EADB;padding:10px 18px;border-radius:999px;font-size:15px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
 .toast.show{opacity:1}
 .gift-list .line{align-items:center}
+.hol-bar{background:var(--accent);color:#FFFFFF;border-bottom:3px solid var(--line);padding:12px 24px;text-align:center;font-size:16px;font-weight:700;line-height:1.4}
+.hol-bar a{color:var(--ice);font-weight:800;white-space:nowrap}.hol-bar a:hover{color:#FFFFFF}
+.hol-bar[hidden]{display:none}
 .thanks{background:var(--ink);color:#F3EADB;border:3px solid var(--line);border-radius:24px;padding:28px;box-shadow:6px 6px 0 var(--accent);margin-bottom:28px}
 .thanks h2{font-size:clamp(34px,5vw,52px);color:var(--ice);margin-bottom:10px}
 .thanks p{margin:0 0 10px;font-size:18px}
@@ -198,6 +201,7 @@ footer.site-foot a{color:var(--ice)}
 </head>
 <body>
 <div class="site-head"><a class="logo" href="../index.html">watabish<span>.</span></a><a href="../index.html#faq">questions?</a></div>
+<div class="hol-bar" data-holiday-bar="shop" hidden role="status"></div>
 <div class="wrap">
   <header class="intro">
     <div class="brand">hand-painted pet portraits · from $49</div>
@@ -351,8 +355,10 @@ footer.site-foot a{color:var(--ice)}
   const fmtShort = d => d.toLocaleDateString("en-CA", { month: "short", day: "numeric" });
   function weekList() {
     const t = new Date(); t.setHours(0, 0, 0, 0);
-    const monday = new Date(t); monday.setDate(t.getDate() + ((8 - t.getDay()) % 7 || 7)); // next Monday
-    monday.setDate(monday.getDate() + (SHOP.slots.leadWeeks - 1) * 7);
+    // First Monday at least (leadWeeks − 1) weeks away. On a Monday, the Monday
+    // exactly 7 days out still counts (same rule as MIN_DAYS_AHEAD in the worker).
+    const monday = new Date(t); monday.setDate(t.getDate() + (SHOP.slots.leadWeeks - 1) * 7);
+    monday.setDate(monday.getDate() + (8 - monday.getDay()) % 7);
     const out = [];
     for (let i = 0; i < SHOP.slots.weeksAhead; i++) {
       const d = new Date(monday); d.setDate(monday.getDate() + i * 7);
@@ -675,6 +681,13 @@ footer.site-foot a{color:var(--ice)}
     state.portraits = [{ size: pre, pets: state.portraits[0] ? state.portraits[0].pets : 1 }];
     try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
   }
+  // Arriving from a "send a gift card" link: skip the default portrait and open gift cards
+  // (a cart with a painting week already picked is left alone)
+  const giftOnly = q.get("gift") === "1";
+  if (giftOnly) {
+    if (!state.week) state.portraits = [];
+    try { history.replaceState(null, "", location.pathname + "#gift"); } catch (e) {}
+  }
   if (q.get("paid") === "1") {
     state.portraits = []; state.gifts = []; state.week = null; save();
     $("thanks").hidden = false;
@@ -690,6 +703,7 @@ footer.site-foot a{color:var(--ice)}
   for (const st of reach) { if (st.id === fromHash && ok) { go(st.id, false); break; } if (stepErrors(st.id).length) ok = false; }
 })();
 </script>
+<script src="../holiday.js" defer></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e59c6eb38a8e4eec98ada1d31cd5fb8e"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
