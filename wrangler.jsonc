@@ -1,0 +1,12 @@
+// Cloudflare Workers Builds deploys the checkout worker from this repo on every
+// push to main. Without this file it deploys the website instead and checkout breaks.
+// The website itself is hosted on GitHub Pages, not here.
+{
+  "name": "watabish-checkout",
+  "main": "_checkout/worker.js",
+  "compatibility_date": "2026-10-30",
+  "workers_dev": true,
+  // Keep anything set in the Cloudflare dashboard (the STRIPE_SECRET_KEY secret is never touched by deploys)
+  "keep_vars": true,
+  "observability": { "enabled": true }
+}
