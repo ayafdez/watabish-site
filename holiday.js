@@ -4,7 +4,8 @@
    - usLastOrder / caLastOrder: last day someone can claim a painting week
      that still arrives by Christmas (the week of Nov 23 / Dec 7 must be at
      least 7 days away, so it's the Monday one week before).
-   - giftUntil: after this day the banner disappears.
+   - giftUntil: last day of the holiday look (banner, hero, hat, lights,
+     bows). The day after, everything goes back to normal by itself.
    Test any date by adding ?holiday_date=2026-12-02 to a page's address.
    ===================================================================== */
 const HOLIDAY = {
@@ -12,7 +13,7 @@ const HOLIDAY = {
   caLastOrder: "2026-11-30",
   caLastWeek: "dec 7",
   usLastWeek: "nov 23",
-  giftUntil: "2026-12-24",
+  giftUntil: "2026-12-25",
 };
 
 (() => {
@@ -52,6 +53,38 @@ const HOLIDAY = {
       shop: `<b>christmas painting weeks are done.</b> a gift card still makes it: emailed to them, they pick the pet. ${a(giftUrl, "send one →")}`,
     },
   };
+
+  // Homepage hero: holiday headline while it's gifting season
+  const mon = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+  const caBy = `${mon[+HOLIDAY.caLastOrder.slice(5, 7) - 1]} ${+HOLIDAY.caLastOrder.slice(8)}`;
+  const blue = (t, block) => `<span style="color: #1F5FA8; ${block ? "display: block" : "white-space: nowrap"}">${t}</span>`;
+  const HERO = {
+    canada: {
+      tag:  "watabish · hand-painted pet portraits · from $49",
+      h1:   `give the iconic gift. ${blue("paint their pet.", true)}`,
+      size: "clamp(36px, 6.6vw, 96px)",
+      lead: `the gift they'll actually hang up. order by ${caBy} and it's under the tree. approved by one very rude cat.`,
+      cta2: ["send a gift card →", giftUrl],
+      note: `in time for christmas in canada (order by ${caBy}). US: gift cards only.`,
+    },
+    gift: {
+      tag:  "watabish · hand-painted pet portraits · gift cards from $25",
+      h1:   `give the ${blue("iconic gift.")}`,
+      size: "clamp(50px, 8vw, 116px)",
+      lead: "they pick the pet, the pose and the vibe. you take the credit. emailed to them in minutes.",
+      cta1: ["send a gift card — from $25", giftUrl],
+      note: "works for anyone, anywhere. no shipping deadline for a gift card.",
+    },
+  };
+  const hero = HERO[phase];
+  if (hero) {
+    const $ = k => document.querySelector(`[data-hero="${k}"]`);
+    if ($("h1")) { $("h1").innerHTML = hero.h1; $("h1").style.fontSize = hero.size; }
+    ["tag", "lead", "note"].forEach(k => { if ($(k)) $(k).textContent = hero[k]; });
+    ["cta1", "cta2"].forEach(k => {
+      if (hero[k] && $(k)) { $(k).textContent = hero[k][0]; $(k).href = hero[k][1]; }
+    });
+  }
 
   document.querySelectorAll("[data-holiday-bar]").forEach(el => {
     const html = MSG[phase][el.dataset.holidayBar];
