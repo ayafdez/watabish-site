@@ -21,6 +21,11 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 @keyframes wb-wobble{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
 .wb-track{animation:wb-scroll 28s linear infinite}
 .wb-wobble{animation:wb-wobble 2.4s ease-in-out infinite}
+.wb-lights{display:none;position:relative;height:28px;margin-bottom:-14px;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22160%22%20height%3D%2228%22%3E%3Cpath%20d%3D%22M0%203%20Q40%2019%2080%203%20Q120%2019%20160%203%22%20fill%3D%22none%22%20stroke%3D%22%232B1C15%22%20stroke-width%3D%222%22/%3E%3Crect%20x%3D%2217%22%20y%3D%227%22%20width%3D%226%22%20height%3D%225%22%20rx%3D%221%22%20fill%3D%22%232B1C15%22/%3E%3Cellipse%20cx%3D%2220%22%20cy%3D%2218%22%20rx%3D%225%22%20ry%3D%227%22%20fill%3D%22%23D7263D%22%20stroke%3D%22%232B1C15%22%20stroke-width%3D%222%22/%3E%3Crect%20x%3D%2257%22%20y%3D%227%22%20width%3D%226%22%20height%3D%225%22%20rx%3D%221%22%20fill%3D%22%232B1C15%22/%3E%3Cellipse%20cx%3D%2260%22%20cy%3D%2218%22%20rx%3D%225%22%20ry%3D%227%22%20fill%3D%22%232E8B57%22%20stroke%3D%22%232B1C15%22%20stroke-width%3D%222%22/%3E%3Crect%20x%3D%2297%22%20y%3D%227%22%20width%3D%226%22%20height%3D%225%22%20rx%3D%221%22%20fill%3D%22%232B1C15%22/%3E%3Cellipse%20cx%3D%22100%22%20cy%3D%2218%22%20rx%3D%225%22%20ry%3D%227%22%20fill%3D%22%23F2B705%22%20stroke%3D%22%232B1C15%22%20stroke-width%3D%222%22/%3E%3Crect%20x%3D%22137%22%20y%3D%227%22%20width%3D%226%22%20height%3D%225%22%20rx%3D%221%22%20fill%3D%22%232B1C15%22/%3E%3Cellipse%20cx%3D%22140%22%20cy%3D%2218%22%20rx%3D%225%22%20ry%3D%227%22%20fill%3D%22%234DA8F0%22%20stroke%3D%22%232B1C15%22%20stroke-width%3D%222%22/%3E%3C/svg%3E") repeat-x 0 0;pointer-events:none}
+.wb-lights::after{content:"";position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22160%22%20height%3D%2228%22%3E%3Cellipse%20cx%3D%2220%22%20cy%3D%2218%22%20rx%3D%224%22%20ry%3D%226%22%20fill%3D%22%232B1C15%22%20fill-opacity%3D%22.5%22/%3E%3Cellipse%20cx%3D%22100%22%20cy%3D%2218%22%20rx%3D%224%22%20ry%3D%226%22%20fill%3D%22%232B1C15%22%20fill-opacity%3D%22.5%22/%3E%3C/svg%3E") repeat-x 0 0;animation:wb-twinkle 1.6s steps(1) infinite}
+@keyframes wb-twinkle{0%{background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22160%22%20height%3D%2228%22%3E%3Cellipse%20cx%3D%2220%22%20cy%3D%2218%22%20rx%3D%224%22%20ry%3D%226%22%20fill%3D%22%232B1C15%22%20fill-opacity%3D%22.5%22/%3E%3Cellipse%20cx%3D%22100%22%20cy%3D%2218%22%20rx%3D%224%22%20ry%3D%226%22%20fill%3D%22%232B1C15%22%20fill-opacity%3D%22.5%22/%3E%3C/svg%3E")}50%{background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22160%22%20height%3D%2228%22%3E%3Cellipse%20cx%3D%2260%22%20cy%3D%2218%22%20rx%3D%224%22%20ry%3D%226%22%20fill%3D%22%232B1C15%22%20fill-opacity%3D%22.5%22/%3E%3Cellipse%20cx%3D%22140%22%20cy%3D%2218%22%20rx%3D%224%22%20ry%3D%226%22%20fill%3D%22%232B1C15%22%20fill-opacity%3D%22.5%22/%3E%3C/svg%3E")}}
+.wb-bow{display:none;position:absolute;top:-20px;right:-14px;width:68px;transform:rotate(14deg);pointer-events:none;filter:drop-shadow(3px 3px 0 rgba(43,28,21,.35))}
+html[data-holiday=both] .wb-lights,html[data-holiday=canada] .wb-lights,html[data-holiday=gift] .wb-lights,html[data-holiday=both] .wb-bow,html[data-holiday=canada] .wb-bow,html[data-holiday=gift] .wb-bow{display:block}
 .wb-hat{display:none;position:absolute;left:25%;top:22%;width:24%;transform:rotate(-30deg);pointer-events:none;filter:drop-shadow(3px 3px 0 rgba(43,28,21,.35))}
 html[data-holiday=both] .wb-hat,html[data-holiday=canada] .wb-hat,html[data-holiday=gift] .wb-hat{display:block}
 .bv-r{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
@@ -46,7 +51,7 @@ html[data-holiday=both] .wb-hat,html[data-holiday=canada] .wb-hat,html[data-holi
 .hol-bar{background:#1F5FA8;color:#FFFFFF;border-bottom:3px solid #2B1C15;padding:12px 24px;text-align:center;font-size:16px;font-weight:700;line-height:1.4}
 .hol-bar a{color:#BFE3FF;font-weight:800;white-space:nowrap}.hol-bar a:hover{color:#FFFFFF}
 .hol-bar[hidden]{display:none}
-@media (prefers-reduced-motion: reduce){.wb-track,.wb-wobble{animation:none}}
+@media (prefers-reduced-motion: reduce){.wb-track,.wb-wobble,.wb-lights::after{animation:none}}
 </style>
 </head>
 <body>
@@ -62,6 +67,9 @@ html[data-holiday=both] .wb-hat,html[data-holiday=canada] .wb-hat,html[data-holi
 
 <!-- holiday cut-offs (filled in by holiday.js) -->
 <div class="hol-bar" data-holiday-bar="home" hidden role="status"></div>
+
+<!-- christmas lights: holiday season only (holiday.js) -->
+<div class="wb-lights" aria-hidden="true"></div>
 
 <!-- nav -->
 <nav style="max-width: 1240px; margin: 0 auto; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
@@ -109,6 +117,7 @@ html[data-holiday=both] .wb-hat,html[data-holiday=canada] .wb-hat,html[data-holi
 <figure style="margin: 0; position: relative">
 <img src="images/portfolio-pup.jpg" alt="Acrylic portrait of a shaggy brown pup with its tongue out on a pink canvas" loading="lazy" style="display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border: 3px solid #2B1C15; border-radius: 24px; box-shadow: 6px 6px 0 #2B1C15">
 <figcaption style="position: absolute; top: 14px; left: 14px; background: #F3EADB; color: #2B1C15; border: 2px solid #2B1C15; border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 700; transform: rotate(-3deg)">no thoughts, just tongue</figcaption>
+<svg class="wb-bow" viewBox="0 0 80 70" aria-hidden="true"><path d="M36 34 L20 66 L30 60 L34 68 L40 38 Z M44 34 L60 66 L50 60 L46 68 L40 38 Z" fill="#B81D33" stroke="#2B1C15" stroke-width="3" stroke-linejoin="round"/><path d="M38 32 C 24 6, 2 10, 6 26 C 9 38, 26 38, 38 34 Z M42 32 C 56 6, 78 10, 74 26 C 71 38, 54 38, 42 34 Z" fill="#D7263D" stroke="#2B1C15" stroke-width="3" stroke-linejoin="round"/><path d="M14 22 C 20 18, 28 22, 32 28 M66 22 C 60 18, 52 22, 48 28" fill="none" stroke="#F3EADB" stroke-width="2.5" stroke-linecap="round" opacity=".7"/><rect x="32" y="26" width="16" height="14" rx="5" fill="#D7263D" stroke="#2B1C15" stroke-width="3"/></svg>
 </figure>
 <div style="position: relative; margin: -56px 18px 0; background: #F3EADB; color: #2B1C15; border: 3px solid #2B1C15; border-radius: 24px; padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 6px 6px 0 #2B1C15; transform: rotate(-2deg)">
 <h3 style="margin: 0; font-size: clamp(30px, 2.6vw, 36px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; color: #1F5FA8">for your pet</h3>
@@ -118,8 +127,9 @@ html[data-holiday=both] .wb-hat,html[data-holiday=canada] .wb-hat,html[data-holi
 </article>
 <article style="display: flex; flex-direction: column; align-items: stretch">
 <figure style="margin: 0; position: relative">
-<img src="images/portfolio-orange.jpg" alt="Acrylic portrait of an orange tabby on a sage green canvas" loading="lazy" style="display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border: 3px solid #2B1C15; border-radius: 24px; box-shadow: 6px 6px 0 #2B1C15">
-<figcaption style="position: absolute; top: 14px; left: 14px; background: #F3EADB; color: #2B1C15; border: 2px solid #2B1C15; border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 700; transform: rotate(-3deg)">plotting something</figcaption>
+<img src="images/portfolio-pittie.jpg" alt="Acrylic portrait of a red and white pit bull with tall ears on a bright blue canvas, on a small easel on a shelf" loading="lazy" style="display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border: 3px solid #2B1C15; border-radius: 24px; box-shadow: 6px 6px 0 #2B1C15">
+<figcaption style="position: absolute; top: 14px; left: 14px; background: #F3EADB; color: #2B1C15; border: 2px solid #2B1C15; border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 700; transform: rotate(-3deg)">judging you, lovingly</figcaption>
+<svg class="wb-bow" viewBox="0 0 80 70" aria-hidden="true"><path d="M36 34 L20 66 L30 60 L34 68 L40 38 Z M44 34 L60 66 L50 60 L46 68 L40 38 Z" fill="#B81D33" stroke="#2B1C15" stroke-width="3" stroke-linejoin="round"/><path d="M38 32 C 24 6, 2 10, 6 26 C 9 38, 26 38, 38 34 Z M42 32 C 56 6, 78 10, 74 26 C 71 38, 54 38, 42 34 Z" fill="#D7263D" stroke="#2B1C15" stroke-width="3" stroke-linejoin="round"/><path d="M14 22 C 20 18, 28 22, 32 28 M66 22 C 60 18, 52 22, 48 28" fill="none" stroke="#F3EADB" stroke-width="2.5" stroke-linecap="round" opacity=".7"/><rect x="32" y="26" width="16" height="14" rx="5" fill="#D7263D" stroke="#2B1C15" stroke-width="3"/></svg>
 </figure>
 <div style="position: relative; margin: -56px 18px 0; background: #2B1C15; color: #F3EADB; border: 3px solid #2B1C15; border-radius: 24px; padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 6px 6px 0 #1F5FA8; transform: rotate(1.5deg)">
 <h3 style="margin: 0; font-size: clamp(30px, 2.6vw, 36px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; color: #BFE3FF">for your fam</h3>
@@ -131,6 +141,7 @@ html[data-holiday=both] .wb-hat,html[data-holiday=canada] .wb-hat,html[data-holi
 <figure style="margin: 0; position: relative">
 <img src="images/portfolio-calico.jpg" alt="Framed acrylic portrait of a calico, mid side-eye" loading="lazy" style="display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border: 3px solid #2B1C15; border-radius: 24px; box-shadow: 6px 6px 0 #2B1C15">
 <figcaption style="position: absolute; top: 14px; left: 14px; background: #F3EADB; color: #2B1C15; border: 2px solid #2B1C15; border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 700; transform: rotate(-3deg)">the side-eye of a lifetime</figcaption>
+<svg class="wb-bow" viewBox="0 0 80 70" aria-hidden="true"><path d="M36 34 L20 66 L30 60 L34 68 L40 38 Z M44 34 L60 66 L50 60 L46 68 L40 38 Z" fill="#B81D33" stroke="#2B1C15" stroke-width="3" stroke-linejoin="round"/><path d="M38 32 C 24 6, 2 10, 6 26 C 9 38, 26 38, 38 34 Z M42 32 C 56 6, 78 10, 74 26 C 71 38, 54 38, 42 34 Z" fill="#D7263D" stroke="#2B1C15" stroke-width="3" stroke-linejoin="round"/><path d="M14 22 C 20 18, 28 22, 32 28 M66 22 C 60 18, 52 22, 48 28" fill="none" stroke="#F3EADB" stroke-width="2.5" stroke-linecap="round" opacity=".7"/><rect x="32" y="26" width="16" height="14" rx="5" fill="#D7263D" stroke="#2B1C15" stroke-width="3"/></svg>
 </figure>
 <div style="position: relative; margin: -56px 18px 0; background: #F3EADB; color: #2B1C15; border: 3px solid #2B1C15; border-radius: 24px; padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 6px 6px 0 #2B1C15; transform: rotate(-1deg)">
 <h3 style="margin: 0; font-size: clamp(30px, 2.6vw, 36px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; color: #1F5FA8">for your bestie</h3>
