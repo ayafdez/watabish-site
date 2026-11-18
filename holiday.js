@@ -4,7 +4,8 @@
    - usLastOrder / caLastOrder: last day someone can claim a painting week
      that still arrives by Christmas (the week of Nov 23 / Dec 7 must be at
      least 7 days away, so it's the Monday one week before).
-   - giftUntil: after this day the banner disappears.
+   - giftUntil: last day of the holiday look (banner, hero, hat, lights,
+     bows). The day after, everything goes back to normal by itself.
    Test any date by adding ?holiday_date=2026-12-02 to a page's address.
    ===================================================================== */
 const HOLIDAY = {
@@ -12,7 +13,7 @@ const HOLIDAY = {
   caLastOrder: "2026-11-30",
   caLastWeek: "dec 7",
   usLastWeek: "nov 23",
-  giftUntil: "2026-12-24",
+  giftUntil: "2026-12-25",
 };
 
 (() => {
