@@ -21,6 +21,8 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 @keyframes wb-wobble{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
 .wb-track{animation:wb-scroll 28s linear infinite}
 .wb-wobble{animation:wb-wobble 2.4s ease-in-out infinite}
+.wb-hat{display:none;position:absolute;left:25%;top:22%;width:24%;transform:rotate(-30deg);pointer-events:none;filter:drop-shadow(3px 3px 0 rgba(43,28,21,.35))}
+html[data-holiday=both] .wb-hat,html[data-holiday=canada] .wb-hat,html[data-holiday=gift] .wb-hat{display:block}
 .bv-r{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .bv{display:grid;gap:24px}
 .bv-tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -87,6 +89,8 @@ a{color:#2B1C15}a:hover{color:#1F5FA8}
 <div style="flex: 1 1 340px; min-width: 0; display: flex; justify-content: center">
 <div class="wb-wobble" style="position: relative; width: 100%; max-width: 400px; aspect-ratio: 4 / 5; background: #2B1C15; border: 3px solid #2B1C15; border-radius: 200px 200px 24px 24px; box-shadow: 10px 10px 0 #1F5FA8">
 <img src="images/watabish-hero.jpg" alt="Watabish, a lynx point cat, mid-scream with one paw raised" style="display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; border-radius: 197px 197px 21px 21px">
+<!-- christmas hat: shows only during the holiday season (holiday.js) -->
+<svg class="wb-hat" viewBox="0 0 120 100" aria-hidden="true"><path d="M14 78 C 22 46, 44 18, 78 12 C 96 9, 108 20, 104 34 C 96 26, 86 26, 80 34 C 90 50, 96 64, 100 78 Z" fill="#D7263D" stroke="#2B1C15" stroke-width="4" stroke-linejoin="round"/><rect x="6" y="70" width="104" height="22" rx="11" fill="#F3EADB" stroke="#2B1C15" stroke-width="4"/><circle cx="104" cy="36" r="12" fill="#F3EADB" stroke="#2B1C15" stroke-width="4"/></svg>
 <span style="position: absolute; top: -18px; right: -14px; background: #F3EADB; border: 3px solid #2B1C15; border-radius: 999px; padding: 8px 14px; font-weight: 800; font-size: 15px; transform: rotate(8deg)">chief executive bish™</span>
 </div>
 </div>
