@@ -59,10 +59,10 @@ const HOLIDAY = {
   const blue = (t, block) => `<span style="color: #1F5FA8; ${block ? "display: block" : "white-space: nowrap"}">${t}</span>`;
   const HERO = {
     canada: {
-      tag:  "watabish · hand-painted pet portraits · the gift they'll actually hang up",
+      tag:  "watabish · hand-painted pet portraits · from $49",
       h1:   `give the iconic gift. ${blue("paint their pet.", true)}`,
       size: "clamp(36px, 6.6vw, 96px)",
-      lead: `iconic pets deserve iconic art. order by ${caBy} and it's under the tree. approved by one very rude cat.`,
+      lead: `the gift they'll actually hang up. order by ${caBy} and it's under the tree. approved by one very rude cat.`,
       cta2: ["send a gift card →", giftUrl],
       note: `in time for christmas in canada (order by ${caBy}). US: gift cards only.`,
     },
