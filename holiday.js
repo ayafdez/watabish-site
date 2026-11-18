@@ -2,17 +2,17 @@
    HOLIDAY CUT-OFFS — the site switches itself by date (Toronto time).
    Edit these dates each year; nothing else needs to change.
    - usLastOrder / caLastOrder: last day someone can claim a painting week
-     that still arrives by Christmas (the week of Nov 23 / Dec 7 must be at
+     that still arrives by Christmas (the week of Nov 30 / Dec 7 must be at
      least 7 days away, so it's the Monday one week before).
    - giftUntil: last day of the holiday look (banner, hero, hat, lights,
      bows). The day after, everything goes back to normal by itself.
    Test any date by adding ?holiday_date=2026-12-02 to a page's address.
    ===================================================================== */
 const HOLIDAY = {
-  usLastOrder: "2026-11-16",
+  usLastOrder: "2026-11-23",
   caLastOrder: "2026-11-30",
   caLastWeek: "dec 7",
-  usLastWeek: "nov 23",
+  usLastWeek: "nov 30",
   giftUntil: "2026-12-25",
 };
 
@@ -34,13 +34,18 @@ const HOLIDAY = {
   const giftUrl = `${shop}?gift=1`;
   const caLeft = days(today, HOLIDAY.caLastOrder);
   const caWhen = caLeft === 0 ? "today's the last day" : caLeft === 1 ? "1 day left" : `${caLeft} days left`;
+  const usLeft = days(today, HOLIDAY.usLastOrder);
+  const usWhen = usLeft === 0 ? "today's the last day" : usLeft === 1 ? "1 day left" : `${usLeft} days left`;
   const a = (href, text) => `<a href="${href}">${text}</a>`;
+  const mon = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+  const short = d => `${mon[+d.slice(5, 7) - 1]} ${+d.slice(8)}`;
+  const caBy = short(HOLIDAY.caLastOrder), usBy = short(HOLIDAY.usLastOrder);
 
   const MSG = {
     both: {
-      home: `christmas cut-offs: <b>US orders close tonight.</b> canada: ${caWhen} (by nov 30). ${a(shop, "claim a painting week →")}`,
-      us:   `<b>last call: today's the last day to order for christmas in the US.</b> claim the week of ${HOLIDAY.usLastWeek}. ${a(`${shop}?portrait=std`, "book now →")}`,
-      shop: `christmas cut-offs: <b>US orders close tonight</b> (week of ${HOLIDAY.usLastWeek}). canada: ${caWhen}, pick a week up to ${HOLIDAY.caLastWeek}.`,
+      home: `christmas cut-offs: <b>US: ${usWhen}</b> (by ${usBy}). canada: ${caWhen} (by ${caBy}). ${a(shop, "claim a painting week →")}`,
+      us:   `<b>christmas in the US: ${usWhen} to order</b> (by ${usBy}). claim the week of ${HOLIDAY.usLastWeek}. ${a(`${shop}?portrait=std`, "book now →")}`,
+      shop: `christmas cut-offs: <b>US: ${usWhen}</b>, pick the week of ${HOLIDAY.usLastWeek}. canada: ${caWhen}, pick a week up to ${HOLIDAY.caLastWeek}.`,
     },
     canada: {
       home: `<b>canada: ${caWhen} to order a portrait for christmas.</b> in the US? too late for paint, perfect for a ${a(giftUrl, "gift card →")}`,
@@ -55,10 +60,16 @@ const HOLIDAY = {
   };
 
   // Homepage hero: holiday headline while it's gifting season
-  const mon = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
-  const caBy = `${mon[+HOLIDAY.caLastOrder.slice(5, 7) - 1]} ${+HOLIDAY.caLastOrder.slice(8)}`;
   const blue = (t, block) => `<span style="color: #1F5FA8; ${block ? "display: block" : "white-space: nowrap"}">${t}</span>`;
   const HERO = {
+    both: {
+      tag:  "watabish · hand-painted pet portraits · from $49",
+      h1:   `give the iconic gift. ${blue("paint their pet.", true)}`,
+      size: "clamp(36px, 6.6vw, 96px)",
+      lead: `the gift they'll actually hang up. order by ${usBy} in the US or ${caBy} in canada and it's under the tree. approved by one very rude cat.`,
+      cta2: ["send a gift card →", giftUrl],
+      note: `in time for christmas: US orders by ${usBy}, canada by ${caBy}.`,
+    },
     canada: {
       tag:  "watabish · hand-painted pet portraits · from $49",
       h1:   `give the iconic gift. ${blue("paint their pet.", true)}`,
