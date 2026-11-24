@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /hunt/
+Disallow: /feedback.html
+
+Sitemap: https://watabish.com/sitemap.xml
